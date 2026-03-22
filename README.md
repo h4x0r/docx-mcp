@@ -1,5 +1,7 @@
 # docx-mcp
 
+[![Sponsor](https://img.shields.io/github/sponsors/h4x0r?label=Sponsor&logo=github)](https://github.com/sponsors/h4x0r)
+
 MCP server for reading and editing Word (.docx) documents with track changes, comments, footnotes, and structural validation.
 
 The only cross-platform MCP server that combines **track changes**, **comments**, and **footnotes** in a single package — with OOXML-level structural validation that no other server offers.
