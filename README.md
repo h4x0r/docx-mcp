@@ -31,12 +31,20 @@ The only cross-platform MCP server that combines **track changes**, **comments**
 ## Installation
 
 ```bash
+# Claude Code (recommended)
+claude mcp add docx-mcp -- uvx docx-mcp-server
+
 # With pip
 pip install docx-mcp-server
 
-# With uvx (recommended for MCP)
+# With uvx
 uvx docx-mcp-server
 ```
+
+> **Optional:** Install the companion [skill](skill/SKILL.md) for Claude Code — it teaches Claude when and how to use the tools automatically:
+> ```bash
+> curl -sSL https://raw.githubusercontent.com/SecurityRonin/docx-mcp/main/install.sh | bash
+> ```
 
 ## Configuration
 
