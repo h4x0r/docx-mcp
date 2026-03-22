@@ -191,8 +191,10 @@ def audit_document() -> str:
 
 @mcp.tool()
 def insert_text(
-    para_id: str, text: str,
-    position: str = "end", author: str = "Claude",
+    para_id: str,
+    text: str,
+    position: str = "end",
+    author: str = "Claude",
 ) -> str:
     """Insert text with Word track-changes markup (appears as a green underlined insertion in Word).
 
@@ -207,7 +209,9 @@ def insert_text(
 
 @mcp.tool()
 def delete_text(
-    para_id: str, text: str, author: str = "Claude",
+    para_id: str,
+    text: str,
+    author: str = "Claude",
 ) -> str:
     """Mark text as deleted with Word track-changes markup (appears as red strikethrough in Word).
 
@@ -233,7 +237,9 @@ def get_comments() -> str:
 
 @mcp.tool()
 def add_comment(
-    para_id: str, text: str, author: str = "Claude",
+    para_id: str,
+    text: str,
+    author: str = "Claude",
 ) -> str:
     """Add a comment anchored to a paragraph.
 
@@ -250,7 +256,9 @@ def add_comment(
 
 @mcp.tool()
 def reply_to_comment(
-    parent_id: int, text: str, author: str = "Claude",
+    parent_id: int,
+    text: str,
+    author: str = "Claude",
 ) -> str:
     """Reply to an existing comment (creates a threaded reply).
 

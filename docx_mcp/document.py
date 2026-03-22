@@ -7,15 +7,15 @@ footnotes, and structural validation.
 
 from __future__ import annotations
 
+import contextlib
 import os
-import re
 import random
+import re
 import shutil
 import tempfile
 import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
 
 from lxml import etree
 
@@ -46,8 +46,10 @@ REL_TYPES = {
 }
 
 CT_TYPES = {
-    "comments": "application/vnd.openxmlformats-officedocument.wordprocessingml.comments+xml",
-    "commentsExtended": "application/vnd.openxmlformats-officedocument.wordprocessingml.commentsExtended+xml",
+    "comments": ("application/vnd.openxmlformats-officedocument.wordprocessingml.comments+xml"),
+    "commentsExtended": (
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.commentsExtended+xml"
+    ),
 }
 
 
@@ -66,7 +68,7 @@ class DocxDocument:
 
     def __init__(self, path: str):
         self.source_path = Path(path).resolve()
-        self.workdir: Optional[Path] = None
+        self.workdir: Path | None = None
         self._trees: dict[str, etree._Element] = {}
         self._modified: set[str] = set()
 
@@ -88,9 +90,14 @@ class DocxDocument:
         word_dir = self.workdir / "word"
         if word_dir.exists():
             for name in [
-                "document.xml", "footnotes.xml", "endnotes.xml",
-                "comments.xml", "commentsExtended.xml", "styles.xml",
-                "numbering.xml", "settings.xml",
+                "document.xml",
+                "footnotes.xml",
+                "endnotes.xml",
+                "comments.xml",
+                "commentsExtended.xml",
+                "styles.xml",
+                "numbering.xml",
+                "settings.xml",
             ]:
                 if (word_dir / name).exists():
                     xml_files.append(f"word/{name}")
@@ -131,10 +138,8 @@ class DocxDocument:
     def get_info(self) -> dict:
         """Get document overview stats."""
         info: dict = {"path": str(self.source_path)}
-        try:
+        with contextlib.suppress(OSError):
             info["size_bytes"] = self.source_path.stat().st_size
-        except OSError:
-            pass
 
         doc = self._tree("word/document.xml")
         if doc is not None:
@@ -174,12 +179,14 @@ class DocxDocument:
             m = re.match(r"^Heading(\d+)$", style)
             if not m:
                 continue
-            headings.append({
-                "level": int(m.group(1)),
-                "text": self._text(para),
-                "style": style,
-                "paraId": para.get(f"{W14}paraId", ""),
-            })
+            headings.append(
+                {
+                    "level": int(m.group(1)),
+                    "text": self._text(para),
+                    "style": style,
+                    "paraId": para.get(f"{W14}paraId", ""),
+                }
+            )
         return headings
 
     # ── Search ──────────────────────────────────────────────────────────────
@@ -205,19 +212,20 @@ class DocxDocument:
                     if not matches:
                         continue
                     match_info = [
-                        {"start": m.start(), "end": m.end(), "match": m.group()}
-                        for m in matches
+                        {"start": m.start(), "end": m.end(), "match": m.group()} for m in matches
                     ]
                 else:
                     if query.lower() not in text.lower():
                         continue
                     match_info = None
-                results.append({
-                    "source": source,
-                    "paraId": para.get(f"{W14}paraId", ""),
-                    "text": text[:300],
-                    "matches": match_info,
-                })
+                results.append(
+                    {
+                        "source": source,
+                        "paraId": para.get(f"{W14}paraId", ""),
+                        "text": text[:300],
+                        "matches": match_info,
+                    }
+                )
         return results
 
     # ── Paragraph access ────────────────────────────────────────────────────
@@ -248,10 +256,12 @@ class DocxDocument:
             return []
         result = []
         for fn in self._real_footnotes(fn_tree):
-            result.append({
-                "id": int(fn.get(f"{W}id", "0")),
-                "text": self._text(fn),
-            })
+            result.append(
+                {
+                    "id": int(fn.get(f"{W}id", "0")),
+                    "text": self._text(fn),
+                }
+            )
         return result
 
     def add_footnote(self, para_id: str, text: str) -> dict:
@@ -390,8 +400,12 @@ class DocxDocument:
     # ── Track changes ───────────────────────────────────────────────────────
 
     def insert_text(
-        self, para_id: str, text: str,
-        *, position: str = "end", author: str = "Claude",
+        self,
+        para_id: str,
+        text: str,
+        *,
+        position: str = "end",
+        author: str = "Claude",
     ) -> dict:
         """Insert text with Word track-changes markup (w:ins).
 
@@ -440,7 +454,11 @@ class DocxDocument:
         return {"change_id": cid, "type": "insertion", "author": author, "date": now}
 
     def delete_text(
-        self, para_id: str, text: str, *, author: str = "Claude",
+        self,
+        para_id: str,
+        text: str,
+        *,
+        author: str = "Claude",
     ) -> dict:
         """Mark text as deleted with Word track-changes markup (w:del).
 
@@ -523,7 +541,11 @@ class DocxDocument:
         ]
 
     def add_comment(
-        self, para_id: str, text: str, *, author: str = "Claude",
+        self,
+        para_id: str,
+        text: str,
+        *,
+        author: str = "Claude",
     ) -> dict:
         """Add a comment anchored to a paragraph."""
         doc = self._require("word/document.xml")
@@ -564,8 +586,6 @@ class DocxDocument:
         self._mark("word/comments.xml")
 
         # Add range markers in document.xml
-        markup_id = self._next_markup_id(doc)
-        # Use markup_id for range markers, but comment_id for the comment reference
         range_start = etree.Element(f"{W}commentRangeStart")
         range_start.set(f"{W}id", str(comment_id))
 
@@ -592,7 +612,11 @@ class DocxDocument:
         return {"comment_id": comment_id, "para_id": para_id, "author": author, "date": now}
 
     def reply_to_comment(
-        self, parent_id: int, text: str, *, author: str = "Claude",
+        self,
+        parent_id: int,
+        text: str,
+        *,
+        author: str = "Claude",
     ) -> dict:
         """Reply to an existing comment."""
         cm_tree = self._require("word/comments.xml")
@@ -661,12 +685,14 @@ class DocxDocument:
             prev = 0
             for h in headings:
                 if h["level"] > prev + 1 and prev > 0:
-                    issues.append({
-                        "issue": "level_skip",
-                        "heading": h["text"][:60],
-                        "expected_max": prev + 1,
-                        "actual": h["level"],
-                    })
+                    issues.append(
+                        {
+                            "issue": "level_skip",
+                            "heading": h["text"][:60],
+                            "expected_max": prev + 1,
+                            "actual": h["level"],
+                        }
+                    )
                 prev = h["level"]
             results["headings"] = {"count": len(headings), "issues": issues}
 
@@ -709,7 +735,9 @@ class DocxDocument:
         artifacts = []
         for marker in ["DRAFT", "TODO", "FIXME", "XXX"]:
             for hit in self.search_text(marker):
-                artifacts.append({"marker": marker, "source": hit["source"], "context": hit["text"][:100]})
+                artifacts.append(
+                    {"marker": marker, "source": hit["source"], "context": hit["text"][:100]}
+                )
         results["artifacts"] = artifacts
 
         # Overall
@@ -742,7 +770,10 @@ class DocxDocument:
             fp.parent.mkdir(parents=True, exist_ok=True)
             et = etree.ElementTree(tree)
             et.write(
-                str(fp), xml_declaration=True, encoding="UTF-8", standalone=True,
+                str(fp),
+                xml_declaration=True,
+                encoding="UTF-8",
+                standalone=True,
             )
 
         # Repack
@@ -783,10 +814,7 @@ class DocxDocument:
     @staticmethod
     def _real_footnotes(fn_root: etree._Element) -> list[etree._Element]:
         """Return footnote elements excluding separators (id 0 and -1)."""
-        return [
-            f for f in fn_root.findall(f"{W}footnote")
-            if f.get(f"{W}id") not in ("0", "-1")
-        ]
+        return [f for f in fn_root.findall(f"{W}footnote") if f.get(f"{W}id") not in ("0", "-1")]
 
     def _find_para(self, root: etree._Element, para_id: str) -> etree._Element | None:
         for p in root.iter(f"{W}p"):
@@ -813,17 +841,18 @@ class DocxDocument:
         """Next available ID for ins/del/comment/bookmark markup."""
         max_id = 0
         for tag in (
-            f"{W}ins", f"{W}del",
-            f"{W}commentRangeStart", f"{W}commentRangeEnd",
-            f"{W}bookmarkStart", f"{W}bookmarkEnd",
+            f"{W}ins",
+            f"{W}del",
+            f"{W}commentRangeStart",
+            f"{W}commentRangeEnd",
+            f"{W}bookmarkStart",
+            f"{W}bookmarkEnd",
         ):
             for el in doc.iter(tag):
                 eid = el.get(f"{W}id")
                 if eid:
-                    try:
+                    with contextlib.suppress(ValueError):
                         max_id = max(max_id, int(eid))
-                    except ValueError:
-                        pass
         return max_id + 1
 
     @staticmethod
@@ -832,10 +861,8 @@ class DocxDocument:
         for c in cm_tree.findall(f"{W}comment"):
             cid = c.get(f"{W}id")
             if cid:
-                try:
+                with contextlib.suppress(ValueError):
                     max_id = max(max_id, int(cid))
-                except ValueError:
-                    pass
         return max_id + 1
 
     @staticmethod
@@ -880,10 +907,8 @@ class DocxDocument:
                 for r in rels.findall(f"{RELS}Relationship"):
                     rid = r.get("Id", "")
                     if rid.startswith("rId"):
-                        try:
+                        with contextlib.suppress(ValueError):
                             max_rid = max(max_rid, int(rid[3:]))
-                        except ValueError:
-                            pass
                 rel = etree.SubElement(rels, f"{RELS}Relationship")
                 rel.set("Id", f"rId{max_rid + 1}")
                 rel.set("Type", REL_TYPES["comments"])

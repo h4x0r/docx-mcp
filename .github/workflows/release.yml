@@ -1,0 +1,90 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  # ── Build wheel + sdist ───────────────────────────────────────────────────
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  # ── Publish to PyPI via trusted publishing ────────────────────────────────
+
+  pypi:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  # ── Build standalone binaries with PyInstaller ────────────────────────────
+
+  binaries:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            name: docx-mcp-linux-x86_64
+          - os: macos-latest
+            name: docx-mcp-macos-arm64
+          - os: windows-latest
+            name: docx-mcp-windows-x86_64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install . pyinstaller
+      - name: Build binary
+        run: >
+          pyinstaller --onefile
+          --name ${{ matrix.name }}
+          --collect-all docx_mcp
+          --collect-all mcp
+          docx_mcp/__main__.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: binary-${{ matrix.name }}
+          path: dist/${{ matrix.name }}*
+
+  # ── Create GitHub release with all assets ─────────────────────────────────
+
+  release:
+    needs: [pypi, binaries]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+      - name: Collect assets
+        run: |
+          mkdir -p release-assets
+          cp artifacts/dist/* release-assets/ 2>/dev/null || true
+          find artifacts/binary-* -type f -exec cp {} release-assets/ \; 2>/dev/null || true
+          ls -la release-assets/
+      - uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: release-assets/*

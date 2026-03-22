@@ -23,6 +23,14 @@ dependencies = [
     "lxml>=4.9.0",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=6.0",
+    "ruff>=0.9",
+    "pre-commit>=4.0",
+]
+
 [project.scripts]
 docx-mcp = "docx_mcp.server:main"
 
@@ -33,3 +41,31 @@ Issues = "https://github.com/h4x0r/docx-mcp/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["docx_mcp"]
+
+# ── Ruff ────────────────────────────────────────────────────────────────────
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+
+# ── Pytest ──────────────────────────────────────────────────────────────────
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+# ── Coverage ────────────────────────────────────────────────────────────────
+
+[tool.coverage.run]
+source = ["docx_mcp"]
+omit = ["docx_mcp/__main__.py"]
+
+[tool.coverage.report]
+fail_under = 100
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__",
+]
