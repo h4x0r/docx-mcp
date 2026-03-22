@@ -9,7 +9,7 @@ description = "MCP server for reading and editing Word (.docx) documents with tr
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
-authors = [{ name = "h4x0r" }]
+authors = [{ name = "SecurityRonin" }]
 keywords = ["mcp", "docx", "word", "track-changes", "comments", "footnotes", "ooxml"]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -35,9 +35,9 @@ dev = [
 docx-mcp = "docx_mcp.server:main"
 
 [project.urls]
-Homepage = "https://github.com/h4x0r/docx-mcp"
-Repository = "https://github.com/h4x0r/docx-mcp"
-Issues = "https://github.com/h4x0r/docx-mcp/issues"
+Homepage = "https://github.com/SecurityRonin/docx-mcp"
+Repository = "https://github.com/SecurityRonin/docx-mcp"
+Issues = "https://github.com/SecurityRonin/docx-mcp/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["docx_mcp"]
