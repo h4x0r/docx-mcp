@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "docx-mcp-server"
-version = "0.2.2"
+version = "0.2.3"
 description = "MCP server for reading and editing Word (.docx) documents with track changes, comments, footnotes, tables, images, sections, and structural validation"
 readme = "README.md"
 license = "MIT"
@@ -33,6 +33,7 @@ dev = [
 
 [project.scripts]
 docx-mcp = "docx_mcp.cli:main"
+docx-mcp-server = "docx_mcp.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/SecurityRonin/docx-mcp"
