@@ -43,10 +43,10 @@ The only cross-platform MCP server that combines **track changes**, **comments**
 claude mcp add docx-mcp -- uvx docx-mcp-server
 
 # Install the companion skill (teaches Claude when and how to use the tools)
-uvx --from docx-mcp-server docx-mcp install-skill
+uvx --from docx-mcp-server@latest docx-mcp install-skill
 ```
 
-The skill ships inside the package. After upgrading, run `uvx --from docx-mcp-server docx-mcp update-skill` to refresh it.
+The skill ships inside the package. After upgrading, run `uvx --from docx-mcp-server@latest docx-mcp update-skill` to refresh it.
 
 <details>
 <summary>Other installation methods</summary>
@@ -57,7 +57,7 @@ pip install docx-mcp-server
 docx-mcp install-skill
 
 # With uvx (standalone, no pip install)
-uvx --from docx-mcp-server docx-mcp install-skill
+uvx --from docx-mcp-server@latest docx-mcp install-skill
 ```
 
 </details>
@@ -66,7 +66,7 @@ uvx --from docx-mcp-server docx-mcp install-skill
 
 ```bash
 # uvx users — uvx always fetches the latest, just refresh the skill
-uvx --from docx-mcp-server docx-mcp update-skill
+uvx --from docx-mcp-server@latest docx-mcp update-skill
 
 # pip users
 pip install --upgrade docx-mcp-server
