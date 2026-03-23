@@ -17,10 +17,10 @@ def _skill_target_dir() -> Path:
 
 
 def _needs_update(source: Path, dest: Path) -> bool:
-    """Return True if dest is missing or older than source."""
+    """Return True if dest is missing or differs from source."""
     if not dest.exists():
         return True
-    return source.stat().st_size != dest.stat().st_size
+    return source.read_bytes() != dest.read_bytes()
 
 
 def install_skill(*, target_dir: Path | None = None) -> Path:
