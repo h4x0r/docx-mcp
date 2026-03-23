@@ -1,4 +1,4 @@
-"""Track changes mixin: insert, delete."""
+"""Track changes mixin: insert, delete, accept, reject."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from .base import W, W14, _now_iso, _preserve
 
 
 class TracksMixin:
-    """Insert/delete text with tracked changes markup."""
+    """Insert/delete/accept/reject text with tracked changes markup."""
 
     def insert_text(
         self,
@@ -134,3 +134,90 @@ class TracksMixin:
             f"Text '{text}' not found in a single run of paragraph '{para_id}'. "
             "If the text spans multiple runs, try searching for a shorter substring."
         )
+
+    # ── Accept / Reject ───────────────────────────────────────────────────
+
+    def _matches_author(self, el: etree._Element, author: str | None) -> bool:
+        """Check if element's author matches filter (None = match all)."""
+        if author is None:
+            return True
+        return el.get(f"{W}author") == author
+
+    def accept_changes(
+        self,
+        *,
+        author: str | None = None,
+    ) -> dict:
+        """Accept tracked changes: keep insertions, remove deletions.
+
+        Args:
+            author: If set, only accept changes by this author.
+        """
+        doc = self._require("word/document.xml")
+        count = 0
+
+        # Accept insertions: unwrap w:ins (promote children)
+        for ins in list(doc.iter(f"{W}ins")):
+            if not self._matches_author(ins, author):
+                continue
+            parent = ins.getparent()
+            idx = list(parent).index(ins)
+            for child in list(ins):
+                ins.remove(child)
+                parent.insert(idx, child)
+                idx += 1
+            parent.remove(ins)
+            count += 1
+
+        # Accept deletions: remove w:del entirely
+        for del_el in list(doc.iter(f"{W}del")):
+            if not self._matches_author(del_el, author):
+                continue
+            del_el.getparent().remove(del_el)
+            count += 1
+
+        if count > 0:
+            self._mark("word/document.xml")
+        scope = "by_author" if author else "all"
+        return {"accepted": count, "scope": scope}
+
+    def reject_changes(
+        self,
+        *,
+        author: str | None = None,
+    ) -> dict:
+        """Reject tracked changes: remove insertions, restore deletions.
+
+        Args:
+            author: If set, only reject changes by this author.
+        """
+        doc = self._require("word/document.xml")
+        count = 0
+
+        # Reject insertions: remove w:ins and its content entirely
+        for ins in list(doc.iter(f"{W}ins")):
+            if not self._matches_author(ins, author):
+                continue
+            ins.getparent().remove(ins)
+            count += 1
+
+        # Reject deletions: unwrap w:del, convert w:delText back to w:t
+        for del_el in list(doc.iter(f"{W}del")):
+            if not self._matches_author(del_el, author):
+                continue
+            parent = del_el.getparent()
+            idx = list(parent).index(del_el)
+            for child in list(del_el):
+                # Convert w:delText -> w:t inside each run
+                for dt in child.findall(f"{W}delText"):
+                    dt.tag = f"{W}t"
+                del_el.remove(child)
+                parent.insert(idx, child)
+                idx += 1
+            parent.remove(del_el)
+            count += 1
+
+        if count > 0:
+            self._mark("word/document.xml")
+        scope = "by_author" if author else "all"
+        return {"rejected": count, "scope": scope}

@@ -280,6 +280,63 @@ def delete_text(
     return _js(_require_doc().delete_text(para_id, text, author=author))
 
 
+@mcp.tool()
+def accept_changes(author: str = "") -> str:
+    """Accept tracked changes — keep insertions, remove deletions.
+
+    Args:
+        author: If set, only accept changes by this author. Empty = all changes.
+    """
+    return _js(_require_doc().accept_changes(author=author or None))
+
+
+@mcp.tool()
+def reject_changes(author: str = "") -> str:
+    """Reject tracked changes — remove insertions, restore deleted text.
+
+    Args:
+        author: If set, only reject changes by this author. Empty = all changes.
+    """
+    return _js(_require_doc().reject_changes(author=author or None))
+
+
+@mcp.tool()
+def set_formatting(
+    para_id: str,
+    text: str,
+    bold: bool = False,
+    italic: bool = False,
+    underline: str = "",
+    color: str = "",
+    author: str = "Claude",
+) -> str:
+    """Apply character formatting to text with tracked-change markup.
+
+    Finds the text within the paragraph, splits the run if needed, and applies
+    formatting with rPrChange so it appears as a format revision in Word.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        text: Exact text to format.
+        bold: Apply bold formatting.
+        italic: Apply italic formatting.
+        underline: Underline style (e.g., "single", "double"). Empty = no underline.
+        color: Font color as hex (e.g., "FF0000"). Empty = no color change.
+        author: Author name for the revision.
+    """
+    return _js(
+        _require_doc().set_formatting(
+            para_id,
+            text,
+            bold=bold,
+            italic=italic,
+            underline=underline or None,
+            color=color or None,
+            author=author,
+        )
+    )
+
+
 # ── Comments ────────────────────────────────────────────────────────────────
 
 

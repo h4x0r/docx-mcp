@@ -22,6 +22,7 @@ from .base import (
     _preserve,
 )
 from .comments import CommentsMixin
+from .formatting import FormattingMixin
 from .endnotes import EndnotesMixin
 from .footnotes import FootnotesMixin
 from .headers_footers import HeadersFootersMixin
@@ -38,6 +39,7 @@ class DocxDocument(
     BaseMixin,
     ReadingMixin,
     TracksMixin,
+    FormattingMixin,
     CommentsMixin,
     FootnotesMixin,
     ValidationMixin,
