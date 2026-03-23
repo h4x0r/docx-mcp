@@ -26,6 +26,7 @@ from .formatting import FormattingMixin
 from .endnotes import EndnotesMixin
 from .footnotes import FootnotesMixin
 from .headers_footers import HeadersFootersMixin
+from .lists import ListsMixin
 from .images import ImagesMixin
 from .properties import PropertiesMixin
 from .reading import ReadingMixin
@@ -46,6 +47,7 @@ class DocxDocument(
     TablesMixin,
     StylesMixin,
     HeadersFootersMixin,
+    ListsMixin,
     PropertiesMixin,
     ImagesMixin,
     EndnotesMixin,

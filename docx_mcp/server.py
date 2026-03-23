@@ -194,6 +194,25 @@ def delete_table_row(
     return _js(_require_doc().delete_table_row(table_idx, row_idx, author=author))
 
 
+# ── Lists ──────────────────────────────────────────────────────────────────
+
+
+@mcp.tool()
+def add_list(
+    para_ids: list[str],
+    style: str = "bullet",
+) -> str:
+    """Apply list formatting to paragraphs (bullet or numbered).
+
+    Creates numbering definitions and sets w:numPr on each target paragraph.
+
+    Args:
+        para_ids: List of paraIds to format as list items.
+        style: "bullet" or "numbered".
+    """
+    return _js(_require_doc().add_list(para_ids, style=style))
+
+
 # ── Styles ─────────────────────────────────────────────────────────────────
 
 
@@ -210,6 +229,24 @@ def get_styles() -> str:
 def get_headers_footers() -> str:
     """Get all headers and footers with their text content."""
     return _js(_require_doc().get_headers_footers())
+
+
+@mcp.tool()
+def edit_header_footer(
+    location: str,
+    old_text: str,
+    new_text: str,
+    author: str = "Claude",
+) -> str:
+    """Edit text in a header or footer with tracked changes.
+
+    Args:
+        location: "header" or "footer" (matches first found).
+        old_text: Text to find and replace.
+        new_text: Replacement text.
+        author: Author name for the revision.
+    """
+    return _js(_require_doc().edit_header_footer(location, old_text, new_text, author=author))
 
 
 # ── Properties ─────────────────────────────────────────────────────────────
@@ -230,6 +267,24 @@ def get_images() -> str:
     return _js(_require_doc().get_images())
 
 
+@mcp.tool()
+def insert_image(
+    para_id: str,
+    image_path: str,
+    width_emu: int = 2000000,
+    height_emu: int = 2000000,
+) -> str:
+    """Insert an image into the document after a paragraph.
+
+    Args:
+        para_id: paraId of the paragraph to insert after.
+        image_path: Absolute path to the image file.
+        width_emu: Image width in EMUs (914400 = 1 inch).
+        height_emu: Image height in EMUs.
+    """
+    return _js(_require_doc().insert_image(para_id, image_path, width_emu=width_emu, height_emu=height_emu))
+
+
 # ── Endnotes ───────────────────────────────────────────────────────────────
 
 
@@ -237,6 +292,30 @@ def get_images() -> str:
 def get_endnotes() -> str:
     """Get all endnotes with their ID and text content."""
     return _js(_require_doc().get_endnotes())
+
+
+@mcp.tool()
+def add_endnote(para_id: str, text: str) -> str:
+    """Add an endnote to a paragraph.
+
+    Creates the endnote definition in endnotes.xml and adds a superscript
+    reference in the target paragraph.
+
+    Args:
+        para_id: paraId of the paragraph to attach the endnote to.
+        text: Endnote text content.
+    """
+    return _js(_require_doc().add_endnote(para_id, text))
+
+
+@mcp.tool()
+def validate_endnotes() -> str:
+    """Cross-reference endnote IDs between document.xml and endnotes.xml.
+
+    Checks that every endnote reference has a matching definition,
+    and flags orphaned definitions with no reference.
+    """
+    return _js(_require_doc().validate_endnotes())
 
 
 # ── Footnotes ───────────────────────────────────────────────────────────────

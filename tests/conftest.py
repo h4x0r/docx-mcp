@@ -329,5 +329,8 @@ _HEADER_XML = """
       </w:pict>
     </w:r>
   </w:p>
+  <w:p w14:paraId="00000E02" w14:textId="77777777">
+    <w:r><w:t>Document Header Text</w:t></w:r>
+  </w:p>
 </w:hdr>
 """
