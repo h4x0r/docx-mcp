@@ -351,6 +351,99 @@ def validate_footnotes() -> str:
     return _js(_require_doc().validate_footnotes())
 
 
+# ── Sections / Page breaks ─────────────────────────────────────────────
+
+
+@mcp.tool()
+def add_page_break(para_id: str) -> str:
+    """Insert a page break after a paragraph.
+
+    Creates a new paragraph containing a page break element.
+
+    Args:
+        para_id: paraId of the paragraph to insert after.
+    """
+    return _js(_require_doc().add_page_break(para_id))
+
+
+@mcp.tool()
+def add_section_break(
+    para_id: str,
+    break_type: str = "nextPage",
+) -> str:
+    """Add a section break at a paragraph.
+
+    Inserts a section properties element in the paragraph, marking it as
+    the last paragraph of its section.
+
+    Args:
+        para_id: paraId of the paragraph to place the section break on.
+        break_type: "nextPage", "continuous", "evenPage", or "oddPage".
+    """
+    return _js(_require_doc().add_section_break(para_id, break_type=break_type))
+
+
+@mcp.tool()
+def set_section_properties(
+    para_id: str = "",
+    width: int = 0,
+    height: int = 0,
+    orientation: str = "",
+    margin_top: int = 0,
+    margin_bottom: int = 0,
+    margin_left: int = 0,
+    margin_right: int = 0,
+) -> str:
+    """Modify section properties (page size, orientation, margins).
+
+    Args:
+        para_id: paraId of paragraph with section break. Empty = body section.
+        width: Page width in DXA (twips). 12240 = 8.5 inches.
+        height: Page height in DXA. 15840 = 11 inches.
+        orientation: "portrait" or "landscape". Empty = unchanged.
+        margin_top: Top margin in DXA. 0 = unchanged.
+        margin_bottom: Bottom margin in DXA. 0 = unchanged.
+        margin_left: Left margin in DXA. 0 = unchanged.
+        margin_right: Right margin in DXA. 0 = unchanged.
+    """
+    return _js(
+        _require_doc().set_section_properties(
+            para_id=para_id or None,
+            width=width or None,
+            height=height or None,
+            orientation=orientation or None,
+            margin_top=margin_top or None,
+            margin_bottom=margin_bottom or None,
+            margin_left=margin_left or None,
+            margin_right=margin_right or None,
+        )
+    )
+
+
+# ── Cross-references ──────────────────────────────────────────────────
+
+
+@mcp.tool()
+def add_cross_reference(
+    source_para_id: str,
+    target_para_id: str,
+    text: str,
+) -> str:
+    """Add a cross-reference link from one paragraph to another.
+
+    Creates a bookmark at the target (if none exists) and inserts a hyperlink
+    in the source paragraph with the given display text.
+
+    Args:
+        source_para_id: paraId of the paragraph where the link appears.
+        target_para_id: paraId of the paragraph being referenced.
+        text: Display text for the cross-reference link.
+    """
+    return _js(
+        _require_doc().add_cross_reference(source_para_id, target_para_id, text)
+    )
+
+
 # ── Validation ──────────────────────────────────────────────────────────────
 
 

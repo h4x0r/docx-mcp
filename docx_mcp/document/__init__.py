@@ -30,6 +30,8 @@ from .lists import ListsMixin
 from .images import ImagesMixin
 from .properties import PropertiesMixin
 from .reading import ReadingMixin
+from .references import ReferencesMixin
+from .sections import SectionsMixin
 from .styles import StylesMixin
 from .tables import TablesMixin
 from .tracks import TracksMixin
@@ -51,6 +53,8 @@ class DocxDocument(
     PropertiesMixin,
     ImagesMixin,
     EndnotesMixin,
+    SectionsMixin,
+    ReferencesMixin,
 ):
     """Word document editor with OOXML-level control."""
 
