@@ -28,7 +28,9 @@ from .footnotes import FootnotesMixin
 from .headers_footers import HeadersFootersMixin
 from .lists import ListsMixin
 from .images import ImagesMixin
+from .merge import MergeMixin
 from .properties import PropertiesMixin
+from .protection import ProtectionMixin
 from .reading import ReadingMixin
 from .references import ReferencesMixin
 from .sections import SectionsMixin
@@ -55,6 +57,8 @@ class DocxDocument(
     EndnotesMixin,
     SectionsMixin,
     ReferencesMixin,
+    ProtectionMixin,
+    MergeMixin,
 ):
     """Word document editor with OOXML-level control."""
 

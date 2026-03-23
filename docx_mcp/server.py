@@ -258,6 +258,31 @@ def get_properties() -> str:
     return _js(_require_doc().get_properties())
 
 
+@mcp.tool()
+def set_properties(
+    title: str = "",
+    creator: str = "",
+    subject: str = "",
+    description: str = "",
+) -> str:
+    """Set core document properties.
+
+    Args:
+        title: Document title. Empty = unchanged.
+        creator: Document author/creator. Empty = unchanged.
+        subject: Document subject. Empty = unchanged.
+        description: Document description. Empty = unchanged.
+    """
+    return _js(
+        _require_doc().set_properties(
+            title=title or None,
+            creator=creator or None,
+            subject=subject or None,
+            description=description or None,
+        )
+    )
+
+
 # ── Images ─────────────────────────────────────────────────────────────────
 
 
@@ -442,6 +467,42 @@ def add_cross_reference(
     return _js(
         _require_doc().add_cross_reference(source_para_id, target_para_id, text)
     )
+
+
+# ── Protection ─────────────────────────────────────────────────────────────
+
+
+@mcp.tool()
+def set_document_protection(
+    edit: str,
+    password: str = "",
+) -> str:
+    """Set document protection in settings.xml.
+
+    Args:
+        edit: Protection type — "trackedChanges", "comments", "readOnly",
+              "forms", or "none" (removes protection).
+        password: Optional password (hashed with SHA-512). Empty = no password.
+    """
+    return _js(
+        _require_doc().set_document_protection(edit, password=password or None)
+    )
+
+
+# ── Merge ──────────────────────────────────────────────────────────────────
+
+
+@mcp.tool()
+def merge_documents(source_path: str) -> str:
+    """Merge another DOCX document's content into the current document.
+
+    Appends body paragraphs and tables from the source. ParaIds are
+    automatically remapped to avoid collisions.
+
+    Args:
+        source_path: Absolute path to the DOCX file to merge in.
+    """
+    return _js(_require_doc().merge_documents(source_path))
 
 
 # ── Validation ──────────────────────────────────────────────────────────────
