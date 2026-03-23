@@ -78,6 +78,25 @@ Add to your MCP configuration file:
 }
 ```
 
+### OpenClaw
+
+Add to your `openclaw.yaml`:
+
+```yaml
+mcpServers:
+  docx-mcp:
+    command: uvx
+    args:
+      - docx-mcp-server
+```
+
+Or via the CLI:
+
+```bash
+openclaw config set mcpServers.docx-mcp.command "uvx"
+openclaw config set mcpServers.docx-mcp.args '["docx-mcp-server"]'
+```
+
 ### With pip install
 
 ```json
