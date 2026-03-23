@@ -21,6 +21,7 @@ from .base import (
     _now_iso,
     _preserve,
 )
+from .creation import CreationMixin
 from .comments import CommentsMixin
 from .endnotes import EndnotesMixin
 from .footnotes import FootnotesMixin
@@ -42,6 +43,7 @@ from .validation import ValidationMixin
 
 class DocxDocument(
     BaseMixin,
+    CreationMixin,
     ReadingMixin,
     TracksMixin,
     FormattingMixin,
