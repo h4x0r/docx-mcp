@@ -53,11 +53,41 @@ class TracksMixin:
             para.append(ins)
         else:
             placed = False
-            for run_el in para.findall(f"{W}r"):
-                if position in self._text(run_el):
+            # Search regular runs — split if match is mid-run
+            for run_el in list(para.findall(f"{W}r")):
+                t_el = run_el.find(f"{W}t")
+                if t_el is None or t_el.text is None:
+                    continue
+                if position not in t_el.text:
+                    continue
+
+                full = t_el.text
+                end = full.index(position) + len(position)
+
+                if end < len(full):
+                    # Match is mid-run: split, insert between halves
+                    rpr = run_el.find(f"{W}rPr")
+                    rpr_bytes = etree.tostring(rpr) if rpr is not None else None
+                    _preserve(t_el, full[:end])
+                    after_run = self._make_run(full[end:], rpr_bytes)
                     run_el.addnext(ins)
-                    placed = True
-                    break
+                    ins.addnext(after_run)
+                else:
+                    run_el.addnext(ins)
+                placed = True
+                break
+
+            # Fallback: search w:del elements (delete-then-insert pattern)
+            if not placed:
+                for del_el in para.findall(f"{W}del"):
+                    del_text = "".join(
+                        t.text for t in del_el.iter(f"{W}delText") if t.text
+                    )
+                    if position in del_text:
+                        del_el.addnext(ins)
+                        placed = True
+                        break
+
             if not placed:
                 para.append(ins)
 

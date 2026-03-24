@@ -277,8 +277,33 @@ class TestTrackChanges:
         assert r["type"] == "insertion"
 
     def test_insert_after_substring(self):
+        """Insert after mid-run substring splits the run correctly."""
         r = _j(server.insert_text("00000004", " (extended)", position="30 days"))
         assert r["type"] == "insertion"
+        # Accept the change and verify text order
+        server.accept_changes()
+        para = _j(server.get_paragraph("00000004"))
+        assert "30 days (extended) from" in para["text"]
+
+    def test_insert_after_substring_at_run_end(self):
+        """Insert after substring that ends a run places correctly."""
+        r = _j(server.insert_text("00000004", " [ADDED]", position="effective date."))
+        assert r["type"] == "insertion"
+        server.accept_changes()
+        para = _j(server.get_paragraph("00000004"))
+        assert para["text"].endswith("effective date. [ADDED]")
+
+    def test_insert_after_deleted_text(self):
+        """Delete-then-insert pattern places insertion at deletion site."""
+        server.delete_text("00000004", "30 days", author="Tester")
+        r = _j(server.insert_text("00000004", "60 days", position="30 days"))
+        assert r["type"] == "insertion"
+        # Accept all and verify replacement
+        server.accept_changes()
+        para = _j(server.get_paragraph("00000004"))
+        assert "60 days" in para["text"]
+        assert "30 days" not in para["text"]
+        assert "60 days from" in para["text"]
 
     def test_insert_after_missing_substring_falls_back_to_end(self):
         """If the position substring isn't found, appends to end."""
