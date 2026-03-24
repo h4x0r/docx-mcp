@@ -48,8 +48,14 @@ def _write_blank_skeleton(path: Path) -> None:
         return f"{random.randint(1, 0x7FFFFFFF):08X}"
 
     # Generate unique paraIds for all paragraphs in the skeleton
-    pids = {"body1": _pid(), "fn_sep": _pid(), "fn_cont": _pid(),
-            "en_sep": _pid(), "en_cont": _pid(), "hdr1": _pid()}
+    pids = {
+        "body1": _pid(),
+        "fn_sep": _pid(),
+        "fn_cont": _pid(),
+        "en_sep": _pid(),
+        "en_cont": _pid(),
+        "hdr1": _pid(),
+    }
 
     files = {
         "[Content_Types].xml": _CONTENT_TYPES,
@@ -343,14 +349,14 @@ _NUMBERING_XML = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:numbering xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
   <w:abstractNum w:abstractNumId="0">
     <w:lvl w:ilvl="0"><w:numFmt w:val="bullet"/><w:lvlText w:val="\u2022"/><w:pPr><w:ind w:left="720" w:hanging="360"/></w:pPr></w:lvl>
-    <w:lvl w:ilvl="1"><w:numFmt w:val="bullet"/><w:lvlText w:val="\u25E6"/><w:pPr><w:ind w:left="1440" w:hanging="360"/></w:pPr></w:lvl>
-    <w:lvl w:ilvl="2"><w:numFmt w:val="bullet"/><w:lvlText w:val="\u25AA"/><w:pPr><w:ind w:left="2160" w:hanging="360"/></w:pPr></w:lvl>
+    <w:lvl w:ilvl="1"><w:numFmt w:val="bullet"/><w:lvlText w:val="\u25e6"/><w:pPr><w:ind w:left="1440" w:hanging="360"/></w:pPr></w:lvl>
+    <w:lvl w:ilvl="2"><w:numFmt w:val="bullet"/><w:lvlText w:val="\u25aa"/><w:pPr><w:ind w:left="2160" w:hanging="360"/></w:pPr></w:lvl>
     <w:lvl w:ilvl="3"><w:numFmt w:val="bullet"/><w:lvlText w:val="\u2022"/><w:pPr><w:ind w:left="2880" w:hanging="360"/></w:pPr></w:lvl>
-    <w:lvl w:ilvl="4"><w:numFmt w:val="bullet"/><w:lvlText w:val="\u25E6"/><w:pPr><w:ind w:left="3600" w:hanging="360"/></w:pPr></w:lvl>
-    <w:lvl w:ilvl="5"><w:numFmt w:val="bullet"/><w:lvlText w:val="\u25AA"/><w:pPr><w:ind w:left="4320" w:hanging="360"/></w:pPr></w:lvl>
+    <w:lvl w:ilvl="4"><w:numFmt w:val="bullet"/><w:lvlText w:val="\u25e6"/><w:pPr><w:ind w:left="3600" w:hanging="360"/></w:pPr></w:lvl>
+    <w:lvl w:ilvl="5"><w:numFmt w:val="bullet"/><w:lvlText w:val="\u25aa"/><w:pPr><w:ind w:left="4320" w:hanging="360"/></w:pPr></w:lvl>
     <w:lvl w:ilvl="6"><w:numFmt w:val="bullet"/><w:lvlText w:val="\u2022"/><w:pPr><w:ind w:left="5040" w:hanging="360"/></w:pPr></w:lvl>
-    <w:lvl w:ilvl="7"><w:numFmt w:val="bullet"/><w:lvlText w:val="\u25E6"/><w:pPr><w:ind w:left="5760" w:hanging="360"/></w:pPr></w:lvl>
-    <w:lvl w:ilvl="8"><w:numFmt w:val="bullet"/><w:lvlText w:val="\u25AA"/><w:pPr><w:ind w:left="6480" w:hanging="360"/></w:pPr></w:lvl>
+    <w:lvl w:ilvl="7"><w:numFmt w:val="bullet"/><w:lvlText w:val="\u25e6"/><w:pPr><w:ind w:left="5760" w:hanging="360"/></w:pPr></w:lvl>
+    <w:lvl w:ilvl="8"><w:numFmt w:val="bullet"/><w:lvlText w:val="\u25aa"/><w:pPr><w:ind w:left="6480" w:hanging="360"/></w:pPr></w:lvl>
   </w:abstractNum>
   <w:abstractNum w:abstractNumId="1">
     <w:lvl w:ilvl="0"><w:numFmt w:val="decimal"/><w:lvlText w:val="%1."/><w:pPr><w:ind w:left="720" w:hanging="360"/></w:pPr></w:lvl>

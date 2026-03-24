@@ -1658,13 +1658,7 @@ class TestCreateFromMarkdownE2E:
 
     def test_markdown_with_table_roundtrip(self, tmp_path: Path):
         """create from markdown with table → save → reopen → table found via get_tables."""
-        md = (
-            "# Doc\n\n"
-            "| Col A | Col B |\n"
-            "| ----- | ----- |\n"
-            "| one   | two   |\n"
-            "| three | four  |\n"
-        )
+        md = "# Doc\n\n| Col A | Col B |\n| ----- | ----- |\n| one   | two   |\n| three | four  |\n"
         out = str(tmp_path / "md_table.docx")
         server.create_from_markdown(out, markdown=md)
 
@@ -1680,9 +1674,7 @@ class TestCreateFromMarkdownE2E:
     def test_create_then_track_changes(self, tmp_path: Path):
         """create from markdown → delete_text/insert_text → save → reopen → new text found."""
         out = str(tmp_path / "md_edit.docx")
-        server.create_from_markdown(
-            out, markdown="# Report\n\nThe quick brown fox jumps."
-        )
+        server.create_from_markdown(out, markdown="# Report\n\nThe quick brown fox jumps.")
 
         results = _j(server.search_text("quick brown fox"))
         assert len(results) >= 1

@@ -11,14 +11,16 @@
   <img width="380" height="200" src="https://glama.ai/mcp/servers/SecurityRonin/docx-mcp/badges/card.svg" alt="docx-mcp MCP server" />
 </a>
 
-MCP server for reading and editing Word (.docx) documents with track changes, comments, footnotes, tables, images, sections, and structural validation.
+MCP server for creating, reading, and editing Word (.docx) documents with track changes, comments, footnotes, tables, images, sections, and structural validation.
 
-The only cross-platform MCP server that combines **track changes**, **comments**, **footnotes**, **tables**, **formatting**, **images**, **sections**, **cross-references**, **document merge**, and **protection** in a single package — with OOXML-level structural validation that no other server offers.
+The only cross-platform MCP server that combines **document creation**, **markdown-to-DOCX conversion**, **track changes**, **comments**, **footnotes**, **tables**, **formatting**, **images**, **sections**, **cross-references**, **document merge**, and **protection** in a single package — with OOXML-level structural validation that no other server offers.
 
 ## Features
 
 | Capability | Description |
 |---|---|
+| **Create from scratch** | Create blank documents or from .dotx templates |
+| **Markdown to DOCX** | Convert GitHub-Flavored Markdown to .docx with headings, tables, lists, images, footnotes, code blocks, and smart typography |
 | **Track changes** | Insert/delete text with proper `w:ins`/`w:del` markup — shows as revisions in Word |
 | **Accept/reject changes** | Accept or reject tracked changes (all or by author) |
 | **Character formatting** | Bold, italic, underline, color — with tracked-change markup |
@@ -124,13 +126,15 @@ openclaw config set mcpServers.docx-mcp.args '["docx-mcp-server"]'
 }
 ```
 
-## Available Tools (43)
+## Available Tools (45)
 
 ### Document Lifecycle
 
 | Tool | Description |
 |---|---|
 | `open_document` | Open a .docx file for reading and editing |
+| `create_document` | Create a new blank .docx (or from a .dotx template) |
+| `create_from_markdown` | Create a .docx from markdown (GitHub-Flavored Markdown) |
 | `close_document` | Close the current document and clean up |
 | `get_document_info` | Get overview stats (paragraphs, headings, footnotes, comments) |
 | `save_document` | Save changes back to .docx (can overwrite or save to new path) |
@@ -259,6 +263,7 @@ This approach gives full control over OOXML markup — essential for track chang
 
 - Python 3.10+
 - lxml
+- mistune (for markdown conversion)
 
 ## License
 

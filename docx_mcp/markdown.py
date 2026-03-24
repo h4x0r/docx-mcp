@@ -163,9 +163,7 @@ class MarkdownConverter:
         for child in children:
             ct = child["type"]
             if ct == "text":
-                parent.append(
-                    self._make_run(child["raw"], bold=bold, italic=italic, strike=strike)
-                )
+                parent.append(self._make_run(child["raw"], bold=bold, italic=italic, strike=strike))
             elif ct == "strong":
                 self._render_inline_children(
                     parent, child["children"], bold=True, italic=italic, strike=strike
@@ -185,9 +183,7 @@ class MarkdownConverter:
             elif ct == "image":
                 self._render_image(parent, child)
             elif ct == "softbreak":
-                parent.append(
-                    self._make_run(" ", bold=bold, italic=italic, strike=strike)
-                )
+                parent.append(self._make_run(" ", bold=bold, italic=italic, strike=strike))
             elif ct == "linebreak":
                 r = etree.SubElement(parent, f"{W}r")
                 etree.SubElement(r, f"{W}br")
@@ -216,9 +212,7 @@ class MarkdownConverter:
                 result.extend(self._render_list_item(item, num_id, depth))
         return result
 
-    def _render_list_item(
-        self, token: dict, num_id: str, depth: int
-    ) -> list[etree._Element]:
+    def _render_list_item(self, token: dict, num_id: str, depth: int) -> list[etree._Element]:
         """Render a single list item, handling nested lists and task items."""
         result = []
         is_task = token["type"] == "task_list_item"
@@ -249,9 +243,7 @@ class MarkdownConverter:
                 result.extend(self._render_list(child, depth=depth + 1))
         return result
 
-    def _render_blockquote(
-        self, token: dict, depth: int = 0
-    ) -> list[etree._Element]:
+    def _render_blockquote(self, token: dict, depth: int = 0) -> list[etree._Element]:
         """Render blockquote with increasing indent for nesting."""
         result = []
         for child in token.get("children", []):
@@ -416,9 +408,7 @@ class MarkdownConverter:
         extent.set("cx", "2000000")
         extent.set("cy", "2000000")
         graphic = etree.SubElement(inline, f"{{{ns_a}}}graphic")
-        gdata = etree.SubElement(
-            graphic, f"{{{ns_a}}}graphicData", uri=ns_pic
-        )
+        gdata = etree.SubElement(graphic, f"{{{ns_a}}}graphicData", uri=ns_pic)
         pic = etree.SubElement(gdata, f"{{{ns_pic}}}pic")
         blip_fill = etree.SubElement(pic, f"{{{ns_pic}}}blipFill")
         blip = etree.SubElement(blip_fill, f"{{{ns_a}}}blip")
@@ -455,9 +445,7 @@ class MarkdownConverter:
                     tbl.append(tr)
         return tbl
 
-    def _render_table_head_row(
-        self, token: dict, bold: bool = False
-    ) -> etree._Element:
+    def _render_table_head_row(self, token: dict, bold: bool = False) -> etree._Element:
         """Render the table head as a single row.
 
         In mistune 3.x, table_head contains table_cell children directly
@@ -471,15 +459,11 @@ class MarkdownConverter:
                 tc = etree.SubElement(tr, f"{W}tc")
                 p = self._new_para()
                 if cell_token.get("children"):
-                    self._render_inline_children(
-                        p, cell_token["children"], bold=bold
-                    )
+                    self._render_inline_children(p, cell_token["children"], bold=bold)
                 tc.append(p)
         return tr
 
-    def _render_table_row(
-        self, token: dict, bold: bool = False
-    ) -> etree._Element:
+    def _render_table_row(self, token: dict, bold: bool = False) -> etree._Element:
         """Render a table body row."""
         tr = etree.Element(f"{W}tr")
         tr.set(f"{W14}paraId", self._doc._new_para_id())
@@ -489,9 +473,7 @@ class MarkdownConverter:
                 tc = etree.SubElement(tr, f"{W}tc")
                 p = self._new_para()
                 if cell_token.get("children"):
-                    self._render_inline_children(
-                        p, cell_token["children"], bold=bold
-                    )
+                    self._render_inline_children(p, cell_token["children"], bold=bold)
                 tc.append(p)
         return tr
 
@@ -501,9 +483,7 @@ class MarkdownConverter:
         if fn_tree is None:
             return
 
-        existing = {
-            int(f.get(f"{W}id", "0")) for f in fn_tree.findall(f"{W}footnote")
-        }
+        existing = {int(f.get(f"{W}id", "0")) for f in fn_tree.findall(f"{W}footnote")}
         next_id = max(existing | {0}) + 1
 
         for item in token.get("children", []):

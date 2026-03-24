@@ -7,7 +7,7 @@ def smartify(text: str) -> str:
     """Convert straight quotes, dashes, and ellipses to smart typography.
 
     Rules:
-    - "text" → \u201Ctext\u201D (curly double quotes)
+    - "text" → \u201ctext\u201d (curly double quotes)
     - 'text' → \u2018text\u2019 (curly single quotes)
     - Apostrophe after letter → \u2019
     - --- → \u2014 (em dash)
@@ -33,7 +33,7 @@ def _convert_double_quotes(text: str) -> str:
     open_quote = True
     for char in text:
         if char == '"':
-            result.append("\u201C" if open_quote else "\u201D")
+            result.append("\u201c" if open_quote else "\u201d")
             open_quote = not open_quote
         else:
             result.append(char)

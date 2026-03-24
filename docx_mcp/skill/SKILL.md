@@ -1,18 +1,20 @@
 ---
 name: docx-mcp
-description: "Use when editing existing Word (.docx) documents with track changes, comments, footnotes, or structural validation. Triggers: reviewing contracts, marking up reports, adding revision comments, validating document structure, removing watermarks, auditing OOXML integrity, bulk text replacement with revisions, footnote management, paragraph-level edits. Requires the docx-mcp MCP server to be running."
+description: "Use when creating or editing Word (.docx) documents — from scratch, from markdown, or from templates. Triggers: creating documents, converting markdown to docx, reviewing contracts, marking up reports, adding revision comments, validating document structure, removing watermarks, auditing OOXML integrity, bulk text replacement with revisions, footnote management, paragraph-level edits. Requires the docx-mcp MCP server to be running."
 ---
 
-# Editing Word Documents with docx-mcp
+# Creating and Editing Word Documents with docx-mcp
 
 ## Overview
 
-The `docx-mcp` MCP server provides tools for reading and editing .docx files with proper OOXML markup. Edits appear as real revisions in Microsoft Word — red strikethrough for deletions, green underline for insertions, comments in the sidebar.
+The `docx-mcp` MCP server provides tools for creating, reading, and editing .docx files with proper OOXML markup. Create documents from scratch or from markdown. Edits appear as real revisions in Microsoft Word — red strikethrough for deletions, green underline for insertions, comments in the sidebar.
 
 A .docx file is a ZIP archive of XML files. This server unpacks the archive, parses all XML parts with lxml, edits the cached DOM trees directly, and repacks modified XML back into a valid .docx archive. This gives full control over OOXML markup — essential for track changes, comments, and structural validation that higher-level libraries don't expose.
 
 ## When to Use
 
+- Creating new .docx documents from scratch or from templates
+- Converting markdown to .docx with full formatting (headings, tables, lists, images, footnotes, code blocks)
 - Editing existing .docx files with tracked changes
 - Adding comments or footnotes to documents
 - Reviewing/auditing document structure
@@ -20,9 +22,28 @@ A .docx file is a ZIP archive of XML files. This server unpacks the archive, par
 - Bulk find-and-replace with revision marks
 - Any task where changes must be visible as Word revisions
 
-**Do NOT use for:** Creating new .docx from scratch (use docx-js instead), PDFs, spreadsheets, or `.doc` (legacy binary format — convert to .docx first).
+**Do NOT use for:** PDFs, spreadsheets, or `.doc` (legacy binary format — convert to .docx first).
 
-## Workflow
+## Workflows
+
+### Creating Documents from Markdown
+
+```
+1. create_from_markdown(output_path, markdown="# Title\n\nContent with **bold**.")
+2. audit_document()                          → verify integrity
+3. save_document()                           → save to disk
+```
+
+Supports: headings, bold/italic/strikethrough, links, images, bullet/numbered/nested lists, code blocks, blockquotes, tables, footnotes, task lists. Smart typography (curly quotes, em/en dashes, ellipses) is applied automatically.
+
+### Creating Blank Documents
+
+```
+1. create_document("/path/to/new.docx")      → blank document
+2. create_document("/path/to/new.docx", template_path="/path/to/template.dotx")  → from template
+```
+
+### Editing Existing Documents
 
 ```
 1. open_document("/path/to/file.docx")
@@ -45,6 +66,8 @@ A .docx file is a ZIP archive of XML files. This server unpacks the archive, par
 | Tool | Purpose | Key args |
 |------|---------|----------|
 | `open_document` | Open .docx for editing | `path` |
+| `create_document` | Create blank .docx or from template | `output_path`, `template_path` |
+| `create_from_markdown` | Create .docx from markdown | `output_path`, `markdown` or `md_path`, `template_path` |
 | `close_document` | Close and clean up | — |
 | `get_document_info` | Stats overview | — |
 | `save_document` | Save to .docx | `output_path` (optional) |

@@ -21,8 +21,8 @@ from .base import (
     _now_iso,
     _preserve,
 )
-from .creation import CreationMixin
 from .comments import CommentsMixin
+from .creation import CreationMixin
 from .endnotes import EndnotesMixin
 from .footnotes import FootnotesMixin
 from .formatting import FormattingMixin

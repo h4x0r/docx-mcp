@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "docx-mcp-server"
 version = "0.3.0"
-description = "MCP server for reading and editing Word (.docx) documents with track changes, comments, footnotes, tables, images, sections, and structural validation"
+description = "MCP server for creating, reading, and editing Word (.docx) documents with markdown conversion, track changes, comments, footnotes, tables, images, sections, and structural validation"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
