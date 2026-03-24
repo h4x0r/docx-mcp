@@ -305,6 +305,20 @@ class TestTrackChanges:
         assert "30 days" not in para["text"]
         assert "60 days from" in para["text"]
 
+    def test_insert_skips_run_without_text(self):
+        """Runs with no w:t (e.g. formatting-only) are skipped during position search."""
+        doc = server._doc
+        body = doc._tree("word/document.xml").find(f"{W}body")
+        para = doc._find_para(body, "00000004")
+        # Inject an empty run (rPr only, no w:t) before the first real run
+        empty_run = etree.SubElement(para, f"{W}r")
+        etree.SubElement(empty_run, f"{W}rPr")
+        para.insert(0, empty_run)  # move to front
+        r = _j(server.insert_text("00000004", " [OK]", position="30 days"))
+        assert r["type"] == "insertion"
+        # Clean up: remove the injected empty run
+        para.remove(empty_run)
+
     def test_insert_after_missing_substring_falls_back_to_end(self):
         """If the position substring isn't found, appends to end."""
         r = _j(server.insert_text("00000004", " [FALLBACK]", position="ZZZMISSING"))
