@@ -5,7 +5,10 @@ from __future__ import annotations
 import zipfile
 from pathlib import Path
 
-from docx_mcp.document import W14, DocxDocument, W
+import pytest
+
+from docx_mcp.document import CT, W14, DocxDocument, W
+from tests.conftest import _build_fixture
 
 
 class TestCreateBlank:
@@ -117,4 +120,73 @@ class TestCreateBlank:
         ]
         for part in required_parts:
             assert part in part_names, f"Missing override: {part}"
+        doc.close()
+
+
+class TestCreateFromTemplate:
+    """Tests for DocxDocument.create() with template_path parameter."""
+
+    @pytest.fixture()
+    def template_dotx(self, tmp_path: Path) -> Path:
+        """Create a minimal .dotx template (same ZIP structure as .docx)."""
+        path = tmp_path / "template.dotx"
+        _build_fixture(path)
+        return path
+
+    def test_template_creates_docx_from_dotx(self, tmp_path: Path, template_dotx: Path):
+        """Creating from .dotx produces a valid .docx with document.xml."""
+        out = tmp_path / "from_template.docx"
+        doc = DocxDocument.create(str(out), template_path=str(template_dotx))
+        assert out.exists()
+        assert "word/document.xml" in doc._trees
+        doc.close()
+
+    def test_template_preserves_existing_styles(self, tmp_path: Path, template_dotx: Path):
+        """Template's own styles (like Heading1) survive the create process."""
+        out = tmp_path / "from_template.docx"
+        doc = DocxDocument.create(str(out), template_path=str(template_dotx))
+        styles = doc._trees["word/styles.xml"]
+        style_ids = {s.get(f"{W}styleId") for s in styles.findall(f"{W}style")}
+        assert "Heading1" in style_ids
+        doc.close()
+
+    def test_template_adds_custom_styles_if_missing(self, tmp_path: Path, template_dotx: Path):
+        """CodeBlock and BlockQuote are injected when template lacks them."""
+        out = tmp_path / "from_template.docx"
+        doc = DocxDocument.create(str(out), template_path=str(template_dotx))
+        styles = doc._trees["word/styles.xml"]
+        style_ids = {s.get(f"{W}styleId") for s in styles.findall(f"{W}style")}
+        assert "CodeBlock" in style_ids
+        assert "BlockQuote" in style_ids
+        doc.close()
+
+    def test_template_missing_raises(self, tmp_path: Path):
+        """FileNotFoundError when template_path points to a nonexistent file."""
+        out = tmp_path / "from_template.docx"
+        with pytest.raises(FileNotFoundError):
+            DocxDocument.create(str(out), template_path=str(tmp_path / "no_such.dotx"))
+
+    def test_template_bootstraps_numbering_if_missing(self, tmp_path: Path, template_dotx: Path):
+        """If template lacks numbering.xml, create() bootstraps it."""
+        # Build a cleaned copy without numbering.xml
+        clean = tmp_path / "no_numbering.dotx"
+        with zipfile.ZipFile(template_dotx, "r") as src, \
+             zipfile.ZipFile(clean, "w", zipfile.ZIP_DEFLATED) as dst:
+            for item in src.infolist():
+                if item.filename == "word/numbering.xml":
+                    continue
+                dst.writestr(item, src.read(item.filename))
+
+        out = tmp_path / "from_clean.docx"
+        doc = DocxDocument.create(str(out), template_path=str(clean))
+        # numbering.xml should now exist in the tree
+        assert "word/numbering.xml" in doc._trees
+        num_root = doc._trees["word/numbering.xml"]
+        abstracts = num_root.findall(f"{W}abstractNum")
+        assert len(abstracts) >= 2  # bullet + numbered
+
+        # Content type override should have been added
+        ct = doc._trees["[Content_Types].xml"]
+        part_names = {o.get("PartName") for o in ct.findall(f"{CT}Override")}
+        assert "/word/numbering.xml" in part_names
         doc.close()
