@@ -103,9 +103,9 @@ class TestInlineFormatting:
         body = blank_doc._trees["word/document.xml"].find(f"{W}body")
         runs = body.findall(f".//{W}r")
         both = [
-            r for r in runs
-            if r.find(f"{W}rPr/{W}b") is not None
-            and r.find(f"{W}rPr/{W}i") is not None
+            r
+            for r in runs
+            if r.find(f"{W}rPr/{W}b") is not None and r.find(f"{W}rPr/{W}i") is not None
         ]
         assert len(both) >= 1
 
@@ -161,9 +161,7 @@ class TestLists:
         body = blank_doc._trees["word/document.xml"].find(f"{W}body")
         paras = body.findall(f"{W}p")
         assert len(paras) == 3
-        levels = [
-            p.find(f"{W}pPr/{W}numPr/{W}ilvl").get(f"{W}val") for p in paras
-        ]
+        levels = [p.find(f"{W}pPr/{W}numPr/{W}ilvl").get(f"{W}val") for p in paras]
         assert levels == ["0", "1", "2"]
 
 
@@ -241,9 +239,7 @@ class TestTables:
 
 
 class TestFootnotes:
-    def test_footnote_creates_reference_and_definition(
-        self, blank_doc: DocxDocument
-    ):
+    def test_footnote_creates_reference_and_definition(self, blank_doc: DocxDocument):
         md = "Text with a note[^1].\n\n[^1]: The note text."
         MarkdownConverter.convert(blank_doc, md)
 
@@ -256,9 +252,7 @@ class TestFootnotes:
         fn_tree = blank_doc._trees["word/footnotes.xml"]
         # Real footnotes exclude separator ids 0 and -1
         real_fns = [
-            f
-            for f in fn_tree.findall(f"{W}footnote")
-            if f.get(f"{W}id") not in ("0", "-1")
+            f for f in fn_tree.findall(f"{W}footnote") if f.get(f"{W}id") not in ("0", "-1")
         ]
         assert len(real_fns) >= 1
         fn_text = blank_doc._text(real_fns[0])
@@ -271,17 +265,13 @@ class TestImages:
         img_path = tmp_path / "tiny.png"
         _write_tiny_png(img_path)
 
-        MarkdownConverter.convert(
-            blank_doc, "![alt](tiny.png)", base_dir=tmp_path
-        )
+        MarkdownConverter.convert(blank_doc, "![alt](tiny.png)", base_dir=tmp_path)
         body = blank_doc._trees["word/document.xml"].find(f"{W}body")
         drawings = body.findall(f".//{W}drawing")
         assert len(drawings) >= 1
 
     def test_remote_image_becomes_hyperlink(self, blank_doc: DocxDocument):
-        MarkdownConverter.convert(
-            blank_doc, "![photo](https://example.com/img.png)"
-        )
+        MarkdownConverter.convert(blank_doc, "![photo](https://example.com/img.png)")
         body = blank_doc._trees["word/document.xml"].find(f"{W}body")
         hyperlinks = body.findall(f".//{W}hyperlink")
         assert len(hyperlinks) >= 1
@@ -352,10 +342,7 @@ def _write_tiny_png(path: Path) -> None:
     raw_row = b"\x00\xff\xff\xff"  # filter byte + white pixel (RGB)
     idat_data = zlib.compress(raw_row)
     path.write_bytes(
-        signature
-        + _chunk(b"IHDR", ihdr_data)
-        + _chunk(b"IDAT", idat_data)
-        + _chunk(b"IEND", b"")
+        signature + _chunk(b"IHDR", ihdr_data) + _chunk(b"IDAT", idat_data) + _chunk(b"IEND", b"")
     )
 
 
@@ -411,3 +398,124 @@ class TestCreateFromMarkdownTool:
         out = tmp_path / "output.docx"
         result = json.loads(server.create_from_markdown(str(out), md_path=str(md_file)))
         assert "paragraph_count" in result
+
+    def test_closes_previous_doc(self, tmp_path: Path):
+        """create_from_markdown closes an already-open doc (server.py line 122)."""
+        first = tmp_path / "first.docx"
+        server.create_from_markdown(str(first), markdown="# First")
+        assert server._doc is not None
+        old_workdir = server._doc.workdir
+
+        second = tmp_path / "second.docx"
+        server.create_from_markdown(str(second), markdown="# Second")
+        assert not old_workdir.exists()  # old workdir cleaned up
+
+    def test_nonexistent_md_path(self, tmp_path: Path):
+        """create_from_markdown returns error for nonexistent md_path (server.py line 132)."""
+        out = tmp_path / "out.docx"
+        result = server.create_from_markdown(str(out), md_path="/nonexistent/file.md")
+        assert "Error" in result
+        assert "not found" in result
+
+
+# ── Coverage gap tests for markdown.py ────────────────────────────────────
+
+
+class TestLinks:
+    """Test hyperlink rendering (markdown.py lines 182, 282-297)."""
+
+    def test_link_creates_hyperlink(self, blank_doc: DocxDocument):
+        MarkdownConverter.convert(blank_doc, "[click here](https://example.com)")
+        body = blank_doc._trees["word/document.xml"].find(f"{W}body")
+        hyperlinks = body.findall(f".//{W}hyperlink")
+        assert len(hyperlinks) >= 1
+        # Should have link text
+        text = blank_doc._text(hyperlinks[0])
+        assert "click here" in text
+
+    def test_link_has_relationship(self, blank_doc: DocxDocument):
+        MarkdownConverter.convert(blank_doc, "[test](https://example.com/page)")
+        rels = blank_doc._tree("word/_rels/document.xml.rels")
+        from docx_mcp.document.base import RELS
+
+        targets = [
+            r.get("Target")
+            for r in rels.findall(f"{RELS}Relationship")
+            if r.get("TargetMode") == "External"
+        ]
+        assert "https://example.com/page" in targets
+
+
+class TestSoftbreakAndLinebreak:
+    """Test softbreak and linebreak inline types (markdown.py lines 186, 188-189)."""
+
+    def test_softbreak_becomes_space(self, blank_doc: DocxDocument):
+        # A single newline inside a paragraph produces a softbreak token
+        MarkdownConverter.convert(blank_doc, "line1\nline2")
+        body = blank_doc._trees["word/document.xml"].find(f"{W}body")
+        text = blank_doc._text(body)
+        # Softbreak renders as a space
+        assert "line1" in text
+        assert "line2" in text
+
+    def test_linebreak_creates_br(self, blank_doc: DocxDocument):
+        # Two trailing spaces + newline = hard line break
+        MarkdownConverter.convert(blank_doc, "line1  \nline2")
+        body = blank_doc._trees["word/document.xml"].find(f"{W}body")
+        breaks = body.findall(f".//{W}br")
+        assert len(breaks) >= 1
+
+
+class TestUnknownTokenType:
+    """Test fallback for unknown token types (markdown.py line 140)."""
+
+    def test_unknown_block_type_returns_empty(self, blank_doc: DocxDocument):
+        converter = MarkdownConverter(blank_doc)
+        result = converter._render_block({"type": "nonexistent_type"})
+        assert result == []
+
+
+class TestSectPrPath:
+    """Test element insertion before sectPr (markdown.py line 77)."""
+
+    def test_elements_inserted_before_sect_pr(self, blank_doc: DocxDocument):
+        from lxml import etree
+
+        body = blank_doc._trees["word/document.xml"].find(f"{W}body")
+        # Add a sectPr element to the body
+        sect_pr = etree.SubElement(body, f"{W}sectPr")
+        etree.SubElement(sect_pr, f"{W}pgSz")
+
+        MarkdownConverter.convert(blank_doc, "# Heading\n\nParagraph text")
+        # sectPr should be last child of body
+        children = list(body)
+        assert children[-1].tag == f"{W}sectPr"
+        # Paragraphs should come before sectPr
+        assert len(children) >= 3  # heading + paragraph + sectPr
+        for child in children[:-1]:
+            assert child.tag == f"{W}p"
+
+
+class TestFootnoteEdgeCases:
+    """Test footnote edge cases (markdown.py lines 484, 535)."""
+
+    def test_footnote_definitions_no_footnotes_xml(self, blank_doc: DocxDocument):
+        """_process_footnote_definitions returns early when fn_tree is None (line 484)."""
+        # Remove footnotes.xml from the trees
+        del blank_doc._trees["word/footnotes.xml"]
+        # This markdown has footnote definitions -- should not crash
+        MarkdownConverter.convert(blank_doc, "Text[^1]\n\n[^1]: Note text")
+        # Should complete without error; no footnotes created
+        assert "word/footnotes.xml" not in blank_doc._trees
+
+    def test_unresolved_footnote_ref(self, blank_doc: DocxDocument):
+        """_render_footnote_ref returns early when fn_id is None (line 535)."""
+        converter = MarkdownConverter(blank_doc)
+        from lxml import etree
+
+        parent = etree.Element(f"{W}p")
+        # Call with a key that was never defined in footnote_map
+        converter._render_footnote_ref(parent, {"raw": "undefined_key"})
+        # No footnoteReference should be added
+        refs = parent.findall(f".//{W}footnoteReference")
+        assert len(refs) == 0

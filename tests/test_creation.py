@@ -78,7 +78,9 @@ class TestCreateBlank:
         # Each should have 9 levels (ilvl 0-8)
         for abstract in abstracts:
             lvls = abstract.findall(f"{W}lvl")
-            assert len(lvls) == 9, f"abstractNum {abstract.get(f'{W}abstractNumId')} has {len(lvls)} levels"
+            assert len(lvls) == 9, (
+                f"abstractNum {abstract.get(f'{W}abstractNumId')} has {len(lvls)} levels"
+            )
         doc.close()
 
     def test_returns_opened_document(self, tmp_path: Path):
@@ -108,6 +110,7 @@ class TestCreateBlank:
         out = tmp_path / "new.docx"
         doc = DocxDocument.create(str(out))
         from docx_mcp.document import CT
+
         ct = doc._trees["[Content_Types].xml"]
         part_names = {o.get("PartName") for o in ct.findall(f"{CT}Override")}
         required_parts = [
@@ -172,8 +175,10 @@ class TestCreateFromTemplate:
         """If template lacks numbering.xml, create() bootstraps it."""
         # Build a cleaned copy without numbering.xml
         clean = tmp_path / "no_numbering.dotx"
-        with zipfile.ZipFile(template_dotx, "r") as src, \
-             zipfile.ZipFile(clean, "w", zipfile.ZIP_DEFLATED) as dst:
+        with (
+            zipfile.ZipFile(template_dotx, "r") as src,
+            zipfile.ZipFile(clean, "w", zipfile.ZIP_DEFLATED) as dst,
+        ):
             for item in src.infolist():
                 if item.filename == "word/numbering.xml":
                     continue
@@ -191,6 +196,52 @@ class TestCreateFromTemplate:
         ct = doc._trees["[Content_Types].xml"]
         part_names = {o.get("PartName") for o in ct.findall(f"{CT}Override")}
         assert "/word/numbering.xml" in part_names
+        doc.close()
+
+    def test_template_no_styles_xml(self, tmp_path: Path, template_dotx: Path):
+        """_ensure_custom_styles returns early when styles.xml is absent (line 87)."""
+        clean = tmp_path / "no_styles.dotx"
+        with (
+            zipfile.ZipFile(template_dotx, "r") as src,
+            zipfile.ZipFile(clean, "w", zipfile.ZIP_DEFLATED) as dst,
+        ):
+            for item in src.infolist():
+                if item.filename == "word/styles.xml":
+                    continue
+                dst.writestr(item, src.read(item.filename))
+
+        out = tmp_path / "from_no_styles.docx"
+        doc = DocxDocument.create(str(out), template_path=str(clean))
+        # styles.xml should not be in the tree (was not in the template)
+        assert doc._tree("word/styles.xml") is None
+        doc.close()
+
+    def test_template_keeps_existing_numbering(self, tmp_path: Path, template_dotx: Path):
+        """_ensure_numbering returns early when numbering.xml already exists (line 144)."""
+        # The conftest fixture has no numbering.xml, so build one that does
+        with_num = tmp_path / "with_numbering.dotx"
+        numbering_xml = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:numbering xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:abstractNum w:abstractNumId="99">
+    <w:lvl w:ilvl="0"><w:numFmt w:val="bullet"/><w:lvlText w:val="X"/></w:lvl>
+  </w:abstractNum>
+  <w:num w:numId="99"><w:abstractNumId w:val="99"/></w:num>
+</w:numbering>"""
+        with (
+            zipfile.ZipFile(template_dotx, "r") as src,
+            zipfile.ZipFile(with_num, "w", zipfile.ZIP_DEFLATED) as dst,
+        ):
+            for item in src.infolist():
+                dst.writestr(item, src.read(item.filename))
+            dst.writestr("word/numbering.xml", numbering_xml.strip())
+
+        out = tmp_path / "from_with_num.docx"
+        doc = DocxDocument.create(str(out), template_path=str(with_num))
+        # numbering.xml should be present and retain the original abstractNumId="99"
+        num_root = doc._trees["word/numbering.xml"]
+        abstracts = num_root.findall(f"{W}abstractNum")
+        abstract_ids = {a.get(f"{W}abstractNumId") for a in abstracts}
+        assert "99" in abstract_ids  # original preserved, not replaced
         doc.close()
 
 
