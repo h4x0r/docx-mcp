@@ -1587,3 +1587,113 @@ class TestFullRoundtrip:
         # Footnote cross-refs valid
         fv = _j(server.validate_footnotes())
         assert fv["valid"] is True
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  E2E roundtrip: create_document
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+def _first_para_id() -> str:
+    """Return the paraId of the first paragraph in the currently-open document."""
+    doc_tree = server._doc._tree("word/document.xml")
+    body = doc_tree.find(f"{W}body")
+    first_para = body.find(f"{W}p")
+    return first_para.get(f"{W14}paraId")
+
+
+class TestCreateDocumentE2E:
+    def test_create_save_reopen(self, tmp_path: Path):
+        """create blank doc → save → close → reopen → verify info."""
+        out = str(tmp_path / "blank.docx")
+        info = _j(server.create_document(out))
+        assert info["paragraph_count"] >= 1
+        assert info["path"] == out
+
+        _j(server.save_document())
+        server.close_document()
+
+        reopened = _j(server.open_document(out))
+        assert reopened["paragraph_count"] >= 1
+        assert reopened["path"] == out
+
+    def test_create_edit_save_reopen(self, tmp_path: Path):
+        """create blank doc → insert_text → save → close → reopen → search finds text."""
+        out = str(tmp_path / "edited.docx")
+        server.create_document(out)
+
+        pid = _first_para_id()
+        server.insert_text(pid, "Hello roundtrip world")
+
+        _j(server.save_document())
+        server.close_document()
+
+        server.open_document(out)
+        results = _j(server.search_text("Hello roundtrip world"))
+        assert len(results) >= 1
+        assert any("Hello roundtrip world" in r["text"] for r in results)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  E2E roundtrip: create_from_markdown
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+class TestCreateFromMarkdownE2E:
+    def test_markdown_roundtrip(self, tmp_path: Path):
+        """create from markdown → save → reopen → heading and bold text found."""
+        out = str(tmp_path / "md.docx")
+        server.create_from_markdown(out, markdown="# Title\n\nParagraph with **bold**.")
+
+        _j(server.save_document())
+        server.close_document()
+
+        server.open_document(out)
+
+        headings = _j(server.get_headings())
+        assert any(h["text"] == "Title" for h in headings)
+
+        results = _j(server.search_text("bold"))
+        assert len(results) >= 1
+
+    def test_markdown_with_table_roundtrip(self, tmp_path: Path):
+        """create from markdown with table → save → reopen → table found via get_tables."""
+        md = (
+            "# Doc\n\n"
+            "| Col A | Col B |\n"
+            "| ----- | ----- |\n"
+            "| one   | two   |\n"
+            "| three | four  |\n"
+        )
+        out = str(tmp_path / "md_table.docx")
+        server.create_from_markdown(out, markdown=md)
+
+        _j(server.save_document())
+        server.close_document()
+
+        server.open_document(out)
+        tables = _j(server.get_tables())
+        assert len(tables) >= 1
+        assert tables[0]["col_count"] == 2
+        assert tables[0]["row_count"] >= 2
+
+    def test_create_then_track_changes(self, tmp_path: Path):
+        """create from markdown → delete_text/insert_text → save → reopen → new text found."""
+        out = str(tmp_path / "md_edit.docx")
+        server.create_from_markdown(
+            out, markdown="# Report\n\nThe quick brown fox jumps."
+        )
+
+        results = _j(server.search_text("quick brown fox"))
+        assert len(results) >= 1
+        para_id = results[0]["paraId"]
+
+        server.delete_text(para_id, "quick brown fox")
+        server.insert_text(para_id, "lazy cat")
+
+        _j(server.save_document())
+        server.close_document()
+
+        server.open_document(out)
+        new_results = _j(server.search_text("lazy cat"))
+        assert len(new_results) >= 1
