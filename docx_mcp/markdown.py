@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+import re
 from pathlib import Path
 
 import mistune
@@ -50,6 +51,9 @@ class MarkdownConverter:
             self._body.remove(p)
         for tbl in list(self._body.findall(f"{W}tbl")):
             self._body.remove(tbl)
+
+        # Strip BOM — prevents mistune from recognizing first-line headings
+        text = text.lstrip("\ufeff")
 
         if not text.strip():
             return
@@ -143,6 +147,8 @@ class MarkdownConverter:
         _preserve(t, final_text)
         return r
 
+    _HTML_HEADING_RE = re.compile(r"<h([1-6])[^>]*>(.*?)</h\1>", re.IGNORECASE | re.DOTALL)
+
     def _render_block(self, token: dict) -> list[etree._Element]:
         """Render a block-level token into OOXML elements."""
         t = token["type"]
@@ -160,6 +166,42 @@ class MarkdownConverter:
             return [self._render_hr()]
         elif t == "table":
             return [self._render_table(token)]
+        elif t == "block_html":
+            return self._render_block_html(token)
+
+        # Fallback: render unknown tokens with content as plain paragraphs
+        children = token.get("children", [])
+        raw = token.get("raw", "")
+        if children:
+            p = self._new_para()
+            self._render_inline_children(p, children)
+            return [p]
+        elif raw:
+            p = self._new_para()
+            r = self._make_run(raw)
+            p.append(r)
+            return [p]
+        return []
+
+    def _render_block_html(self, token: dict) -> list[etree._Element]:
+        """Render HTML block — convert headings, other HTML as plain text."""
+        raw = token.get("raw", "").strip()
+        m = self._HTML_HEADING_RE.match(raw)
+        if m:
+            level = int(m.group(1))
+            # Strip any nested HTML tags from heading text
+            text = re.sub(r"<[^>]+>", "", m.group(2)).strip()
+            p = self._new_para(f"Heading{level}")
+            r = self._make_run(text, smart=True)
+            p.append(r)
+            return [p]
+        # Non-heading HTML: strip tags, render as paragraph
+        text = re.sub(r"<[^>]+>", "", raw).strip()
+        if text:
+            p = self._new_para()
+            r = self._make_run(text, smart=True)
+            p.append(r)
+            return [p]
         return []
 
     def _render_paragraph(self, token: dict) -> etree._Element:

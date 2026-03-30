@@ -466,12 +466,112 @@ class TestSoftbreakAndLinebreak:
         assert len(breaks) >= 1
 
 
-class TestUnknownTokenType:
-    """Test fallback for unknown token types (markdown.py line 140)."""
+class TestBomStripping:
+    """BOM prefix must be stripped so headings aren't lost."""
 
-    def test_unknown_block_type_returns_empty(self, blank_doc: DocxDocument):
+    def test_bom_prefix_heading_preserved(self, blank_doc: DocxDocument):
+        """BOM at start of markdown must not prevent heading recognition."""
+        MarkdownConverter.convert(blank_doc, "\ufeff# Title\n\nBody text")
+        body = blank_doc._trees["word/document.xml"].find(f"{W}body")
+        styles = [
+            p.find(f"{W}pPr/{W}pStyle")
+            for p in body.findall(f"{W}p")
+            if p.find(f"{W}pPr/{W}pStyle") is not None
+        ]
+        heading_styles = [s.get(f"{W}val") for s in styles if "Heading" in s.get(f"{W}val", "")]
+        assert "Heading1" in heading_styles
+
+    def test_bom_in_md_file(self, blank_doc: DocxDocument, tmp_path):
+        """BOM in a .md file read via md_path is also stripped."""
+        md_file = tmp_path / "bom.md"
+        md_file.write_bytes(b"\xef\xbb\xbf# BOM Heading\n\nBody")
+        import json
+
+        from docx_mcp import server
+
+        out = str(tmp_path / "bom_output.docx")
+        result = json.loads(server.create_from_markdown(out, md_path=str(md_file)))
+        assert result["heading_count"] >= 1
+
+
+class TestHtmlHeadings:
+    """HTML headings (<h1>-<h6>) must be rendered as proper headings."""
+
+    def test_h1_through_h3(self, blank_doc: DocxDocument):
+        md = "<h1>Title</h1>\n\n<h2>Section</h2>\n\n<h3>Subsection</h3>\n\nBody."
+        MarkdownConverter.convert(blank_doc, md)
+        body = blank_doc._trees["word/document.xml"].find(f"{W}body")
+        styles = []
+        for p in body.findall(f"{W}p"):
+            ps = p.find(f"{W}pPr/{W}pStyle")
+            if ps is not None:
+                styles.append(ps.get(f"{W}val"))
+        assert "Heading1" in styles
+        assert "Heading2" in styles
+        assert "Heading3" in styles
+
+    def test_html_heading_text_extracted(self, blank_doc: DocxDocument):
+        MarkdownConverter.convert(blank_doc, "<h1>My Title</h1>\n\nBody.")
+        body = blank_doc._trees["word/document.xml"].find(f"{W}body")
+        heading_para = body.findall(f"{W}p")[0]
+        text = "".join(t.text or "" for t in heading_para.iter(f"{W}t"))
+        assert "My Title" in text
+
+    def test_html_with_attributes_ignored(self, blank_doc: DocxDocument):
+        """<h1 id='foo' class='bar'>Title</h1> should still work."""
+        MarkdownConverter.convert(blank_doc, '<h1 id="x" class="y">Attrs</h1>\n\nBody.')
+        body = blank_doc._trees["word/document.xml"].find(f"{W}body")
+        styles = [
+            p.find(f"{W}pPr/{W}pStyle").get(f"{W}val")
+            for p in body.findall(f"{W}p")
+            if p.find(f"{W}pPr/{W}pStyle") is not None
+        ]
+        assert "Heading1" in styles
+
+    def test_non_heading_html_rendered_as_paragraph(self, blank_doc: DocxDocument):
+        """<div>content</div> should not be silently dropped."""
+        MarkdownConverter.convert(blank_doc, "<div>Some content</div>\n\nBody.")
+        body = blank_doc._trees["word/document.xml"].find(f"{W}body")
+        all_text = "".join(t.text or "" for t in body.iter(f"{W}t"))
+        assert "Some content" in all_text
+
+    def test_empty_html_block_produces_nothing(self, blank_doc: DocxDocument):
+        """HTML comment or empty tag produces no paragraph."""
+        MarkdownConverter.convert(blank_doc, "<!-- comment -->\n\nBody.")
+        body = blank_doc._trees["word/document.xml"].find(f"{W}body")
+        paras = body.findall(f"{W}p")
+        # Should have just the "Body." paragraph, not a blank one from the comment
+        assert len(paras) == 1
+
+
+class TestUnknownTokenType:
+    """Unrecognized block types must not silently discard content."""
+
+    def test_unknown_block_type_renders_as_paragraph(self, blank_doc: DocxDocument):
+        """Unknown token with children should produce a paragraph, not empty."""
         converter = MarkdownConverter(blank_doc)
-        result = converter._render_block({"type": "nonexistent_type"})
+        token = {
+            "type": "some_future_type",
+            "children": [{"type": "text", "raw": "Preserved content"}],
+        }
+        result = converter._render_block(token)
+        assert len(result) == 1
+        text = "".join(t.text or "" for t in result[0].iter(f"{W}t"))
+        assert "Preserved content" in text
+
+    def test_unknown_block_with_raw_text(self, blank_doc: DocxDocument):
+        """Unknown token with raw text should produce a paragraph."""
+        converter = MarkdownConverter(blank_doc)
+        token = {"type": "some_future_type", "raw": "Raw fallback text"}
+        result = converter._render_block(token)
+        assert len(result) == 1
+        text = "".join(t.text or "" for t in result[0].iter(f"{W}t"))
+        assert "Raw fallback text" in text
+
+    def test_unknown_block_no_content_returns_empty(self, blank_doc: DocxDocument):
+        """Unknown token with no children or raw returns empty (nothing to render)."""
+        converter = MarkdownConverter(blank_doc)
+        result = converter._render_block({"type": "empty_type"})
         assert result == []
 
 
