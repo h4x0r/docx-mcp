@@ -136,6 +136,7 @@ def create_from_markdown(
     from docx_mcp.markdown import MarkdownConverter
 
     MarkdownConverter.convert(_doc, markdown, base_dir=base_dir)
+    _doc.save()
     return _js(_doc.get_info())
 
 
