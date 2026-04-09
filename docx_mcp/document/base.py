@@ -137,7 +137,7 @@ class BaseMixin:
 
     # ── Save ────────────────────────────────────────────────────────────────
 
-    def save(self, output_path: str | None = None) -> dict:
+    def save(self, output_path: str | None = None, *, backup: bool = True) -> dict:
         """Write modified XML back to files and repack into a .docx."""
         if self.workdir is None:
             raise RuntimeError("No document is open")
@@ -145,7 +145,7 @@ class BaseMixin:
         output = Path(output_path) if output_path else self.source_path
 
         # Backup existing file before overwriting
-        backup_path = self._backup_if_exists(output)
+        backup_path = self._backup_if_exists(output) if backup else None
 
         # Auto-repair known corruption patterns
         repairs = self._pre_save_repair()

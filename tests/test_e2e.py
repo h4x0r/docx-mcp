@@ -570,6 +570,27 @@ class TestBackupOnSave:
         assert bak.stat().st_size == original_size
 
 
+class TestCreateFromMarkdownAutoSave:
+    """create_from_markdown auto-save should not create spurious backups."""
+
+    def test_no_spurious_backup(self, tmp_path: Path):
+        """Auto-save after create_from_markdown must not backup the blank skeleton."""
+        out = tmp_path / "report.docx"
+        server.create_from_markdown(str(out), markdown="# Title\n\nBody text.")
+        baks = list(tmp_path.glob("*.bak*"))
+        assert baks == [], f"Unexpected backups: {baks}"
+
+    def test_content_flushed_to_disk(self, tmp_path: Path):
+        """Auto-save ensures the .docx on disk has the converted content."""
+        out = tmp_path / "report.docx"
+        server.create_from_markdown(str(out), markdown="# Heading\n\nParagraph.")
+        # Reopen from disk and verify content
+        server.open_document(str(out))
+        info = _j(server.get_document_info())
+        assert info["heading_count"] >= 1
+        assert info["paragraph_count"] >= 2
+
+
 class TestAutoRepairOnSave:
     """save() auto-repairs known corruption patterns before writing."""
 
