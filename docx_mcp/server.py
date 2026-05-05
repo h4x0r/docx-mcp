@@ -628,6 +628,7 @@ def insert_text(
     author: str = "Claude",
     context_before: str = "",
     context_after: str = "",
+    ignore_case: bool = False,
 ) -> str:
     """Insert text with Word track-changes markup (appears as a green underlined insertion in Word).
 
@@ -638,10 +639,12 @@ def insert_text(
         author: Author name for the revision (shown in Word's review pane).
         context_before: Text immediately before the insertion point (for precise anchoring).
         context_after: Text immediately after the insertion point (for precise anchoring).
+        ignore_case: If True, match context_before/context_after case-insensitively.
     """
     return _js(_require_doc().insert_text(
         para_id, text, position=position, author=author,
         context_before=context_before, context_after=context_after,
+        ignore_case=ignore_case,
     ))
 
 
@@ -652,6 +655,7 @@ def delete_text(
     author: str = "Claude",
     context_before: str = "",
     context_after: str = "",
+    ignore_case: bool = False,
 ) -> str:
     """Mark text as deleted with Word track-changes markup (appears as red strikethrough in Word).
 
@@ -665,10 +669,12 @@ def delete_text(
         author: Author name for the revision.
         context_before: Text immediately before the target (for precise anchoring).
         context_after: Text immediately after the target (for precise anchoring).
+        ignore_case: If True, match text and context case-insensitively (output preserves original casing).
     """
     return _js(_require_doc().delete_text(
         para_id, text, author=author,
         context_before=context_before, context_after=context_after,
+        ignore_case=ignore_case,
     ))
 
 
@@ -680,6 +686,7 @@ def replace_text(
     author: str = "Claude",
     context_before: str = "",
     context_after: str = "",
+    ignore_case: bool = False,
 ) -> str:
     """Replace text with tracked changes markup (deletion + insertion).
 
@@ -697,7 +704,18 @@ def replace_text(
     return _js(_require_doc().replace_text(
         para_id, find=find, replace=replace, author=author,
         context_before=context_before, context_after=context_after,
+        ignore_case=ignore_case,
     ))
+
+
+@mcp.tool()
+def get_tracked_changes() -> str:
+    """Return all pending tracked changes (insertions and deletions) as a JSON list.
+
+    Each entry contains: type, change_id, author, date, para_id, text.
+    Changes are returned in document order.
+    """
+    return _js(_require_doc().get_tracked_changes())
 
 
 @mcp.tool()
@@ -816,6 +834,57 @@ def save_document(output_path: str = "") -> str:
     doc = _require_doc()
     path = output_path if output_path else None
     return _js(doc.save(path))
+
+
+@mcp.tool()
+def sanitize_metadata(
+    output_path: str,
+    level: int = 1,
+    redact_authors_as: str = "",
+) -> str:
+    """Write a sanitized copy of the open document to output_path.
+
+    Level 1: Remove rsid session-fingerprint attributes from document.xml.
+    Level 2: + Replace tracked-change author names (w:author on w:ins/w:del).
+    Level 3: + Clear creator/lastModifiedBy/revision in docProps/core.xml
+             + Clear Company in docProps/app.xml
+             + Remove attachedTemplate reference from word/settings.xml
+
+    Args:
+        output_path: Destination path for the sanitized DOCX. Must be non-empty.
+        level: Sanitization depth (1, 2, or 3). Default 1.
+        redact_authors_as: Replacement author string for level 2+. Default "Anonymous".
+    """
+    return _js(_require_doc().sanitize_metadata(
+        output_path,
+        level=level,
+        redact_authors_as=redact_authors_as,
+    ))
+
+
+@mcp.tool()
+def compare_documents(
+    base_path: str,
+    revised_path: str,
+    output_path: str = "",
+) -> str:
+    """Diff two DOCX files and produce a tracked-change document.
+
+    Paragraph-level LCS diff:
+      - Unchanged paragraphs copied verbatim.
+      - Deleted paragraphs (in base, absent in revised) wrapped in w:del.
+      - Inserted paragraphs (in revised, absent in base) wrapped in w:ins.
+      - Modified paragraphs (1:1 replacement) get word-level del+ins inline.
+
+    The output is a valid DOCX readable in Word/LibreOffice showing the changes
+    as tracked revisions.
+
+    Args:
+        base_path: Path to the original DOCX.
+        revised_path: Path to the revised DOCX.
+        output_path: Destination path. Auto-generated if empty.
+    """
+    return _js(DocxDocument.compare_documents(base_path, revised_path, output_path))
 
 
 # ── Entry point ─────────────────────────────────────────────────────────────

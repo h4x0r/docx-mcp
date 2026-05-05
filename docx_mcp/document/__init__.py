@@ -22,6 +22,7 @@ from .base import (
     _preserve,
 )
 from .comments import CommentsMixin
+from .compare import CompareMixin
 from .creation import CreationMixin
 from .endnotes import EndnotesMixin
 from .footnotes import FootnotesMixin
@@ -30,6 +31,7 @@ from .headers_footers import HeadersFootersMixin
 from .images import ImagesMixin
 from .lists import ListsMixin
 from .merge import MergeMixin
+from .metadata import MetadataMixin
 from .properties import PropertiesMixin
 from .protection import ProtectionMixin
 from .reading import ReadingMixin
@@ -37,6 +39,7 @@ from .references import ReferencesMixin
 from .sections import SectionsMixin
 from .styles import StylesMixin
 from .tables import TablesMixin
+from .revisions import RevisionsMixin
 from .tracks import TracksMixin
 from .validation import ValidationMixin
 
@@ -46,6 +49,7 @@ class DocxDocument(
     CreationMixin,
     ReadingMixin,
     TracksMixin,
+    RevisionsMixin,
     FormattingMixin,
     CommentsMixin,
     FootnotesMixin,
@@ -61,6 +65,8 @@ class DocxDocument(
     ReferencesMixin,
     ProtectionMixin,
     MergeMixin,
+    MetadataMixin,
+    CompareMixin,
 ):
     """Word document editor with OOXML-level control."""
 
