@@ -626,6 +626,8 @@ def insert_text(
     text: str,
     position: str = "end",
     author: str = "Claude",
+    context_before: str = "",
+    context_after: str = "",
 ) -> str:
     """Insert text with Word track-changes markup (appears as a green underlined insertion in Word).
 
@@ -634,8 +636,13 @@ def insert_text(
         text: Text to insert.
         position: Where to insert — "start", "end", or a substring to insert after.
         author: Author name for the revision (shown in Word's review pane).
+        context_before: Text immediately before the insertion point (for precise anchoring).
+        context_after: Text immediately after the insertion point (for precise anchoring).
     """
-    return _js(_require_doc().insert_text(para_id, text, position=position, author=author))
+    return _js(_require_doc().insert_text(
+        para_id, text, position=position, author=author,
+        context_before=context_before, context_after=context_after,
+    ))
 
 
 @mcp.tool()
@@ -643,18 +650,54 @@ def delete_text(
     para_id: str,
     text: str,
     author: str = "Claude",
+    context_before: str = "",
+    context_after: str = "",
 ) -> str:
     """Mark text as deleted with Word track-changes markup (appears as red strikethrough in Word).
 
-    Finds the exact text within the paragraph and wraps it in deletion markup.
-    The text must exist within a single run (formatting span).
+    Finds the text within the paragraph (across run boundaries if needed) and wraps it in
+    deletion markup. Provide context_before/context_after to disambiguate when the same text
+    appears multiple times, or when the text contains smart quotes / special whitespace.
 
     Args:
         para_id: paraId of the target paragraph.
-        text: Exact text to mark as deleted.
+        text: Text to mark as deleted (ASCII quotes/dashes/spaces match their Unicode equivalents).
         author: Author name for the revision.
+        context_before: Text immediately before the target (for precise anchoring).
+        context_after: Text immediately after the target (for precise anchoring).
     """
-    return _js(_require_doc().delete_text(para_id, text, author=author))
+    return _js(_require_doc().delete_text(
+        para_id, text, author=author,
+        context_before=context_before, context_after=context_after,
+    ))
+
+
+@mcp.tool()
+def replace_text(
+    para_id: str,
+    find: str,
+    replace: str,
+    author: str = "Claude",
+    context_before: str = "",
+    context_after: str = "",
+) -> str:
+    """Replace text with tracked changes markup (deletion + insertion).
+
+    Only the actually-changed portion is marked; common leading/trailing text is
+    left as plain runs (collapseDiff behaviour).
+
+    Args:
+        para_id: paraId of the target paragraph.
+        find: Text to find and replace (may span run boundaries).
+        replace: Replacement text.
+        author: Author name for the revision.
+        context_before: Text immediately before the target (for precise anchoring).
+        context_after: Text immediately after the target (for precise anchoring).
+    """
+    return _js(_require_doc().replace_text(
+        para_id, find=find, replace=replace, author=author,
+        context_before=context_before, context_after=context_after,
+    ))
 
 
 @mcp.tool()

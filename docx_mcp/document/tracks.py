@@ -1,14 +1,400 @@
-"""Track changes mixin: insert, delete, accept, reject."""
+"""Track changes mixin: insert, delete, replace, accept, reject.
+
+New in this version
+-------------------
+- Accepted-view flattening: w:ins content is visible for anchor search;
+  w:del content is invisible.
+- Cascading context anchor: full context → context_before → context_after →
+  unique-find (document-global uniqueness check).
+- Pre-normalisation + whitespace-collapse for fuzzy matching.
+- Multi-run spanning: delete/insert across w:r boundaries with rPr inheritance.
+- replace_text with collapseDiff minimisation.
+"""
 
 from __future__ import annotations
 
+import difflib
+import re
+
 from lxml import etree
 
-from .base import W, _now_iso, _preserve
+from .base import W, W14, _now_iso, _preserve
+
+
+# ── Normalisation ─────────────────────────────────────────────────────────────
+
+# All replacements are single characters (1:1 mapping) so slot indices stay
+# aligned between the original text and the pre-normalised text.
+_PRENORM_MAP: dict[str, str] = {
+    "\u2018": "'", "\u2019": "'",  # left / right single quotation mark
+    "\u201a": "'", "\u201b": "'",  # single low-9 / high-reversed-9
+    "\u201c": '"', "\u201d": '"',  # left / right double quotation mark
+    "\u201e": '"', "\u201f": '"',  # double low-9 / high-reversed-9
+    "\u2014": "-",                  # em dash
+    "\u2013": "-",                  # en dash
+    "\u2011": "-",                  # non-breaking hyphen
+    "\u00a0": " ",                  # non-breaking space
+    "\u00ad": " ",                  # soft hyphen → space (keeps 1:1)
+    "\u200b": " ",                  # zero-width space
+    "\u2060": " ",                  # word joiner
+}
+
+
+def _pre_normalize(text: str) -> str:
+    """Replace typographic characters with ASCII equivalents (1:1 mapping)."""
+    return "".join(_PRENORM_MAP.get(ch, ch) for ch in text)
+
+
+def _normalize_ws(text: str) -> tuple[str, list[int]]:
+    """Collapse consecutive whitespace runs to a single space.
+
+    Returns ``(norm_text, orig_idx)`` where ``orig_idx[i]`` is the position in
+    *text* that corresponds to position *i* in *norm_text*.
+    """
+    result: list[str] = []
+    orig_idx: list[int] = []
+    in_space = False
+    for i, ch in enumerate(text):
+        if ch in " \t\r\n":
+            if not in_space:
+                result.append(" ")
+                orig_idx.append(i)
+            in_space = True
+        else:
+            result.append(ch)
+            orig_idx.append(i)
+            in_space = False
+    return "".join(result), orig_idx
+
+
+def _norm(text: str) -> tuple[str, list[int]]:
+    """Pre-normalize then whitespace-normalize.  Returns (norm_text, orig_idx)."""
+    return _normalize_ws(_pre_normalize(text))
+
+
+# ── Accepted-view flattening ───────────────────────────────────────────────────
+
+
+class _Slot:
+    """One character in a paragraph's accepted view."""
+
+    __slots__ = ("char", "run_el", "rpr_bytes", "idx", "in_ins")
+
+    def __init__(
+        self,
+        char: str,
+        run_el: etree._Element,
+        rpr_bytes: bytes | None,
+        idx: int,
+        in_ins: etree._Element | None,
+    ) -> None:
+        self.char = char
+        self.run_el = run_el
+        self.rpr_bytes = rpr_bytes
+        self.idx = idx       # absolute position in the full slots list
+        self.in_ins = in_ins  # w:ins parent element, or None
+
+
+def _flatten_para(para: etree._Element) -> list[_Slot]:
+    """Build the accepted-view character list for *para*.
+
+    Includes text from ``w:r`` and ``w:ins > w:r``.
+    Excludes text from ``w:del`` (invisible in accepted view).
+    """
+    slots: list[_Slot] = []
+    idx = 0
+    for child in para:
+        if callable(child.tag):
+            continue  # lxml Comment / PI node
+        if child.tag == f"{W}r":
+            idx = _slots_from_run(child, slots, idx, in_ins=None)
+        elif child.tag == f"{W}ins":
+            for r in child.findall(f"{W}r"):
+                idx = _slots_from_run(r, slots, idx, in_ins=child)
+        # w:del, w:pPr, w:bookmarkStart, etc. → skip
+    return slots
+
+
+def _slots_from_run(
+    run_el: etree._Element,
+    slots: list[_Slot],
+    idx: int,
+    in_ins: etree._Element | None,
+) -> int:
+    rpr = run_el.find(f"{W}rPr")
+    rpr_bytes = etree.tostring(rpr) if rpr is not None else None
+    for t_el in run_el.findall(f"{W}t"):
+        for ch in t_el.text or "":
+            slots.append(_Slot(ch, run_el, rpr_bytes, idx, in_ins))
+            idx += 1
+    return idx
+
+
+# ── Anchor search ─────────────────────────────────────────────────────────────
+
+
+def _find_in_norm(
+    norm_text: str,
+    norm_find: str,
+    norm_before: str,
+    norm_after: str,
+) -> list[tuple[int, int]]:
+    """Return all ``(start, end)`` positions of *norm_find* in *norm_text* that
+    satisfy context constraints."""
+    results: list[tuple[int, int]] = []
+    pos = 0
+    flen = len(norm_find)
+    while True:
+        idx = norm_text.find(norm_find, pos)
+        if idx == -1:
+            break
+        end = idx + flen
+        before_ok = (not norm_before) or norm_before in norm_text[:idx]
+        after_ok = (not norm_after) or norm_after in norm_text[end:]
+        if before_ok and after_ok:
+            results.append((idx, end))
+        pos = idx + 1
+    return results
+
+
+def _doc_norm_count(doc: etree._Element, norm_find: str) -> int:
+    """Count how many paragraphs in *doc* contain *norm_find* (in accepted view)."""
+    count = 0
+    for p in doc.iter(f"{W}p"):
+        slots = _flatten_para(p)
+        if not slots:
+            continue
+        nt, _ = _norm("".join(s.char for s in slots))
+        if norm_find in nt:
+            count += 1
+    return count
+
+
+def _resolve(
+    doc: etree._Element,
+    para: etree._Element,
+    find: str,
+    context_before: str,
+    context_after: str,
+) -> tuple[int, int, list[_Slot]]:
+    """Locate *find* in *para* using cascading context anchoring.
+
+    Returns ``(slot_s, slot_e, slots)`` where ``slots[slot_s:slot_e]`` are the
+    characters that matched.
+
+    Strategies (tried in order):
+      1. find + full context
+      2. find + context_before only
+      3. find + context_after only
+      4. find alone — only if text is doc-globally unique
+
+    Raises :class:`ValueError` if the text is not found or is ambiguous.
+    """
+    slots = _flatten_para(para)
+    accepted = "".join(s.char for s in slots)
+    norm_text, orig_idx = _norm(accepted)
+
+    norm_find, _ = _norm(find)
+    norm_before = _normalize_ws(_pre_normalize(context_before))[0]
+    norm_after = _normalize_ws(_pre_normalize(context_after))[0]
+
+    if not norm_find:
+        raise ValueError("find text is empty")
+
+    match: tuple[int, int] | None = None
+
+    # Strategy 1: full context
+    if norm_before or norm_after:
+        m = _find_in_norm(norm_text, norm_find, norm_before, norm_after)
+        if len(m) == 1:
+            match = m[0]
+
+    # Strategy 2: context_before only
+    if match is None and norm_before:
+        m = _find_in_norm(norm_text, norm_find, norm_before, "")
+        if len(m) == 1:
+            match = m[0]
+
+    # Strategy 3: context_after only
+    if match is None and norm_after:
+        m = _find_in_norm(norm_text, norm_find, "", norm_after)
+        if len(m) == 1:
+            match = m[0]
+
+    # Strategy 4: unique find
+    if match is None:
+        m = _find_in_norm(norm_text, norm_find, "", "")
+        if not m:
+            raise ValueError(f"Text {find!r} not found in paragraph")
+        if len(m) > 1:
+            raise ValueError(
+                f"Ambiguous: {find!r} found {len(m)} times in paragraph; "
+                "provide context_before or context_after"
+            )
+        # Unique in this paragraph — verify document-global uniqueness
+        if _doc_norm_count(doc, norm_find) > 1:
+            raise ValueError(
+                f"Ambiguous: {find!r} appears in multiple paragraphs; "
+                "provide context_before or context_after"
+            )
+        match = m[0]
+
+    ns, ne = match
+    slot_s = orig_idx[ns]
+    slot_e = orig_idx[ne - 1] + 1 if ne > ns else slot_s + 1
+    return slot_s, slot_e, slots
+
+
+# ── XML helpers ───────────────────────────────────────────────────────────────
+
+
+def _build_run(
+    text: str,
+    rpr_bytes: bytes | None,
+    *,
+    del_text: bool = False,
+) -> etree._Element:
+    """Build a ``<w:r>`` with optional ``rPr`` and a ``<w:t>`` or ``<w:delText>``."""
+    r = etree.Element(f"{W}r")
+    if rpr_bytes:
+        r.append(etree.fromstring(rpr_bytes))
+    tag = f"{W}delText" if del_text else f"{W}t"
+    t = etree.SubElement(r, tag)
+    _preserve(t, text)
+    return r
+
+
+def _collapse_diff(find: str, replace: str) -> tuple[str, str, str, str]:
+    """Return ``(leading, deleted, inserted, trailing)`` for minimal tracking.
+
+    Uses word-level tokenisation so that shared trailing characters that belong
+    to changed words (e.g. the 'd' shared by "bold" and "red") are not
+    mistakenly included in the trailing common portion.
+    """
+    if find == replace:
+        return find, "", "", ""
+    tokens_f = re.split(r"(\s+)", find)
+    tokens_r = re.split(r"(\s+)", replace)
+    matcher = difflib.SequenceMatcher(None, tokens_f, tokens_r, autojunk=False)
+    changed = [
+        (tag, i1, i2, j1, j2)
+        for tag, i1, i2, j1, j2 in matcher.get_opcodes()
+        if tag != "equal"
+    ]
+    if not changed:
+        return find, "", "", ""
+    fi1, fi2 = changed[0][1], changed[-1][2]
+    ri1, ri2 = changed[0][3], changed[-1][4]
+    leading = "".join(tokens_f[:fi1])
+    del_part = "".join(tokens_f[fi1:fi2])
+    ins_part = "".join(tokens_r[ri1:ri2])
+    trailing = "".join(tokens_f[fi2:])
+    return leading, del_part, ins_part, trailing
+
+
+# ── Deletion helper ───────────────────────────────────────────────────────────
+
+
+def _apply_deletion(
+    para: etree._Element,
+    slot_s: int,
+    slot_e: int,
+    slots: list[_Slot],
+    cid: int,
+    author: str,
+    now: str,
+) -> None:
+    """Wrap ``slots[slot_s:slot_e]`` in a ``<w:del>`` element.
+
+    Handles text spanning multiple ``<w:r>`` elements.  Runs that are only
+    partially deleted are split; runs that are entirely deleted are absorbed
+    into the ``<w:del>``.
+
+    Raises :class:`ValueError` if the target range touches text inside an
+    existing ``<w:ins>`` (accept or reject the insertion first).
+    """
+    del_slots = slots[slot_s:slot_e]
+    if not del_slots:
+        return
+
+    # Guard: we don't support deleting text that lives inside an existing w:ins
+    for s in del_slots:
+        if s.in_ins is not None:
+            raise ValueError(
+                "Cannot delete text inside an existing w:ins; "
+                "accept or reject the insertion first"
+            )
+
+    # ── Group consecutive del_slots by run_el ─────────────────────────────
+    run_groups: list[tuple[etree._Element, bytes | None, str]] = []
+    prev: etree._Element | None = None
+    acc: list[str] = []
+    rpr_b: bytes | None = None
+    for s in del_slots:
+        if s.run_el is not prev:
+            if prev is not None:
+                run_groups.append((prev, rpr_b, "".join(acc)))
+            prev = s.run_el
+            rpr_b = s.rpr_bytes
+            acc = [s.char]
+        else:
+            acc.append(s.char)
+    if prev is not None:
+        run_groups.append((prev, rpr_b, "".join(acc)))
+
+    first_run = run_groups[0][0]
+    last_run = run_groups[-1][0]
+
+    # ── Compute before/after text for split runs ───────────────────────────
+    first_all = [s for s in slots if s.run_el is first_run]
+    before_text = "".join(s.char for s in first_all if s.idx < slot_s)
+    before_rpr = first_all[0].rpr_bytes if first_all else None
+
+    last_all = [s for s in slots if s.run_el is last_run]
+    after_text = "".join(s.char for s in last_all if s.idx >= slot_e)
+    after_rpr = last_all[0].rpr_bytes if last_all else None
+
+    # ── Find insertion point in parent ────────────────────────────────────
+    parent = first_run.getparent()
+    children = list(parent)
+    insert_pos = children.index(first_run)
+
+    # ── Remove all affected run elements ──────────────────────────────────
+    seen: set[int] = set()
+    for run_el, _, _ in run_groups:
+        if id(run_el) not in seen:
+            parent.remove(run_el)
+            seen.add(id(run_el))
+
+    pos = insert_pos
+
+    # ── Before split (first run, if partial) ──────────────────────────────
+    if before_text:
+        parent.insert(pos, _build_run(before_text, before_rpr))
+        pos += 1
+
+    # ── w:del element ─────────────────────────────────────────────────────
+    del_el = etree.Element(f"{W}del")
+    del_el.set(f"{W}id", str(cid))
+    del_el.set(f"{W}author", author)
+    del_el.set(f"{W}date", now)
+    for run_el, rpr_bytes, del_text in run_groups:
+        del_el.append(_build_run(del_text, rpr_bytes, del_text=True))
+    parent.insert(pos, del_el)
+    pos += 1
+
+    # ── After split (last run, if partial) ────────────────────────────────
+    if after_text:
+        parent.insert(pos, _build_run(after_text, after_rpr))
+
+
+# ── TracksMixin ───────────────────────────────────────────────────────────────
 
 
 class TracksMixin:
-    """Insert/delete/accept/reject text with tracked changes markup."""
+    """Insert / delete / replace / accept / reject with tracked-changes markup."""
+
+    # ── insert_text ─────────────────────────────────────────────────────────
 
     def insert_text(
         self,
@@ -17,14 +403,18 @@ class TracksMixin:
         *,
         position: str = "end",
         author: str = "Claude",
+        context_before: str = "",
+        context_after: str = "",
     ) -> dict:
-        """Insert text with Word track-changes markup (w:ins).
+        """Insert *text* with ``<w:ins>`` tracked-changes markup.
 
-        Args:
-            para_id: Target paragraph paraId.
-            text: Text to insert.
-            position: 'end', 'start', or a substring after which to insert.
-            author: Author name for the revision.
+        When *context_before* is provided the insertion is placed immediately
+        after the text matched by *context_before* (optionally disambiguated by
+        *context_after*).  The inserted run inherits the ``<w:rPr>`` of the run
+        at the insertion point.
+
+        When neither context argument is set the legacy *position* semantics
+        apply: ``"start"``, ``"end"``, or a substring to insert after.
         """
         doc = self._require("word/document.xml")
         para = self._find_para(doc, para_id)
@@ -34,11 +424,52 @@ class TracksMixin:
         cid = self._next_markup_id(doc)
         now = _now_iso()
 
+        # ── Context-anchored insertion ─────────────────────────────────────
+        if context_before:
+            slot_s, slot_e, slots = _resolve(doc, para, context_before, "", context_after)
+            last = slots[slot_e - 1]
+
+            # Build w:ins with inherited rPr
+            ins = etree.Element(f"{W}ins")
+            ins.set(f"{W}id", str(cid))
+            ins.set(f"{W}author", author)
+            ins.set(f"{W}date", now)
+            r = etree.SubElement(ins, f"{W}r")
+            if last.rpr_bytes:
+                r.append(etree.fromstring(last.rpr_bytes))
+            t = etree.SubElement(r, f"{W}t")
+            _preserve(t, text)
+
+            # Insert after the element that owns the last matched slot
+            if last.in_ins is not None:
+                anchor = last.in_ins
+            else:
+                # Check whether last slot is the last char of its run
+                run_slots = [s for s in slots if s.run_el is last.run_el]
+                if run_slots[-1].idx == last.idx:
+                    anchor = last.run_el
+                else:
+                    # Split the run at last.idx
+                    before_chars = "".join(s.char for s in run_slots if s.idx <= last.idx)
+                    after_chars = "".join(s.char for s in run_slots if s.idx > last.idx)
+                    t_el = last.run_el.find(f"{W}t")
+                    if t_el is not None:
+                        _preserve(t_el, before_chars)
+                    after_run = _build_run(after_chars, last.rpr_bytes)
+                    last.run_el.addnext(ins)
+                    ins.addnext(after_run)
+                    self._mark("word/document.xml")
+                    return {"change_id": cid, "type": "insertion", "author": author, "date": now}
+
+            anchor.addnext(ins)
+            self._mark("word/document.xml")
+            return {"change_id": cid, "type": "insertion", "author": author, "date": now}
+
+        # ── Legacy position-based insertion ───────────────────────────────
         ins = etree.Element(f"{W}ins")
         ins.set(f"{W}id", str(cid))
         ins.set(f"{W}author", author)
         ins.set(f"{W}date", now)
-
         r = etree.SubElement(ins, f"{W}r")
         t = etree.SubElement(r, f"{W}t")
         _preserve(t, text)
@@ -53,19 +484,15 @@ class TracksMixin:
             para.append(ins)
         else:
             placed = False
-            # Search regular runs — split if match is mid-run
             for run_el in list(para.findall(f"{W}r")):
                 t_el = run_el.find(f"{W}t")
                 if t_el is None or t_el.text is None:
                     continue
                 if position not in t_el.text:
                     continue
-
                 full = t_el.text
                 end = full.index(position) + len(position)
-
                 if end < len(full):
-                    # Match is mid-run: split, insert between halves
                     rpr = run_el.find(f"{W}rPr")
                     rpr_bytes = etree.tostring(rpr) if rpr is not None else None
                     _preserve(t_el, full[:end])
@@ -77,7 +504,6 @@ class TracksMixin:
                 placed = True
                 break
 
-            # Fallback: search w:del elements (delete-then-insert pattern)
             if not placed:
                 for del_el in para.findall(f"{W}del"):
                     del_text = "".join(t.text for t in del_el.iter(f"{W}delText") if t.text)
@@ -92,18 +518,27 @@ class TracksMixin:
         self._mark("word/document.xml")
         return {"change_id": cid, "type": "insertion", "author": author, "date": now}
 
+    # ── delete_text ─────────────────────────────────────────────────────────
+
     def delete_text(
         self,
         para_id: str,
         text: str,
         *,
         author: str = "Claude",
+        context_before: str = "",
+        context_after: str = "",
     ) -> dict:
-        """Mark text as deleted with Word track-changes markup (w:del).
+        """Mark *text* as deleted with ``<w:del>`` tracked-changes markup.
 
-        Finds the text within runs of the target paragraph and wraps the
-        matching portion in <w:del><w:r><w:delText>...</w:delText></w:r></w:del>,
-        splitting the run if the match is a substring.
+        When *context_before* or *context_after* is provided the target text is
+        located via cascading context-anchor search with pre-normalisation
+        (smart quotes, NBSP, em-dash → ASCII) and whitespace collapsing.
+
+        The search operates on the *accepted view* of the paragraph so existing
+        ``<w:ins>`` content is visible and ``<w:del>`` content is invisible.
+
+        Supports deletion across multiple ``<w:r>`` formatting boundaries.
         """
         doc = self._require("word/document.xml")
         para = self._find_para(doc, para_id)
@@ -113,78 +548,93 @@ class TracksMixin:
         cid = self._next_markup_id(doc)
         now = _now_iso()
 
-        for run_el in list(para.findall(f"{W}r")):
-            t_el = run_el.find(f"{W}t")
-            if t_el is None or t_el.text is None:
-                continue
-            full = t_el.text
-            if text not in full:
-                continue
+        slot_s, slot_e, slots = _resolve(doc, para, text, context_before, context_after)
+        _apply_deletion(para, slot_s, slot_e, slots, cid, author, now)
+        self._mark("word/document.xml")
+        return {"change_id": cid, "type": "deletion", "author": author, "date": now}
 
-            idx = full.index(text)
-            rpr = run_el.find(f"{W}rPr")
-            rpr_bytes = etree.tostring(rpr) if rpr is not None else None
-            parent = run_el.getparent()
-            pos = list(parent).index(run_el)
-            parent.remove(run_el)
+    # ── replace_text ────────────────────────────────────────────────────────
 
-            insert_at = pos
+    def replace_text(
+        self,
+        para_id: str,
+        *,
+        find: str,
+        replace: str,
+        author: str = "Claude",
+        context_before: str = "",
+        context_after: str = "",
+    ) -> dict:
+        """Replace *find* with *replace* using tracked changes (del + ins).
 
-            # Text before
-            if idx > 0:
-                before = self._make_run(full[:idx], rpr_bytes)
-                parent.insert(insert_at, before)
-                insert_at += 1
+        Uses :func:`_collapse_diff` so that only the actually-changed portion
+        becomes tracked markup; leading and trailing common substrings are left
+        as plain runs.
 
-            # Deletion
-            del_el = etree.Element(f"{W}del")
-            del_el.set(f"{W}id", str(cid))
-            del_el.set(f"{W}author", author)
-            del_el.set(f"{W}date", now)
-            del_run = etree.SubElement(del_el, f"{W}r")
+        Returns ``{"type": "replacement", ...}``.
+        """
+        doc = self._require("word/document.xml")
+        para = self._find_para(doc, para_id)
+        if para is None:
+            raise ValueError(f"Paragraph '{para_id}' not found")
+
+        slot_s, slot_e, slots = _resolve(doc, para, find, context_before, context_after)
+        actual_found = "".join(slots[i].char for i in range(slot_s, slot_e))
+
+        leading, del_text, ins_text, _trailing = _collapse_diff(actual_found, replace)
+
+        # Adjust slot range to the minimal changed portion
+        real_slot_s = slot_s + len(leading)
+        real_slot_e = real_slot_s + len(del_text)
+
+        if not del_text and not ins_text:
+            return {"change_id": None, "type": "replacement", "author": author, "changed": 0}
+
+        cid = self._next_markup_id(doc)
+        now = _now_iso()
+
+        if del_text:
+            _apply_deletion(para, real_slot_s, real_slot_e, slots, cid, author, now)
+            # Refresh slots after deletion mutated the tree
+            slots = _flatten_para(para)
+            # Find the w:del we just inserted and insert w:ins after it
+            del_els = list(para.iter(f"{W}del"))
+            last_del = del_els[-1] if del_els else None
+
+        if ins_text:
+            ins_cid = self._next_markup_id(doc)
+            ins_el = etree.Element(f"{W}ins")
+            ins_el.set(f"{W}id", str(ins_cid))
+            ins_el.set(f"{W}author", author)
+            ins_el.set(f"{W}date", now)
+            # Inherit rPr from the run at the insert point (first slot of del range)
+            rpr_bytes = slots[real_slot_s].rpr_bytes if real_slot_s < len(slots) else None
+            r = etree.SubElement(ins_el, f"{W}r")
             if rpr_bytes:
-                del_run.append(etree.fromstring(rpr_bytes))
-            dt = etree.SubElement(del_run, f"{W}delText")
-            _preserve(dt, text)
-            parent.insert(insert_at, del_el)
-            insert_at += 1
+                r.append(etree.fromstring(rpr_bytes))
+            t = etree.SubElement(r, f"{W}t")
+            _preserve(t, ins_text)
+            if del_text and last_del is not None:
+                last_del.addnext(ins_el)
+            else:
+                # Pure insertion (no deletion)
+                para.append(ins_el)
 
-            # Text after
-            end = idx + len(text)
-            if end < len(full):
-                after = self._make_run(full[end:], rpr_bytes)
-                parent.insert(insert_at, after)
+        self._mark("word/document.xml")
+        return {"change_id": cid, "type": "replacement", "author": author, "date": now}
 
-            self._mark("word/document.xml")
-            return {"change_id": cid, "type": "deletion", "author": author, "date": now}
-
-        raise ValueError(
-            f"Text '{text}' not found in a single run of paragraph '{para_id}'. "
-            "If the text spans multiple runs, try searching for a shorter substring."
-        )
-
-    # ── Accept / Reject ───────────────────────────────────────────────────
+    # ── Accept / Reject ──────────────────────────────────────────────────────
 
     def _matches_author(self, el: etree._Element, author: str | None) -> bool:
-        """Check if element's author matches filter (None = match all)."""
         if author is None:
             return True
         return el.get(f"{W}author") == author
 
-    def accept_changes(
-        self,
-        *,
-        author: str | None = None,
-    ) -> dict:
-        """Accept tracked changes: keep insertions, remove deletions.
-
-        Args:
-            author: If set, only accept changes by this author.
-        """
+    def accept_changes(self, *, author: str | None = None) -> dict:
+        """Accept tracked changes: keep insertions, remove deletions."""
         doc = self._require("word/document.xml")
         count = 0
 
-        # Accept insertions: unwrap w:ins (promote children)
         for ins in list(doc.iter(f"{W}ins")):
             if not self._matches_author(ins, author):
                 continue
@@ -197,7 +647,6 @@ class TracksMixin:
             parent.remove(ins)
             count += 1
 
-        # Accept deletions: remove w:del entirely
         for del_el in list(doc.iter(f"{W}del")):
             if not self._matches_author(del_el, author):
                 continue
@@ -206,37 +655,25 @@ class TracksMixin:
 
         if count > 0:
             self._mark("word/document.xml")
-        scope = "by_author" if author else "all"
-        return {"accepted": count, "scope": scope}
+        return {"accepted": count, "scope": "by_author" if author else "all"}
 
-    def reject_changes(
-        self,
-        *,
-        author: str | None = None,
-    ) -> dict:
-        """Reject tracked changes: remove insertions, restore deletions.
-
-        Args:
-            author: If set, only reject changes by this author.
-        """
+    def reject_changes(self, *, author: str | None = None) -> dict:
+        """Reject tracked changes: remove insertions, restore deletions."""
         doc = self._require("word/document.xml")
         count = 0
 
-        # Reject insertions: remove w:ins and its content entirely
         for ins in list(doc.iter(f"{W}ins")):
             if not self._matches_author(ins, author):
                 continue
             ins.getparent().remove(ins)
             count += 1
 
-        # Reject deletions: unwrap w:del, convert w:delText back to w:t
         for del_el in list(doc.iter(f"{W}del")):
             if not self._matches_author(del_el, author):
                 continue
             parent = del_el.getparent()
             idx = list(parent).index(del_el)
             for child in list(del_el):
-                # Convert w:delText -> w:t inside each run
                 for dt in child.findall(f"{W}delText"):
                     dt.tag = f"{W}t"
                 del_el.remove(child)
@@ -247,5 +684,4 @@ class TracksMixin:
 
         if count > 0:
             self._mark("word/document.xml")
-        scope = "by_author" if author else "all"
-        return {"rejected": count, "scope": scope}
+        return {"rejected": count, "scope": "by_author" if author else "all"}

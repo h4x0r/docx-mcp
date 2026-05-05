@@ -346,7 +346,8 @@ class TestTrackChanges:
 
     def test_delete_preserves_rpr(self):
         """Paragraph 00000005 has bold runs — rPr should be preserved in deletion."""
-        r = _j(server.delete_text("00000005", "bold"))
+        # "bold" also appears in para 00000006, so context is required to disambiguate.
+        r = _j(server.delete_text("00000005", "bold", context_before="Final paragraph with "))
         assert r["type"] == "deletion"
 
     def test_delete_substring_splits_run(self):
@@ -363,9 +364,9 @@ class TestTrackChanges:
             server.delete_text("00000004", "nonexistent_xyz")
 
     def test_delete_spans_multiple_runs(self):
-        """Text spanning runs raises a clear error."""
-        with pytest.raises(ValueError, match="single run"):
-            server.delete_text("00000006", "First bold")
+        """Text spanning run boundaries is now supported via accepted-view resolver."""
+        r = _j(server.delete_text("00000006", "First bold"))
+        assert r["type"] == "deletion"
 
     def test_delete_bad_para(self):
         with pytest.raises(ValueError, match="not found"):
