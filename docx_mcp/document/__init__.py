@@ -32,6 +32,7 @@ from .images import ImagesMixin
 from .lists import ListsMixin
 from .merge import MergeMixin
 from .metadata import MetadataMixin
+from .pii import PiiMixin
 from .properties import PropertiesMixin
 from .protection import ProtectionMixin
 from .reading import ReadingMixin
@@ -67,6 +68,7 @@ class DocxDocument(
     MergeMixin,
     MetadataMixin,
     CompareMixin,
+    PiiMixin,
 ):
     """Word document editor with OOXML-level control."""
 
