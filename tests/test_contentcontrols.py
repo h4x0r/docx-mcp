@@ -176,33 +176,26 @@ class TestContentControls:
         doc = DocxDocument.create(out)
         tree = doc._tree("word/document.xml")
 
-        # Collect two distinct para_ids
-        para_ids = []
-        for p in tree.iter(f"{W}p"):
-            pid = p.get(f"{W14}paraId")
-            if pid:
-                para_ids.append(pid)
-            if len(para_ids) >= 2:
-                break
+        # Find the body element and the existing first paragraph
+        body = tree.find(f"{W}body")
+        assert body is not None
 
-        # If only one paragraph, add more text to get a second
-        # Use the same para multiple times is allowed since after wrapping
-        # the first control, the original para is inside sdtContent — grab a fresh one.
-        doc.add_content_control(para_ids[0], "tagA", "text", label="LabelA", default="valA")
+        first_paras = [p for p in body if p.tag == f"{W}p"]
+        assert len(first_paras) >= 1
+        para_id_1 = first_paras[0].get(f"{W14}paraId")
+        assert para_id_1 is not None
 
-        # Get a fresh para_id after first wrap (first is now inside sdt)
-        tree = doc._tree("word/document.xml")
-        second_pid = None
-        for p in tree.iter(f"{W}p"):
-            pid = p.get(f"{W14}paraId")
-            if pid and pid not in (para_ids[0],):
-                second_pid = pid
-                break
+        # Add a second paragraph directly to the body with a unique paraId
+        para_id_2 = doc._new_para_id()
+        new_para = etree.SubElement(body, f"{W}p")
+        new_para.set(f"{W14}paraId", para_id_2)
+        r = etree.SubElement(new_para, f"{W}r")
+        t = etree.SubElement(r, f"{W}t")
+        t.text = "Second paragraph"
+        doc._mark("word/document.xml")
 
-        if second_pid is None:
-            pytest.skip("Document has only one paragraph")
-
-        doc.add_content_control(second_pid, "tagB", "checkbox", label="LabelB")
+        doc.add_content_control(para_id_1, "tagA", "text", label="LabelA", default="valA")
+        doc.add_content_control(para_id_2, "tagB", "checkbox", label="LabelB")
 
         controls = doc.get_content_controls()
         assert len(controls) >= 2
