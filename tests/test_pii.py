@@ -21,6 +21,7 @@ from __future__ import annotations
 import json
 import zipfile
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 from lxml import etree
@@ -283,3 +284,121 @@ class TestPiiRedaction:
         assert "sarah.connor@resistance.org" not in text
         # Person names should NOT be redacted when filtered to email only
         assert "Sarah Connor" in text
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# True redaction tests — DrawingML black rectangle (no text in XML)
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Namespace URIs used in assertions
+_WP_NS = "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
+_A_NS = "http://schemas.openxmlformats.org/drawingml/2006/main"
+_WPS_NS = "http://schemas.microsoft.com/office/word/2010/wordprocessingShape"
+
+
+def _make_fake_result(start: int, end: int, entity_type: str = "EMAIL_ADDRESS", score: float = 0.85):
+    """Create a mock Presidio RecognizerResult."""
+    r = MagicMock()
+    r.entity_type = entity_type
+    r.start = start
+    r.end = end
+    r.score = score
+    return r
+
+
+def _email_docx_simple(tmp_path: Path) -> Path:
+    """DOCX with a known email that can be targeted by mocked Presidio."""
+    p = tmp_path / "email_simple.docx"
+    _write_docx(p, ["Contact alice@example.com for info."])
+    return p
+
+
+class TestTrueRedaction:
+    """Verify scrub_pii performs true XML redaction, not visual-only highlighting."""
+
+    @pytest.fixture()
+    def redacted_out(self, tmp_path: Path):
+        """Run scrub_pii with mocked analyzer on a doc containing alice@example.com.
+
+        Returns the output path after redaction.
+        """
+        # "alice@example.com" is at index 8..26 in "Contact alice@example.com for info."
+        text = "Contact alice@example.com for info."
+        email_start = text.index("alice@example.com")
+        email_end = email_start + len("alice@example.com")
+
+        docx_path = _email_docx_simple(tmp_path)
+        out = tmp_path / "redacted.docx"
+
+        fake_result = _make_fake_result(email_start, email_end)
+        mock_analyzer = MagicMock()
+        mock_analyzer.analyze.return_value = [fake_result]
+
+        with patch("docx_mcp.document.pii._get_analyzer", return_value=mock_analyzer):
+            server.open_document(str(docx_path))
+            server.scrub_pii(output_path=str(out))
+
+        return out
+
+    def test_redacted_text_not_in_xml(self, redacted_out: Path):
+        """After redaction, original PII text must not appear anywhere in document.xml."""
+        with zipfile.ZipFile(redacted_out) as zf:
+            xml_bytes = zf.read("word/document.xml")
+        assert b"alice@example.com" not in xml_bytes
+
+    def test_redacted_run_contains_drawing(self, redacted_out: Path):
+        """Redacted span must contain a w:drawing, not a w:t with text."""
+        root = _get_doc_root(redacted_out)
+        drawings = list(root.iter(_w("drawing")))
+        assert len(drawings) >= 1, "Expected at least one w:drawing element after redaction"
+
+    def test_redacted_run_has_no_text_element(self, redacted_out: Path):
+        """The run that replaced PII must not contain w:t with non-empty text."""
+        root = _get_doc_root(redacted_out)
+        # Every w:r that contains a w:drawing must have no w:t with non-empty text
+        for run in root.iter(_w("r")):
+            if run.find(_w("drawing")) is not None:
+                for t_el in run.findall(_w("t")):
+                    assert not (t_el.text and t_el.text.strip()), (
+                        f"Redaction run contains text: {t_el.text!r}"
+                    )
+
+    def test_redacted_drawing_is_black_filled(self, redacted_out: Path):
+        """The DrawingML shape must use solidFill with black color (000000)."""
+        root = _get_doc_root(redacted_out)
+        solid_fills = list(root.iter(f"{{{_A_NS}}}solidFill"))
+        assert solid_fills, "No a:solidFill found in redacted document"
+        black_fills = [
+            sf for sf in solid_fills
+            if sf.find(f"{{{_A_NS}}}srgbClr") is not None
+            and sf.find(f"{{{_A_NS}}}srgbClr").get("val", "").upper() == "000000"
+        ]
+        assert black_fills, "No a:solidFill with a:srgbClr val='000000' found"
+
+    def test_dry_run_still_returns_entities(self, tmp_path: Path):
+        """dry_run=True must still work correctly after the fix."""
+        text = "Contact alice@example.com for info."
+        email_start = text.index("alice@example.com")
+        email_end = email_start + len("alice@example.com")
+
+        docx_path = _email_docx_simple(tmp_path)
+        fake_result = _make_fake_result(email_start, email_end)
+        mock_analyzer = MagicMock()
+        mock_analyzer.analyze.return_value = [fake_result]
+
+        with patch("docx_mcp.document.pii._get_analyzer", return_value=mock_analyzer):
+            server.open_document(str(docx_path))
+            result = json.loads(server.scrub_pii(output_path="", dry_run=True))
+
+        assert result["path"] is None
+        assert len(result["entities"]) == 1
+        assert result["entities"][0]["type"] == "EMAIL_ADDRESS"
+
+    def test_block_chars_not_in_xml(self, redacted_out: Path):
+        """The old '████' approach must be gone — no block chars in output."""
+        with zipfile.ZipFile(redacted_out) as zf:
+            xml_bytes = zf.read("word/document.xml")
+        # chr(0x2588) is FULL BLOCK '█'
+        assert chr(0x2588).encode("utf-8") not in xml_bytes, (
+            "Block character (█) found in output XML — old visual-only redaction still active"
+        )
