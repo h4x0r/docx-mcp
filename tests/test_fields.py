@@ -114,7 +114,7 @@ class TestFields:
 
         result = doc.update_fields()
         assert isinstance(result["updated_count"], int)
-        assert result["updated_count"] >= 2
+        assert result["updated_count"] == 2
 
         # Verify all begin fldChars now have dirty=true
         for fc in tree.iter(f"{W}fldChar"):

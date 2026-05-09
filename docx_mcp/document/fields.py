@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from lxml import etree
 
-from .base import W, W14, _preserve
+from .base import W, W14, XML_SPACE, _preserve
 from .errors import DocxMcpError, ErrCode
 
 
@@ -49,7 +49,7 @@ class FieldsMixin:
         # Run 2: instrText
         r_instr = etree.SubElement(para, f"{W}r")
         instr = etree.SubElement(r_instr, f"{W}instrText")
-        instr.set("{http://www.w3.org/XML/1998/namespace}space", "preserve")
+        instr.set(XML_SPACE, "preserve")
         instr.text = f" {field_code} "
 
         # Run 3: separate fldChar
@@ -97,48 +97,66 @@ class FieldsMixin:
         Returns:
             List of {"code": str, "cached_value": str, "para_id": str | None}
         """
-        doc = self._require("word/document.xml")
+        doc = self._tree("word/document.xml")
+        if doc is None:
+            return []
+
         results: list[dict] = []
 
-        in_field = False
-        collecting_cached = False
-        current: dict | None = None
-        current_para_id: str | None = None
-
-        for elem in doc.iter():
-            tag = elem.tag
-
-            # Track enclosing paragraph para_id
-            if tag == f"{W}p":
-                current_para_id = elem.get(f"{W14}paraId")
+        # Find all begin fldChar runs
+        for fld_char in doc.iter(f"{W}fldChar"):
+            if fld_char.get(f"{W}fldCharType") != "begin":
                 continue
 
-            if tag == f"{W}fldChar":
-                fc_type = elem.get(f"{W}fldCharType")
-                if fc_type == "begin":
-                    in_field = True
-                    collecting_cached = False
-                    current = {
-                        "code": "",
-                        "cached_value": "",
-                        "para_id": current_para_id,
-                    }
-                elif fc_type == "separate" and in_field:
-                    collecting_cached = True
-                elif fc_type == "end" and in_field:
-                    if current is not None:
-                        current["code"] = current["code"].strip()
-                        results.append(current)
-                    current = None
-                    in_field = False
-                    collecting_cached = False
+            # The begin fldChar is inside a w:r; we need the w:p parent to find siblings
+            begin_run = fld_char.getparent()
+            if begin_run is None:
+                continue
+            para = begin_run.getparent()
+            if para is None:
+                continue
 
-            elif tag == f"{W}instrText" and in_field and not collecting_cached:
-                if current is not None and elem.text:
-                    current["code"] += elem.text
+            # Get para_id from the enclosing w:p (walk up if needed)
+            ancestor = para
+            while ancestor is not None and ancestor.tag != f"{W}p":
+                ancestor = ancestor.getparent()
+            para_id = ancestor.get(f"{W14}paraId") if ancestor is not None else None
 
-            elif tag == f"{W}t" and collecting_cached:
-                if current is not None and elem.text:
-                    current["cached_value"] += elem.text
+            # Walk siblings of begin_run to collect instrText and cached value
+            children = list(para)
+            try:
+                start_idx = children.index(begin_run)
+            except ValueError:
+                continue
+
+            code_parts: list[str] = []
+            cached_parts: list[str] = []
+            state = "instr"  # "instr" -> after begin, "cached" -> after separate
+
+            for sibling in children[start_idx + 1:]:
+                # Check for fldChar in this run
+                fc = sibling.find(f"{W}fldChar")
+                if fc is not None:
+                    ftype = fc.get(f"{W}fldCharType")
+                    if ftype == "separate":
+                        state = "cached"
+                        continue
+                    elif ftype == "end":
+                        break  # done with this field
+
+                if state == "instr":
+                    for it in sibling.iter(f"{W}instrText"):
+                        if it.text:
+                            code_parts.append(it.text)
+                elif state == "cached":
+                    for t in sibling.iter(f"{W}t"):
+                        if t.text:
+                            cached_parts.append(t.text)
+
+            results.append({
+                "code": "".join(code_parts).strip(),
+                "cached_value": "".join(cached_parts),
+                "para_id": para_id,
+            })
 
         return results
