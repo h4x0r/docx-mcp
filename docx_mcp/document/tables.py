@@ -2,9 +2,14 @@
 
 from __future__ import annotations
 
+import csv
+import io
+
 from lxml import etree
 
 from .base import W14, W, _now_iso, _preserve
+
+_CM_TO_TWIPS = 567
 
 
 class TablesMixin:
@@ -296,3 +301,237 @@ class TablesMixin:
 
         self._mark("word/document.xml")
         return {"table_index": table_idx, "row_index": row_idx, "deleted": True}
+
+    # ── New table improvement methods ────────────────────────────────────────
+
+    def merge_cells(
+        self,
+        table_index: int,
+        start_row: int,
+        start_col: int,
+        end_row: int,
+        end_col: int,
+    ) -> dict:
+        """Merge a rectangular range of cells.
+
+        Horizontal merge (same row): set w:gridSpan on start cell, remove
+        intermediate cells.
+        Vertical merge (same col): set w:vMerge val="restart" on top cell,
+        w:vMerge (no val) on continuation cells.
+        Rectangular: apply gridSpan on each row, then vMerge across rows.
+
+        Returns {"merged_rows": int, "merged_cols": int, "table_index": int}.
+        """
+        tbl = self._get_table(table_index)
+        rows_els = tbl.findall(f"{W}tr")
+
+        merged_rows = end_row - start_row + 1
+        merged_cols = end_col - start_col + 1
+
+        if merged_rows < 1 or merged_cols < 1:
+            raise ValueError("end indices must be >= start indices")
+
+        if end_row >= len(rows_els):
+            raise ValueError(f"end_row {end_row} out of range")
+
+        for r in range(start_row, end_row + 1):
+            row_el = rows_els[r]
+            cells = row_el.findall(f"{W}tc")
+            if end_col >= len(cells):
+                raise ValueError(f"end_col {end_col} out of range in row {r}")
+
+            if merged_cols > 1:
+                # Set gridSpan on the first cell in the range
+                first_tc = cells[start_col]
+                tc_pr = first_tc.find(f"{W}tcPr")
+                if tc_pr is None:
+                    tc_pr = etree.Element(f"{W}tcPr")
+                    first_tc.insert(0, tc_pr)
+                grid_span = tc_pr.find(f"{W}gridSpan")
+                if grid_span is None:
+                    grid_span = etree.SubElement(tc_pr, f"{W}gridSpan")
+                grid_span.set(f"{W}val", str(merged_cols))
+
+                # Remove intermediate cells
+                for c in range(start_col + 1, end_col + 1):
+                    # Re-fetch cells after removals since list changed
+                    current_cells = row_el.findall(f"{W}tc")
+                    # The cell at start_col+1 becomes the next one to remove
+                    if len(current_cells) > start_col + 1:
+                        row_el.remove(current_cells[start_col + 1])
+
+            if merged_rows > 1:
+                # Apply vMerge to the start_col cell in this row
+                tc = row_el.findall(f"{W}tc")[start_col]
+                tc_pr = tc.find(f"{W}tcPr")
+                if tc_pr is None:
+                    tc_pr = etree.Element(f"{W}tcPr")
+                    tc.insert(0, tc_pr)
+                vmerge = tc_pr.find(f"{W}vMerge")
+                if vmerge is None:
+                    vmerge = etree.SubElement(tc_pr, f"{W}vMerge")
+                if r == start_row:
+                    vmerge.set(f"{W}val", "restart")
+                else:
+                    # Continuation: no val attribute
+                    if f"{W}val" in vmerge.attrib:
+                        del vmerge.attrib[f"{W}val"]
+
+        self._mark("word/document.xml")
+        return {
+            "table_index": table_index,
+            "merged_rows": merged_rows,
+            "merged_cols": merged_cols,
+        }
+
+    def set_header_row(self, table_index: int) -> dict:
+        """Mark the first row as a header row that repeats across page breaks.
+
+        Sets w:tblHeader on the first row's trPr.
+        Returns {"table_index": int, "set": True}.
+        """
+        tbl = self._get_table(table_index)
+        rows_els = tbl.findall(f"{W}tr")
+        if not rows_els:
+            raise ValueError("Table has no rows")
+
+        first_row = rows_els[0]
+        tr_pr = first_row.find(f"{W}trPr")
+        if tr_pr is None:
+            tr_pr = etree.Element(f"{W}trPr")
+            first_row.insert(0, tr_pr)
+
+        if tr_pr.find(f"{W}tblHeader") is None:
+            etree.SubElement(tr_pr, f"{W}tblHeader")
+
+        self._mark("word/document.xml")
+        return {"table_index": table_index, "set": True}
+
+    def set_column_widths(self, table_index: int, widths_cm: list[float]) -> dict:
+        """Set column widths in the table grid.
+
+        Updates w:tblGrid/w:gridCol/@w:w (twips) and w:tcW on each cell.
+        1 cm = 567 twips.
+        Returns {"table_index": int, "column_count": int, "widths_cm": list[float]}.
+        Raises ValueError if len(widths_cm) != column_count.
+        """
+        tbl = self._get_table(table_index)
+
+        # Determine column count from tblGrid or first row
+        grid = tbl.find(f"{W}tblGrid")
+        if grid is not None:
+            grid_cols = grid.findall(f"{W}gridCol")
+            col_count = len(grid_cols)
+        else:
+            rows_els = tbl.findall(f"{W}tr")
+            if rows_els:
+                first_row_cells = rows_els[0].findall(f"{W}tc")
+                col_count = 0
+                for tc in first_row_cells:
+                    tcPr = tc.find(f"{W}tcPr")
+                    grid_span = tcPr.find(f"{W}gridSpan") if tcPr is not None else None
+                    if grid_span is not None:
+                        try:
+                            col_count += int(grid_span.get(f"{W}val", "1"))
+                        except ValueError:
+                            col_count += 1
+                    else:
+                        col_count += 1
+            else:
+                col_count = 0
+
+        if len(widths_cm) != col_count:
+            raise ValueError(
+                f"len(widths_cm)={len(widths_cm)} != column_count={col_count}"
+            )
+
+        twips = [int(w * _CM_TO_TWIPS) for w in widths_cm]
+
+        # Update tblGrid
+        if grid is not None:
+            for i, gc in enumerate(grid_cols):
+                gc.set(f"{W}w", str(twips[i]))
+        else:
+            # Create tblGrid after tblPr (or at start)
+            grid = etree.Element(f"{W}tblGrid")
+            tbl_pr = tbl.find(f"{W}tblPr")
+            if tbl_pr is not None:
+                tbl_pr.addnext(grid)
+            else:
+                tbl.insert(0, grid)
+            for tw in twips:
+                gc = etree.SubElement(grid, f"{W}gridCol")
+                gc.set(f"{W}w", str(tw))
+
+        # Update tcW on each cell
+        for row_el in tbl.findall(f"{W}tr"):
+            cells = row_el.findall(f"{W}tc")
+            for i, tc in enumerate(cells):
+                if i >= col_count:
+                    break
+                tc_pr = tc.find(f"{W}tcPr")
+                if tc_pr is None:
+                    tc_pr = etree.Element(f"{W}tcPr")
+                    tc.insert(0, tc_pr)
+                tc_w = tc_pr.find(f"{W}tcW")
+                if tc_w is None:
+                    tc_w = etree.SubElement(tc_pr, f"{W}tcW")
+                tc_w.set(f"{W}type", "dxa")
+                tc_w.set(f"{W}w", str(twips[i]))
+
+        self._mark("word/document.xml")
+        return {
+            "table_index": table_index,
+            "column_count": col_count,
+            "widths_cm": widths_cm,
+        }
+
+    def csv_to_table(
+        self,
+        para_id: str,
+        csv_text: str,
+        header_row: bool = True,
+    ) -> dict:
+        """Insert a table from CSV text after a paragraph.
+
+        Returns {"table_index": int, "rows": int, "cols": int}.
+        """
+        reader = csv.reader(io.StringIO(csv_text))
+        data = list(reader)
+        if not data:
+            raise ValueError("csv_text is empty")
+
+        num_rows = len(data)
+        num_cols = max(len(r) for r in data)
+
+        result = self.add_table(para_id, num_rows, num_cols)
+        table_index = result["table_index"]
+
+        for r, row in enumerate(data):
+            for c, cell_text in enumerate(row):
+                self.modify_cell(table_index, r, c, cell_text)
+
+        if header_row and num_rows > 0:
+            self.set_header_row(table_index)
+
+        return {"table_index": table_index, "rows": num_rows, "cols": num_cols}
+
+    def table_to_csv(self, table_index: int) -> dict:
+        """Export table content as CSV string.
+
+        Returns {"csv": str, "rows": int, "cols": int}.
+        """
+        tbl = self._get_table(table_index)
+        rows_data = []
+        col_count = 0
+        for tr in tbl.findall(f"{W}tr"):
+            row_cells = [self._text(tc) for tc in tr.findall(f"{W}tc")]
+            rows_data.append(row_cells)
+            col_count = max(col_count, len(row_cells))
+
+        buf = io.StringIO()
+        writer = csv.writer(buf)
+        for row in rows_data:
+            writer.writerow(row)
+
+        return {"csv": buf.getvalue(), "rows": len(rows_data), "cols": col_count}

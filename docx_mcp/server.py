@@ -267,6 +267,47 @@ def delete_table_row(
     return _js(_require_doc().delete_table_row(table_idx, row_idx, author=author))
 
 
+@mcp.tool()
+def merge_cells(
+    table_index: int,
+    start_row: int,
+    start_col: int,
+    end_row: int,
+    end_col: int,
+) -> str:
+    """Merge a rectangular range of cells. Horizontal: gridSpan. Vertical: vMerge."""
+    doc = _require_doc()
+    return _js(doc.merge_cells(table_index, start_row, start_col, end_row, end_col))
+
+
+@mcp.tool()
+def set_header_row(table_index: int) -> str:
+    """Mark the first row as a repeating header row."""
+    doc = _require_doc()
+    return _js(doc.set_header_row(table_index))
+
+
+@mcp.tool()
+def set_column_widths(table_index: int, widths_cm: list[float]) -> str:
+    """Set column widths in cm. len(widths_cm) must match column count."""
+    doc = _require_doc()
+    return _js(doc.set_column_widths(table_index, widths_cm))
+
+
+@mcp.tool()
+def csv_to_table(para_id: str, csv_text: str, header_row: bool = True) -> str:
+    """Insert a table from CSV text."""
+    doc = _require_doc()
+    return _js(doc.csv_to_table(para_id, csv_text, header_row))
+
+
+@mcp.tool()
+def table_to_csv(table_index: int) -> str:
+    """Export a table as CSV string."""
+    doc = _require_doc()
+    return _js(doc.table_to_csv(table_index))
+
+
 # ── Lists ──────────────────────────────────────────────────────────────────
 
 
@@ -383,6 +424,21 @@ def insert_image(
     return _js(
         _require_doc().insert_image(para_id, image_path, width_emu=width_emu, height_emu=height_emu)
     )
+
+
+@mcp.tool()
+def insert_floating_image(
+    para_id: str,
+    image_path: str,
+    width_cm: float,
+    height_cm: float,
+    h_pos: float = 0.0,
+    v_pos: float = 0.0,
+    wrap: str = "square",
+) -> str:
+    """Insert a floating (anchored) image. wrap: square|topbottom|none."""
+    doc = _require_doc()
+    return _js(doc.insert_floating_image(para_id, image_path, width_cm, height_cm, h_pos, v_pos, wrap))
 
 
 # ── Endnotes ───────────────────────────────────────────────────────────────
@@ -1168,6 +1224,30 @@ def lock_content_control(tag: str, lock: str = "sdtLocked") -> str:
     """
     doc = _require_doc()
     return _js(doc.lock_content_control(tag, lock))
+
+
+# ── Multilevel Lists ─────────────────────────────────────────────────────────
+
+
+@mcp.tool()
+def create_multilevel_list(name: str, levels: list[dict]) -> str:
+    """Create a multilevel list in numbering.xml. Each level dict: {num_fmt, lvl_text, indent, hanging, style?}."""
+    doc = _require_doc()
+    return _js(doc.create_multilevel_list(name, levels))
+
+
+@mcp.tool()
+def restart_numbering(para_id: str, level: int = 0, start: int = 1) -> str:
+    """Restart list numbering at a paragraph. Adds lvlOverride with startOverride."""
+    doc = _require_doc()
+    return _js(doc.restart_numbering(para_id, level, start))
+
+
+@mcp.tool()
+def suppress_numbering(para_id: str) -> str:
+    """Remove list numbering from a paragraph by setting numId to 0."""
+    doc = _require_doc()
+    return _js(doc.suppress_numbering(para_id))
 
 
 # ── Entry point ─────────────────────────────────────────────────────────────
