@@ -93,13 +93,24 @@ class TocMixin:
         return p
 
     def _find_toc_field_para(self, body) -> tuple[etree._Element | None, int]:
-        """Find the TOC field paragraph and its index in body children."""
+        """Find the first TOC field paragraph (not LoF/LoT) in body."""
         children = list(body)
         for idx, child in enumerate(children):
             if child.tag != f"{W}p":
                 continue
             for it in child.iter(f"{W}instrText"):
-                if it.text and " TOC " in it.text:
+                if it.text and " TOC " in it.text and "\\c" not in it.text:
+                    return child, idx
+        return None, -1
+
+    def _find_caption_field_para(self, body, caption_type: str) -> tuple[etree._Element | None, int]:
+        """Find existing LoF/LoT field paragraph by caption type (Figure|Table)."""
+        children = list(body)
+        for idx, child in enumerate(children):
+            if child.tag != f"{W}p":
+                continue
+            for it in child.iter(f"{W}instrText"):
+                if it.text and f'\\c "{caption_type}"' in it.text:
                     return child, idx
         return None, -1
 
@@ -285,6 +296,27 @@ class TocMixin:
             if it.text and "SEQ" in it.text and "Table" in it.text:
                 entry_count += 1
 
-        insert_pos = 0
+        # Insert after any existing ToC/LoF block, or at position 0
+        _, toc_idx = self._find_toc_field_para(body)
+        _, lof_idx = self._find_caption_field_para(body, "Figure")
+        anchor_idx = max(toc_idx, lof_idx)
+        if anchor_idx >= 0:
+            children = list(body)
+            insert_pos = anchor_idx + 1
+            while insert_pos < len(children):
+                child = children[insert_pos]
+                if child.tag != f"{W}p":
+                    break
+                pPr = child.find(f"{W}pPr")
+                if pPr is None:
+                    break
+                pStyle = pPr.find(f"{W}pStyle")
+                if pStyle is not None and re.match(r"^TOC\d+$", pStyle.get(f"{W}val", "")):
+                    insert_pos += 1
+                else:
+                    break
+        else:
+            insert_pos = 0
+
         inserted_at = self._insert_toc_block(_LOT_FIELD, [], None, insert_pos)
         return {"inserted_at": inserted_at, "entry_count": entry_count}
