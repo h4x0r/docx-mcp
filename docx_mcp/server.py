@@ -925,6 +925,40 @@ def compare_documents(
     return _js(DocxDocument.compare_documents(base_path, revised_path, output_path))
 
 
+@mcp.tool()
+def list_parts() -> str:
+    """List all XML parts (files) in the open DOCX zip."""
+    return _js(_require_doc().list_parts())
+
+
+@mcp.tool()
+def read_part(part_path: str) -> str:
+    """Read raw XML of any DOCX part (e.g. 'word/document.xml').
+    Use list_parts() to discover available parts.
+    """
+    return _js(_require_doc().read_part(part_path))
+
+
+@mcp.tool()
+def write_part(part_path: str, xml: str) -> str:
+    """Replace a DOCX part with new XML. Validates well-formedness first.
+    WARNING: Direct XML manipulation can corrupt the document if used incorrectly.
+    """
+    return _js(_require_doc().write_part(part_path, xml))
+
+
+@mcp.tool()
+def xpath_query(xpath: str, part: str = "word/document.xml") -> str:
+    """Run XPath against any DOCX part. Pre-bound namespaces: w, w14, r, wp, a, mc.
+
+    Examples:
+      xpath="//w:p" — all paragraphs
+      xpath="//w:t/text()" — all text content
+      xpath="//w:p[w:pPr/w:pStyle/@w:val='Heading1']" — Heading 1 paragraphs
+    """
+    return _js(_require_doc().xpath_query(xpath, part))
+
+
 # ── Entry point ─────────────────────────────────────────────────────────────
 
 
