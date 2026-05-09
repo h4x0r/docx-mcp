@@ -21,13 +21,16 @@ from .base import (
     _now_iso,
     _preserve,
 )
+from .bookmarks import BookmarksMixin
 from .comments import CommentsMixin
 from .compare import CompareMixin
 from .creation import CreationMixin
 from .endnotes import EndnotesMixin
+from .fields import FieldsMixin
 from .footnotes import FootnotesMixin
 from .formatting import FormattingMixin
 from .headers_footers import HeadersFootersMixin
+from .hyperlinks import HyperlinksMixin
 from .images import ImagesMixin
 from .lists import ListsMixin
 from .merge import MergeMixin
@@ -50,6 +53,7 @@ from .query import XPathMixin
 class DocxDocument(
     BaseMixin,
     CreationMixin,
+    BookmarksMixin,
     ReadingMixin,
     TracksMixin,
     RevisionsMixin,
@@ -62,6 +66,8 @@ class DocxDocument(
     HeadersFootersMixin,
     ListsMixin,
     PropertiesMixin,
+    FieldsMixin,
+    HyperlinksMixin,
     ImagesMixin,
     EndnotesMixin,
     SectionsMixin,
