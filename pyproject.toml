@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "docx-mcp-server"
-version = "0.4.0"
+version = "0.4.1"
 description = "MCP server for creating, reading, and editing Word (.docx) documents with markdown conversion, track changes, comments, footnotes, tables, images, sections, and structural validation"
 readme = "README.md"
 license = "MIT"
@@ -22,14 +22,10 @@ dependencies = [
     "mcp>=1.0.0",
     "lxml>=4.9.0",
     "mistune>=3.0",
-]
-
-[project.optional-dependencies]
-pii = [
     "presidio-analyzer>=2.2",
     "presidio-anonymizer>=2.2",
-    "spacy>=3.7",
-    # Also run: python -m spacy download en_core_web_lg
+    "spacy>=3.7,<4",
+    "spacy-transformers>=1.2,<2",
 ]
 
 [dependency-groups]
