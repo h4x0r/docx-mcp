@@ -42,6 +42,7 @@ from .styles import StylesMixin
 from .tables import TablesMixin
 from .revisions import RevisionsMixin
 from .tracks import TracksMixin
+from .rawparts import RawPartsMixin
 from .validation import ValidationMixin
 
 
@@ -69,6 +70,7 @@ class DocxDocument(
     MetadataMixin,
     CompareMixin,
     PiiMixin,
+    RawPartsMixin,
 ):
     """Word document editor with OOXML-level control."""
 

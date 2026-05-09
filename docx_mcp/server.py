@@ -925,6 +925,28 @@ def compare_documents(
     return _js(DocxDocument.compare_documents(base_path, revised_path, output_path))
 
 
+@mcp.tool()
+def list_parts() -> str:
+    """List all XML parts (files) in the open DOCX zip."""
+    return _js(_require_doc().list_parts())
+
+
+@mcp.tool()
+def read_part(part_path: str) -> str:
+    """Read raw XML of any DOCX part (e.g. 'word/document.xml').
+    Use list_parts() to discover available parts.
+    """
+    return _js(_require_doc().read_part(part_path))
+
+
+@mcp.tool()
+def write_part(part_path: str, xml: str) -> str:
+    """Replace a DOCX part with new XML. Validates well-formedness first.
+    WARNING: Direct XML manipulation can corrupt the document if used incorrectly.
+    """
+    return _js(_require_doc().write_part(part_path, xml))
+
+
 # ── Entry point ─────────────────────────────────────────────────────────────
 
 
