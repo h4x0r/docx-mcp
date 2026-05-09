@@ -11,6 +11,9 @@ from .base import CT, RELS, W14, WP, A, R, W
 
 # Additional namespace constants for floating images
 _PIC = "{http://schemas.openxmlformats.org/drawingml/2006/picture}"
+_PIC_NS = _PIC[1:-1]   # bare URI (no braces) for attribute values / nsmap keys
+_WP_NS = WP[1:-1]      # bare URI derived from imported WP constant
+_A_NS = A[1:-1]        # bare URI derived from imported A constant
 _R_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"  # bare URI for nsmap
 
 
@@ -113,30 +116,25 @@ class ImagesMixin:
             self._mark("[Content_Types].xml")
 
         # Build drawing XML
-        ns_wp = "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
-        ns_a = "http://schemas.openxmlformats.org/drawingml/2006/main"
-        ns_pic = "http://schemas.openxmlformats.org/drawingml/2006/picture"
-        ns_r = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
-
         new_para = etree.Element(f"{W}p")
         new_para.set(f"{W14}paraId", self._new_para_id())
         new_para.set(f"{W14}textId", "77777777")
         run = etree.SubElement(new_para, f"{W}r")
         drawing = etree.SubElement(run, f"{W}drawing")
-        inline = etree.SubElement(drawing, f"{{{ns_wp}}}inline")
-        extent = etree.SubElement(inline, f"{{{ns_wp}}}extent")
+        inline = etree.SubElement(drawing, f"{WP}inline")
+        extent = etree.SubElement(inline, f"{WP}extent")
         extent.set("cx", str(width_emu))
         extent.set("cy", str(height_emu))
-        graphic = etree.SubElement(inline, f"{{{ns_a}}}graphic")
+        graphic = etree.SubElement(inline, f"{A}graphic")
         gdata = etree.SubElement(
             graphic,
-            f"{{{ns_a}}}graphicData",
-            uri=ns_pic,
+            f"{A}graphicData",
+            uri=_PIC_NS,
         )
-        pic = etree.SubElement(gdata, f"{{{ns_pic}}}pic")
-        blip_fill = etree.SubElement(pic, f"{{{ns_pic}}}blipFill")
-        blip = etree.SubElement(blip_fill, f"{{{ns_a}}}blip")
-        blip.set(f"{{{ns_r}}}embed", rid)
+        pic = etree.SubElement(gdata, f"{_PIC}pic")
+        blip_fill = etree.SubElement(pic, f"{_PIC}blipFill")
+        blip = etree.SubElement(blip_fill, f"{A}blip")
+        blip.set(f"{R}embed", rid)
 
         para.addnext(new_para)
         self._mark("word/document.xml")
@@ -228,11 +226,6 @@ class ImagesMixin:
         # Allocate unique drawing id
         drawing_id = self._next_drawing_id(doc)
 
-        # Bare namespace URI strings (for nsmap/attribute values — not Clark notation)
-        ns_wp_bare = "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
-        ns_a_bare = "http://schemas.openxmlformats.org/drawingml/2006/main"
-        ns_pic_bare = "http://schemas.openxmlformats.org/drawingml/2006/picture"
-
         # Build wp:anchor element
         anchor = etree.Element(f"{WP}anchor")
         anchor.set("distT", "0")
@@ -289,7 +282,7 @@ class ImagesMixin:
 
         graphic = etree.SubElement(anchor, f"{A}graphic")
         gdata = etree.SubElement(graphic, f"{A}graphicData")
-        gdata.set("uri", ns_pic_bare)
+        gdata.set("uri", _PIC_NS)
 
         pic = etree.SubElement(gdata, f"{_PIC}pic")
         blip_fill = etree.SubElement(pic, f"{_PIC}blipFill")
