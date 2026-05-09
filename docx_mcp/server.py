@@ -1185,6 +1185,30 @@ def lock_content_control(tag: str, lock: str = "sdtLocked") -> str:
     return _js(doc.lock_content_control(tag, lock))
 
 
+# ── Multilevel Lists ─────────────────────────────────────────────────────────
+
+
+@mcp.tool()
+def create_multilevel_list(name: str, levels: list[dict]) -> str:
+    """Create a multilevel list in numbering.xml. Each level dict: {num_fmt, lvl_text, indent, hanging, style?}."""
+    doc = _require_doc()
+    return _js(doc.create_multilevel_list(name, levels))
+
+
+@mcp.tool()
+def restart_numbering(para_id: str, level: int = 0, start: int = 1) -> str:
+    """Restart list numbering at a paragraph. Adds lvlOverride with startOverride."""
+    doc = _require_doc()
+    return _js(doc.restart_numbering(para_id, level, start))
+
+
+@mcp.tool()
+def suppress_numbering(para_id: str) -> str:
+    """Remove list numbering from a paragraph by setting numId to 0."""
+    doc = _require_doc()
+    return _js(doc.suppress_numbering(para_id))
+
+
 # ── Entry point ─────────────────────────────────────────────────────────────
 
 

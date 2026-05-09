@@ -41,7 +41,13 @@ class TestMultilevelList:
         assert result["name"] == "MyList"
         # Verify in numbering.xml
         num_tree = doc._tree("word/numbering.xml")
-        abstract = num_tree.find(f".//{W}abstractNum")
+        abs_id = str(result["abstract_num_id"])
+        abstract = None
+        for a in num_tree.findall(f"{W}abstractNum"):
+            if a.get(f"{W}abstractNumId") == abs_id:
+                abstract = a
+                break
+        assert abstract is not None
         lvls = abstract.findall(f"{W}lvl")
         assert len(lvls) == 3
 
