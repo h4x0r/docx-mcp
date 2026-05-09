@@ -22,6 +22,7 @@ from .base import (
     _preserve,
 )
 from .bookmarks import BookmarksMixin
+from .contentcontrols import ContentControlsMixin
 from .comments import CommentsMixin
 from .compare import CompareMixin
 from .creation import CreationMixin
@@ -54,6 +55,7 @@ class DocxDocument(
     BaseMixin,
     CreationMixin,
     BookmarksMixin,
+    ContentControlsMixin,
     ReadingMixin,
     TracksMixin,
     RevisionsMixin,

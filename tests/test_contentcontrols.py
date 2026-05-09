@@ -267,25 +267,25 @@ class TestContentControls:
 
         with pytest.raises(DocxMcpError) as exc_info:
             doc.add_content_control(second_pid, "dup", "text")
-        assert exc_info.value.args[0] == ErrCode.OOXML_INVALID
+        assert exc_info.value.code == ErrCode.OOXML_INVALID
 
     def test_para_not_found_raises(self, tmp_path: Path):
         """add_content_control raises PARA_NOT_FOUND for unknown para_id."""
         doc, _ = _make_doc(tmp_path)
         with pytest.raises(DocxMcpError) as exc_info:
             doc.add_content_control("DEADBEEF", "t1", "text")
-        assert exc_info.value.args[0] == ErrCode.PARA_NOT_FOUND
+        assert exc_info.value.code == ErrCode.PARA_NOT_FOUND
 
     def test_set_value_tag_not_found_raises(self, tmp_path: Path):
         """set_content_control_value raises BOOKMARK_NOT_FOUND for missing tag."""
         doc, _ = _make_doc(tmp_path)
         with pytest.raises(DocxMcpError) as exc_info:
             doc.set_content_control_value("nonexistent", "value")
-        assert exc_info.value.args[0] == ErrCode.BOOKMARK_NOT_FOUND
+        assert exc_info.value.code == ErrCode.BOOKMARK_NOT_FOUND
 
     def test_lock_tag_not_found_raises(self, tmp_path: Path):
         """lock_content_control raises BOOKMARK_NOT_FOUND for missing tag."""
         doc, _ = _make_doc(tmp_path)
         with pytest.raises(DocxMcpError) as exc_info:
             doc.lock_content_control("nonexistent")
-        assert exc_info.value.args[0] == ErrCode.BOOKMARK_NOT_FOUND
+        assert exc_info.value.code == ErrCode.BOOKMARK_NOT_FOUND
