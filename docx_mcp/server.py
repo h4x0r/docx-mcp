@@ -841,7 +841,6 @@ def scrub_pii(
     output_path: str = "",
     entities: list[str] | None = None,
     confidence_threshold: float = 0.35,
-    redaction_marker: str = "█",
     dry_run: bool = False,
     also_sanitize_metadata: bool = True,
     redact_authors_as: str = "REDACTED",
@@ -854,14 +853,14 @@ def scrub_pii(
     Detects: PERSON, EMAIL_ADDRESS, PHONE_NUMBER, CREDIT_CARD, SSN, IP_ADDRESS,
              IBAN_CODE, US_BANK_NUMBER, US_PASSPORT, and more via Presidio.
 
-    Redacted text is replaced with black-bar runs (w:highlight val='black') so
-    the output looks like a traditional legal redaction in Word.
+    Redacted text is replaced with a solid black DrawingML rectangle — true XML
+    redaction where the original text is deleted entirely from the OOXML, not
+    merely hidden by formatting.
 
     Args:
         output_path: Destination path. Required when dry_run=False.
         entities: Presidio entity types to redact. None = all detected types.
         confidence_threshold: Presidio score floor (default 0.35).
-        redaction_marker: Character used to replace PII chars (default '█').
         dry_run: If True, detect only — return entity list, write no file.
         also_sanitize_metadata: Apply level-3 metadata sanitization (default True).
         redact_authors_as: Replacement author string for metadata pass.
@@ -870,7 +869,6 @@ def scrub_pii(
         output_path,
         entities=entities,
         confidence_threshold=confidence_threshold,
-        redaction_marker=redaction_marker,
         dry_run=dry_run,
         also_sanitize_metadata=also_sanitize_metadata,
         redact_authors_as=redact_authors_as,
