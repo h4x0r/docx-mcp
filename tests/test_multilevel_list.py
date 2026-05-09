@@ -90,9 +90,16 @@ class TestMultilevelList:
         # restart at 5
         result = doc.restart_numbering(para_id, level=0, start=5)
         assert result["start"] == 5
-        # Verify lvlOverride exists in numbering.xml
+        # Verify lvlOverride exists on the specific w:num the paragraph references
         num_tree = doc._tree("word/numbering.xml")
-        override = num_tree.find(f".//{W}lvlOverride")
+        num_id_val = num_id_el.get(f"{W}val")
+        target_num = None
+        for n in num_tree.findall(f"{W}num"):
+            if n.get(f"{W}numId") == num_id_val:
+                target_num = n
+                break
+        assert target_num is not None, f"w:num with numId={num_id_val} not found"
+        override = target_num.find(f"{W}lvlOverride")
         assert override is not None
         start_override = override.find(f"{W}startOverride")
         assert start_override is not None
@@ -128,6 +135,8 @@ class TestMultilevelList:
                 break
         assert abstract is not None
         lvl = abstract.find(f"{W}lvl")
-        pStyle = lvl.find(f"{W}pStyle")
+        pPr = lvl.find(f"{W}pPr")
+        assert pPr is not None
+        pStyle = pPr.find(f"{W}pStyle")  # inside pPr, not lvl
         assert pStyle is not None
         assert pStyle.get(f"{W}val") == "Heading 1"

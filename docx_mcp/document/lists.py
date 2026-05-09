@@ -164,7 +164,7 @@ class ListsMixin:
             # Bind to style if specified
             style_val = lvl_def.get("style")
             if style_val:
-                pStyle_el = etree.SubElement(lvl, f"{W}pStyle")
+                pStyle_el = etree.SubElement(pPr, f"{W}pStyle")
                 pStyle_el.set(f"{W}val", style_val)
 
         # Create num entry referencing abstractNum
