@@ -21,7 +21,7 @@ from __future__ import annotations
 import json
 import zipfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, call
 
 import pytest
 from lxml import etree
@@ -390,3 +390,35 @@ class TestTrueRedaction:
         assert chr(0x2588).encode("utf-8") not in xml_bytes, (
             "Block character (█) found in output XML — old visual-only redaction still active"
         )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Auto-download tests
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+class TestAutoDownload:
+    def test_oserror_triggers_download(self, monkeypatch):
+        """When model not installed, _get_analyzer calls spacy.cli.download."""
+        import docx_mcp.document.pii as pii_mod
+
+        # Reset the cached analyzer
+        original = pii_mod._analyzer
+        pii_mod._analyzer = None
+
+        calls = []
+
+        def fake_load(name):
+            if not calls:  # first call raises, second succeeds (after "download")
+                calls.append(name)
+                raise OSError("model not found")
+            return MagicMock()  # simulate loaded model
+
+        with patch("spacy.load", side_effect=fake_load), \
+             patch("spacy.cli.download") as mock_dl, \
+             patch("presidio_analyzer.AnalyzerEngine"), \
+             patch("presidio_analyzer.nlp_engine.NlpEngineProvider"):
+            pii_mod._get_analyzer()
+            mock_dl.assert_called_once_with("en_core_web_trf")
+
+        pii_mod._analyzer = original  # restore
