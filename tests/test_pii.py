@@ -233,18 +233,6 @@ class TestPiiRedaction:
         text = _doc_text(out)
         assert "The foregoing agreement is binding on all parties." in text
 
-    def test_redacted_run_has_black_highlight(self, email_docx: Path, tmp_path: Path):
-        """Runs containing redacted PII have w:highlight val='black' in their rPr."""
-        server.open_document(str(email_docx))
-        out = tmp_path / "out.docx"
-        server.scrub_pii(output_path=str(out))
-        root = _get_doc_root(out)
-        highlights = [
-            el.get(_w("val"))
-            for el in root.iter(_w("highlight"))
-        ]
-        assert "black" in highlights
-
     def test_deduplication_redacts_all_occurrences(self, duplicate_pii_docx: Path, tmp_path: Path):
         """The same email appearing in two paragraphs is redacted in both."""
         server.open_document(str(duplicate_pii_docx))

@@ -23,14 +23,22 @@ _WPS_NS = "http://schemas.microsoft.com/office/word/2010/wordprocessingShape"
 _RECT_CX = "914400"
 _RECT_CY = "228600"
 
-# Counter for unique drawing IDs within a redaction pass
-_drawing_id_counter = 0
+def _next_drawing_id(doc_tree: etree._Element, _used: set[int] | None = None) -> int:
+    """Return an ID not used by any existing wp:docPr in doc_tree."""
+    _WP = "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
+    used = set()
+    for el in doc_tree.iter(f"{{{_WP}}}docPr"):
+        try:
+            used.add(int(el.get("id", 0)))
+        except (ValueError, TypeError):
+            pass
+    if _used:
+        used.update(_used)
+    n = 1
+    while n in used:
+        n += 1
+    return n
 
-
-def _next_drawing_id() -> int:
-    global _drawing_id_counter
-    _drawing_id_counter += 1
-    return _drawing_id_counter
 
 # Lazy singleton — loading AnalyzerEngine instantiates spaCy (expensive once)
 _analyzer = None
@@ -70,14 +78,15 @@ def _make_run(text: str, rPr: etree._Element | None) -> etree._Element:
     return run
 
 
-def _make_redaction_drawing() -> etree._Element:
+def _make_redaction_drawing(doc_tree: etree._Element, _used_ids: set[int]) -> etree._Element:
     """Create a w:r containing a solid black DrawingML inline rectangle.
 
     The rectangle is a fixed size (1 inch × 0.25 inch) regardless of the
     length of the redacted text, so no information leaks via character count.
     No w:t element is produced — the original text is deleted entirely.
     """
-    drawing_id = _next_drawing_id()
+    drawing_id = _next_drawing_id(doc_tree, _used_ids)
+    _used_ids.add(drawing_id)
 
     run = etree.Element(_wt("r"))
     drawing = etree.SubElement(run, _wt("drawing"))
@@ -139,21 +148,6 @@ def _make_redaction_drawing() -> etree._Element:
     return run
 
 
-def _ensure_drawing_namespaces(doc_root: etree._Element) -> None:
-    """Add wp:, a:, and wps: namespace declarations to the document root if missing."""
-    ns_map = {
-        "wp": _WP_NS,
-        "a": _A_NS,
-        "wps": _WPS_NS,
-    }
-    # lxml exposes nsmap on the element; we need to check/add each namespace.
-    # Since lxml does not let you mutate nsmap directly, we use etree.register_namespace
-    # and rely on serialization picking them up from element usage.
-    # The namespaces are automatically declared when used on child elements —
-    # no manual root attribute manipulation needed with lxml.
-    pass  # lxml auto-declares namespaces from element QNames during serialization
-
-
 # ── Paragraph redaction ──────────────────────────────────────────────────────
 
 
@@ -190,6 +184,8 @@ def _redact_span(
     run_ranges: list[tuple[int, int, etree._Element]],
     span_start: int,
     span_end: int,
+    doc_tree: etree._Element,
+    _used_ids: set[int],
 ) -> None:
     """
     Replace the character range [span_start, span_end) in the paragraph
@@ -222,7 +218,7 @@ def _redact_span(
             run.addprevious(_make_run(before, rPr))
         if not drawing_inserted:
             # Insert exactly one black rectangle for the entire redacted span
-            run.addprevious(_make_redaction_drawing())
+            run.addprevious(_make_redaction_drawing(doc_tree, _used_ids))
             drawing_inserted = True
         if after:
             run.addprevious(_make_run(after, rPr))
@@ -362,13 +358,11 @@ class PiiMixin:
                 redaction_map[para_idx] = _merge_overlapping(spans)
 
         # ── Phase 3: redact on a deep copy of the document tree ─────────────
-        global _drawing_id_counter
-        _drawing_id_counter = 0  # reset per scrub pass for deterministic IDs
-
         doc_copy = copy.deepcopy(doc_tree)
-        _ensure_drawing_namespaces(doc_copy)
         body_copy = doc_copy.find(_wt("body"))
         copy_paragraphs = list(body_copy) if body_copy is not None else []
+
+        _used_ids: set[int] = set()
 
         for para_idx, para in enumerate(copy_paragraphs):
             if para.tag != _wt("p"):
@@ -379,7 +373,7 @@ class PiiMixin:
             full_text, run_ranges = _build_run_char_map(para)
             # Redact spans in reverse order to preserve offsets
             for span_start, span_end in reversed(redaction_map[para_idx]):
-                _redact_span(run_ranges, span_start, span_end)
+                _redact_span(run_ranges, span_start, span_end, doc_copy, _used_ids)
                 # Rebuild run_ranges after each modification (indices shift)
                 full_text, run_ranges = _build_run_char_map(para)
 
