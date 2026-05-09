@@ -1082,6 +1082,94 @@ def list_fields() -> str:
     return _js(_require_doc().list_fields())
 
 
+# ── Table of Contents ────────────────────────────────────────────────────────
+
+
+@mcp.tool()
+def generate_toc(max_level: int = 3, title: str = "Table of Contents") -> str:
+    """Generate a Table of Contents from document headings."""
+    doc = _require_doc()
+    return _js(doc.generate_toc(max_level, title))
+
+
+@mcp.tool()
+def update_toc() -> str:
+    """Regenerate ToC entries from current headings."""
+    doc = _require_doc()
+    return _js(doc.update_toc())
+
+
+@mcp.tool()
+def generate_list_of_figures() -> str:
+    """Insert a List of Figures field (requires SEQ Figure captions)."""
+    doc = _require_doc()
+    return _js(doc.generate_list_of_figures())
+
+
+@mcp.tool()
+def generate_list_of_tables() -> str:
+    """Insert a List of Tables field (requires SEQ Table captions)."""
+    doc = _require_doc()
+    return _js(doc.generate_list_of_tables())
+
+
+# ── Content Controls ────────────────────────────────────────────────────────
+
+
+@mcp.tool()
+def add_content_control(
+    para_id: str,
+    tag: str,
+    control_type: str,
+    label: str = "",
+    options: list[str] | None = None,
+    default: str = "",
+) -> str:
+    """Wrap a paragraph in an SDT content control.
+
+    Args:
+        para_id: paraId of the paragraph to wrap.
+        tag: Unique tag name for the control.
+        control_type: One of text|checkbox|dropdown|date.
+        label: Optional display label (w:alias).
+        options: List of option strings for dropdown controls.
+        default: Default display text (or date string for date controls).
+    """
+    doc = _require_doc()
+    return _js(doc.add_content_control(para_id, tag, control_type, label, options, default))
+
+
+@mcp.tool()
+def get_content_controls() -> str:
+    """List all SDT content controls in the document."""
+    doc = _require_doc()
+    return _js(doc.get_content_controls())
+
+
+@mcp.tool()
+def set_content_control_value(tag: str, value: str) -> str:
+    """Update the value/text of a content control by its tag.
+
+    Args:
+        tag: Tag name of the control to update.
+        value: New value. For checkbox: 'true'/'1' = checked, 'false'/'0' = unchecked.
+    """
+    doc = _require_doc()
+    return _js(doc.set_content_control_value(tag, value))
+
+
+@mcp.tool()
+def lock_content_control(tag: str, lock: str = "sdtLocked") -> str:
+    """Lock a content control to prevent editing.
+
+    Args:
+        tag: Tag name of the control to lock.
+        lock: Lock type — sdtLocked|contentLocked|sdtContentLocked.
+    """
+    doc = _require_doc()
+    return _js(doc.lock_content_control(tag, lock))
+
+
 # ── Entry point ─────────────────────────────────────────────────────────────
 
 

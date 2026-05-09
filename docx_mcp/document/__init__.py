@@ -22,6 +22,7 @@ from .base import (
     _preserve,
 )
 from .bookmarks import BookmarksMixin
+from .contentcontrols import ContentControlsMixin
 from .comments import CommentsMixin
 from .compare import CompareMixin
 from .creation import CreationMixin
@@ -48,12 +49,14 @@ from .tracks import TracksMixin
 from .rawparts import RawPartsMixin
 from .validation import ValidationMixin
 from .query import XPathMixin
+from .toc import TocMixin
 
 
 class DocxDocument(
     BaseMixin,
     CreationMixin,
     BookmarksMixin,
+    ContentControlsMixin,
     ReadingMixin,
     TracksMixin,
     RevisionsMixin,
@@ -79,6 +82,7 @@ class DocxDocument(
     PiiMixin,
     RawPartsMixin,
     XPathMixin,
+    TocMixin,
 ):
     """Word document editor with OOXML-level control."""
 
