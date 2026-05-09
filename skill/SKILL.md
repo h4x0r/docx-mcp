@@ -77,6 +77,122 @@ A .docx file is a ZIP archive of XML files. This server unpacks the archive, par
 | `add_table_row` | Add row to table | `table_index`, `cells` (optional), `row_idx` (optional) |
 | `delete_table_row` | Delete row with tracked changes | `table_index`, `row_index` |
 
+**Table column sizing:** Column widths are in DXA (1440 DXA = 1 inch). Page content widths:
+- A4 (11,906 DXA wide, 1" margins): **9,026 DXA** content width
+- US Letter (12,240 DXA wide, 1" margins): **9,360 DXA** content width
+
+**Header vs data cell widths must match exactly.** Even a 1 DXA difference between a header cell and its data cell causes persistent misalignment. Define column widths as constants and reuse them in every row.
+
+**Usable cell width** = column width − 240 DXA (default margins: 120 DXA each side).
+
+**Font character width reference** (avg DXA/char across a–z, A–Z, 0–9, measured from font files):
+
+Formula: `DXA/char = (advance / upm) × pt × 20`. Word `size:` = pt × 2.  
+Fitting: `chars × dxa_per_char ≤ column_width − 240` (240 = default cell margins, 120 each side).
+
+*Monospaced — all variants identical width:*
+
+| Font | 10pt | 11pt | 12pt | Notes |
+|------|------|------|------|-------|
+| PragmataPro (all variants) | 100 | 110 | 120 | Densest; exceptional Unicode coverage |
+| Cascadia Code NF | 117 | 129 | 141 | VS Code / Windows Terminal default |
+| Hack NF (all variants) | 120 | 132 | 144 | |
+| Courier New (7pt / 6pt) | ~84 / ~72 | — | — | Legacy |
+
+*Calibri (Office 2007–2023 body default):*
+
+| Variant | 10pt | 11pt | 12pt |
+|---------|------|------|------|
+| Light Italic | 99 | 109 | 119 |
+| Light | 100 | 110 | 120 |
+| Regular / Italic | 101 | 111 | 121 |
+| Bold / Bold Italic | 103 | 114 | 124 |
+
+*Aptos (Office 365/2024 default — replaced Calibri mid-2023):*
+
+| Variant | 10pt | 11pt | 12pt |
+|---------|------|------|------|
+| Light | 106 | 116 | 127 |
+| Regular / Italic | 108 | 119 | 130 |
+| Narrow Regular / Italic | 100 | 110 | 120 |
+| Narrow Bold / Bold Italic | 102–103 | 112–113 | 122–123 |
+| SemiBold | 111 | 122 | 133 |
+| Bold / Bold Italic | 113 | 124 | 136 |
+
+*Cambria (Office heading default):*
+
+| Variant | 10pt | 11pt | 12pt |
+|---------|------|------|------|
+| Italic | 105 | 116 | 126 |
+| Regular | 109 | 120 | 131 |
+| Bold Italic | 112 | 123 | 135 |
+| Bold | 116 | 128 | 139 |
+
+*Arial:*
+
+| Variant | 10pt | 11pt | 12pt |
+|---------|------|------|------|
+| Narrow Regular / Italic | 95 | 104 | 114 |
+| Narrow Bold / Bold Italic | 99 | 109 | 119 |
+| Regular / Italic | 116 | 127 | 139 |
+| Bold / Bold Italic | 121 | 133 | 145 |
+| Black | 137 | 151 | 165 |
+
+*Times New Roman:*
+
+| Variant | 10pt | 11pt | 12pt |
+|---------|------|------|------|
+| Italic | 106 | 117 | 128 |
+| Regular / Bold Italic | 111 | 122 | 133 |
+| Bold | 116 | 128 | 140 |
+
+*Verdana (widest — screen-optimised):*
+
+| Variant | 10pt | 11pt | 12pt |
+|---------|------|------|------|
+| Regular / Italic | 125 | 138 | 150 |
+| Bold / Bold Italic | 141 | 155 | 169 |
+
+*Georgia:*
+
+| Variant | 10pt | 11pt | 12pt |
+|---------|------|------|------|
+| Regular | 117 | 128 | 140 |
+| Italic | 118 | 129 | 141 |
+| Bold | 134 | 147 | 160 |
+| Bold Italic | 135 | 149 | 162 |
+
+*Equity B (Matthew Butterick):*
+
+| Variant | 10pt | 11pt | 12pt | Notes |
+|---------|------|------|------|-------|
+| Italic | 106 | 117 | 128 | |
+| Regular | 110 | 121 | 132 | |
+| Bold Italic | 113 | 124 | 135 | |
+| Bold | 116 | 127 | 139 | |
+| Caps Regular | 131 | 144 | 157 | lowercase = small caps |
+| Caps Bold | 137 | 151 | 165 | lowercase = small caps |
+
+*CJK — full-width Han/Hangul = exactly 1 em = pt × 20 DXA:*
+
+| Font | Script | Full-width (10/11/12pt) | Half-width ASCII |
+|------|--------|------------------------|-----------------|
+| SimSun (宋体) | SC | 200 / 220 / 240 | 100 / 110 / 120 |
+| Microsoft YaHei (微软雅黑) | SC | 200 / 220 / 240 | 117 / 129 / 141 |
+| PMingLiU (新細明體) | TC | 200 / 220 / 240 | 100 / 110 / 120 |
+| MS JhengHei (微軟正黑體) | TC | 200 / 220 / 240 | 116 / 128 / 139 |
+| MS PGothic | JP | 185 / 204 / 222 | 100 / 110 / 120 |
+| Yu Gothic | JP | 200 / 220 / 240 | 111 / 122 / 133 |
+| Malgun Gothic (맑은 고딕) | KR | 200 / 220 / 240 | 110 / 121 / 132 |
+| Batang (바탕) | KR | 200 / 220 / 240 | 119 / 131 / 143 |
+
+*Other scripts:*
+
+| Font | Script | 10pt | 11pt | 12pt |
+|------|--------|------|------|------|
+| Mangal | Devanagari (Hindi) | 172 | 190 | 207 |
+| Cordia New | Thai | 68 | 74 | 81 |
+
 ### Lists
 
 | Tool | Purpose | Key args |
@@ -224,6 +340,12 @@ The `validate_paraids()` tool checks all of these. Run it after any structural e
 
 The `validate_footnotes()` tool checks reference/definition matching. Always run after adding footnotes.
 
+**Required styles:** The document template must contain `FootnoteReference` (character style, superscript) and `FootnoteText` (paragraph style). Missing styles cause silent rendering failures. Check with `get_styles()` before adding footnotes to an unfamiliar template.
+
+**Citing the same source multiple times:** You cannot reference the same footnote ID from two places. Call `add_footnote()` once per citation point — N citations of the same source = N separate `add_footnote()` calls, each with its own ID. Never reuse a footnote ID across paragraphs.
+
+**Multi-source citations at a single point:** When multiple sources support one statement, make successive `add_footnote()` calls at the same paragraph. They appear as consecutive superscripts (e.g., ¹²³).
+
 **Word Recovery Warning:** When Word recovers/repairs a file, it renumbers ALL footnotes sequentially by document position, not by original ID. After any Word recovery, re-examine footnotes before further edits.
 
 ### Non-Breaking Spaces
@@ -261,6 +383,16 @@ The docx-mcp tools accept Unicode text directly — pass the actual characters, 
 
 The OOXML schema requires a specific element order: `<w:pStyle>`, `<w:numPr>`, `<w:spacing>`, `<w:ind>`, `<w:jc>`, `<w:rPr>` last. Out-of-order elements cause validation warnings and may trigger Word recovery.
 
+### Element Order in `<w:rPr>`
+
+Child elements inside `w:rPr` also have a required order. Wrong order = "unreadable content" in Word:
+
+```
+w:rStyle → w:rFonts → w:b/w:bCs → w:i/w:iCs → w:color → w:sz/w:szCs → w:u → w:vertAlign
+```
+
+Common mistake: placing `w:u` before `w:sz`, or `w:color` after `w:sz`.
+
 ### Heading Numbering
 
 **NEVER embed literal section numbers in heading text** (e.g., "1.1 Background"). Heading numbers must come from Word's multilevel list numbering system. If you need to insert a heading via `insert_text()`, insert only the heading text — the numbering comes from the document's styles.
@@ -284,6 +416,14 @@ Markdown doesn't have real footnotes — `[^1]` syntax is a convention that some
 ### Superscript Numbers Concatenate
 
 When extracting text from paragraphs that contain footnote references, the superscript reference numbers are invisible in the XML text but adjacent characters concatenate. Example: "File #8" followed by superscript footnote "73" extracts as "File #873". Account for this when using `search_text()` with regex patterns on footnoted text.
+
+### Template List Indents May Override Your Content
+
+A document template's numbering definition often specifies its own indents. When inserting list content via `add_list()`, verify the rendered indent matches expectations — the template's `w:abstractNum` definition takes precedence. If indents look wrong, the fix requires editing the numbering XML directly (outside docx-mcp's current tool set) or applying explicit paragraph indent overrides.
+
+### Footnote URLs
+
+`add_footnote()` accepts plain text. To include a clickable URL in a footnote, insert the URL as plain text — it will be recognised as a hyperlink by modern Word and most readers. Full hyperlink markup (with relationship IDs) requires direct OOXML editing beyond the MCP tool set.
 
 ## Audit Checklist
 
