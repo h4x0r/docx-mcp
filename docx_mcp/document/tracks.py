@@ -23,26 +23,55 @@ from .base import W, W14, _now_iso, _preserve
 
 # ── Normalisation ─────────────────────────────────────────────────────────────
 
-# All replacements are single characters (1:1 mapping) so slot indices stay
-# aligned between the original text and the pre-normalised text.
+# Values that are empty strings are REMOVED (invisible chars — no rendered glyph).
+# Values that are non-empty are SUBSTITUTED (typographic chars → ASCII equivalent).
 _PRENORM_MAP: dict[str, str] = {
+    # Typographic quotes → ASCII equivalents (1:1 substitution)
     "\u2018": "'", "\u2019": "'",  # left / right single quotation mark
     "\u201a": "'", "\u201b": "'",  # single low-9 / high-reversed-9
     "\u201c": '"', "\u201d": '"',  # left / right double quotation mark
     "\u201e": '"', "\u201f": '"',  # double low-9 / high-reversed-9
+    # Dashes → hyphen (1:1 substitution)
     "\u2014": "-",                  # em dash
     "\u2013": "-",                  # en dash
     "\u2011": "-",                  # non-breaking hyphen
-    "\u00a0": " ",                  # non-breaking space
-    "\u00ad": " ",                  # soft hyphen → space (keeps 1:1)
-    "\u200b": " ",                  # zero-width space
-    "\u2060": " ",                  # word joiner
+    # Non-breaking / special spaces → regular space (1:1 substitution)
+    "\u00a0": " ",                  # non-breaking space (NBSP)
+    "\u2007": " ",                  # figure space
+    "\u2009": " ",                  # thin space
+    "\u200a": " ",                  # hair space
+    "\u202f": " ",                  # narrow no-break space
+    # Invisible characters → removed (empty string)
+    # These render as nothing; queries must not include them.
+    "\u00ad": "",                   # soft hyphen (line-break hint)
+    "\u200b": "",                   # zero-width space
+    "\u200c": "",                   # zero-width non-joiner
+    "\u200d": "",                   # zero-width joiner
+    "\u2060": "",                   # word joiner
+    "\ufeff": "",                   # BOM / zero-width no-break space
 }
 
 
 def _pre_normalize(text: str) -> str:
-    """Replace typographic characters with ASCII equivalents (1:1 mapping)."""
+    """Replace/remove typographic characters.  For context strings (no idx needed)."""
     return "".join(_PRENORM_MAP.get(ch, ch) for ch in text)
+
+
+def _prenorm_with_idx(text: str) -> tuple[str, list[int]]:
+    """Pre-normalize and return an index map back to the original string.
+
+    ``prenorm_to_orig[i]`` is the index in *text* of the character that
+    produced position *i* in the returned pre-normalized string.  Characters
+    that map to the empty string are dropped and do not appear in the map.
+    """
+    result: list[str] = []
+    prenorm_to_orig: list[int] = []
+    for i, ch in enumerate(text):
+        replacement = _PRENORM_MAP.get(ch, ch)
+        for c in replacement:           # empty string → zero iterations (char dropped)
+            result.append(c)
+            prenorm_to_orig.append(i)
+    return "".join(result), prenorm_to_orig
 
 
 def _normalize_ws(text: str) -> tuple[str, list[int]]:
@@ -67,9 +96,23 @@ def _normalize_ws(text: str) -> tuple[str, list[int]]:
     return "".join(result), orig_idx
 
 
-def _norm(text: str) -> tuple[str, list[int]]:
-    """Pre-normalize then whitespace-normalize.  Returns (norm_text, orig_idx)."""
-    return _normalize_ws(_pre_normalize(text))
+def _norm(
+    text: str, *, ignore_case: bool = False
+) -> tuple[str, list[int]]:
+    """Pre-normalize, whitespace-collapse, and optionally casefold.
+
+    Returns ``(norm_text, orig_idx)`` where ``orig_idx[i]`` is the index in
+    the *original* (un-normalized) *text* that corresponds to position *i* in
+    *norm_text*.  The composition is safe even when invisible characters are
+    removed by pre-normalization.
+    """
+    prenorm, prenorm_to_orig = _prenorm_with_idx(text)
+    ws_norm, prenorm_idx = _normalize_ws(prenorm)
+    # Compose: norm position i → prenorm position prenorm_idx[i] → orig position
+    orig_idx = [prenorm_to_orig[j] for j in prenorm_idx]
+    if ignore_case:
+        ws_norm = ws_norm.casefold()
+    return ws_norm, orig_idx
 
 
 # ── Accepted-view flattening ───────────────────────────────────────────────────
@@ -157,14 +200,14 @@ def _find_in_norm(
     return results
 
 
-def _doc_norm_count(doc: etree._Element, norm_find: str) -> int:
+def _doc_norm_count(doc: etree._Element, norm_find: str, *, ignore_case: bool = False) -> int:
     """Count how many paragraphs in *doc* contain *norm_find* (in accepted view)."""
     count = 0
     for p in doc.iter(f"{W}p"):
         slots = _flatten_para(p)
         if not slots:
             continue
-        nt, _ = _norm("".join(s.char for s in slots))
+        nt, _ = _norm("".join(s.char for s in slots), ignore_case=ignore_case)
         if norm_find in nt:
             count += 1
     return count
@@ -176,6 +219,8 @@ def _resolve(
     find: str,
     context_before: str,
     context_after: str,
+    *,
+    ignore_case: bool = False,
 ) -> tuple[int, int, list[_Slot]]:
     """Locate *find* in *para* using cascading context anchoring.
 
@@ -192,11 +237,14 @@ def _resolve(
     """
     slots = _flatten_para(para)
     accepted = "".join(s.char for s in slots)
-    norm_text, orig_idx = _norm(accepted)
+    norm_text, orig_idx = _norm(accepted, ignore_case=ignore_case)
 
-    norm_find, _ = _norm(find)
+    norm_find, _ = _norm(find, ignore_case=ignore_case)
     norm_before = _normalize_ws(_pre_normalize(context_before))[0]
     norm_after = _normalize_ws(_pre_normalize(context_after))[0]
+    if ignore_case:
+        norm_before = norm_before.casefold()
+        norm_after = norm_after.casefold()
 
     if not norm_find:
         raise ValueError("find text is empty")
@@ -232,7 +280,7 @@ def _resolve(
                 "provide context_before or context_after"
             )
         # Unique in this paragraph — verify document-global uniqueness
-        if _doc_norm_count(doc, norm_find) > 1:
+        if _doc_norm_count(doc, norm_find, ignore_case=ignore_case) > 1:
             raise ValueError(
                 f"Ambiguous: {find!r} appears in multiple paragraphs; "
                 "provide context_before or context_after"
@@ -405,6 +453,7 @@ class TracksMixin:
         author: str = "Claude",
         context_before: str = "",
         context_after: str = "",
+        ignore_case: bool = False,
     ) -> dict:
         """Insert *text* with ``<w:ins>`` tracked-changes markup.
 
@@ -426,7 +475,9 @@ class TracksMixin:
 
         # ── Context-anchored insertion ─────────────────────────────────────
         if context_before:
-            slot_s, slot_e, slots = _resolve(doc, para, context_before, "", context_after)
+            slot_s, slot_e, slots = _resolve(
+                doc, para, context_before, "", context_after, ignore_case=ignore_case
+            )
             last = slots[slot_e - 1]
 
             # Build w:ins with inherited rPr
@@ -528,18 +579,9 @@ class TracksMixin:
         author: str = "Claude",
         context_before: str = "",
         context_after: str = "",
+        ignore_case: bool = False,
     ) -> dict:
-        """Mark *text* as deleted with ``<w:del>`` tracked-changes markup.
-
-        When *context_before* or *context_after* is provided the target text is
-        located via cascading context-anchor search with pre-normalisation
-        (smart quotes, NBSP, em-dash → ASCII) and whitespace collapsing.
-
-        The search operates on the *accepted view* of the paragraph so existing
-        ``<w:ins>`` content is visible and ``<w:del>`` content is invisible.
-
-        Supports deletion across multiple ``<w:r>`` formatting boundaries.
-        """
+        """Mark *text* as deleted with ``<w:del>`` tracked-changes markup."""
         doc = self._require("word/document.xml")
         para = self._find_para(doc, para_id)
         if para is None:
@@ -548,7 +590,9 @@ class TracksMixin:
         cid = self._next_markup_id(doc)
         now = _now_iso()
 
-        slot_s, slot_e, slots = _resolve(doc, para, text, context_before, context_after)
+        slot_s, slot_e, slots = _resolve(
+            doc, para, text, context_before, context_after, ignore_case=ignore_case
+        )
         _apply_deletion(para, slot_s, slot_e, slots, cid, author, now)
         self._mark("word/document.xml")
         return {"change_id": cid, "type": "deletion", "author": author, "date": now}
@@ -564,6 +608,7 @@ class TracksMixin:
         author: str = "Claude",
         context_before: str = "",
         context_after: str = "",
+        ignore_case: bool = False,
     ) -> dict:
         """Replace *find* with *replace* using tracked changes (del + ins).
 
@@ -578,7 +623,9 @@ class TracksMixin:
         if para is None:
             raise ValueError(f"Paragraph '{para_id}' not found")
 
-        slot_s, slot_e, slots = _resolve(doc, para, find, context_before, context_after)
+        slot_s, slot_e, slots = _resolve(
+            doc, para, find, context_before, context_after, ignore_case=ignore_case
+        )
         actual_found = "".join(slots[i].char for i in range(slot_s, slot_e))
 
         leading, del_text, ins_text, _trailing = _collapse_diff(actual_found, replace)
