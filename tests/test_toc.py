@@ -45,7 +45,8 @@ def _get_instr_texts(doc: DocxDocument) -> list[str]:
 
 
 def _get_toc_entry_styles(doc: DocxDocument) -> list[str]:
-    """Return pStyle values of paragraphs that have a TOC* style."""
+    """Return pStyle values of paragraphs that have a TOC N entry style (TOC1, TOC2, TOC3)."""
+    import re
     tree = doc._tree("word/document.xml")
     styles = []
     for p in tree.iter(f"{W}p"):
@@ -56,7 +57,7 @@ def _get_toc_entry_styles(doc: DocxDocument) -> list[str]:
         if pStyle is None:
             continue
         val = pStyle.get(f"{W}val", "")
-        if val.startswith("TOC"):
+        if re.match(r"^TOC\d+$", val):
             styles.append(val)
     return styles
 

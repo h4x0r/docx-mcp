@@ -1082,6 +1082,37 @@ def list_fields() -> str:
     return _js(_require_doc().list_fields())
 
 
+# ── Table of Contents ────────────────────────────────────────────────────────
+
+
+@mcp.tool()
+def generate_toc(max_level: int = 3, title: str = "Table of Contents") -> str:
+    """Generate a Table of Contents from document headings."""
+    doc = _require_doc()
+    return _js(doc.generate_toc(max_level, title))
+
+
+@mcp.tool()
+def update_toc() -> str:
+    """Regenerate ToC entries from current headings."""
+    doc = _require_doc()
+    return _js(doc.update_toc())
+
+
+@mcp.tool()
+def generate_list_of_figures() -> str:
+    """Insert a List of Figures field (requires SEQ Figure captions)."""
+    doc = _require_doc()
+    return _js(doc.generate_list_of_figures())
+
+
+@mcp.tool()
+def generate_list_of_tables() -> str:
+    """Insert a List of Tables field (requires SEQ Table captions)."""
+    doc = _require_doc()
+    return _js(doc.generate_list_of_tables())
+
+
 # ── Content Controls ────────────────────────────────────────────────────────
 
 
