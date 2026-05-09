@@ -91,5 +91,4 @@ class TestTableImprovements:
         # Parse both and compare data
         orig_rows = list(csv.reader(io.StringIO(csv_input)))
         rt_rows = list(csv.reader(io.StringIO(roundtrip["csv"])))
-        assert len(rt_rows) == len(orig_rows)
-        assert rt_rows[0] == orig_rows[0]  # header
+        assert rt_rows == orig_rows  # all rows: header + data

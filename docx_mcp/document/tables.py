@@ -424,7 +424,21 @@ class TablesMixin:
             col_count = len(grid_cols)
         else:
             rows_els = tbl.findall(f"{W}tr")
-            col_count = len(rows_els[0].findall(f"{W}tc")) if rows_els else 0
+            if rows_els:
+                first_row_cells = rows_els[0].findall(f"{W}tc")
+                col_count = 0
+                for tc in first_row_cells:
+                    tcPr = tc.find(f"{W}tcPr")
+                    grid_span = tcPr.find(f"{W}gridSpan") if tcPr is not None else None
+                    if grid_span is not None:
+                        try:
+                            col_count += int(grid_span.get(f"{W}val", "1"))
+                        except ValueError:
+                            col_count += 1
+                    else:
+                        col_count += 1
+            else:
+                col_count = 0
 
         if len(widths_cm) != col_count:
             raise ValueError(
