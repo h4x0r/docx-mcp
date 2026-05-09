@@ -847,8 +847,7 @@ def scrub_pii(
 ) -> str:
     """Detect and permanently redact PII from the open document using Presidio + spaCy NER.
 
-    Requires: pip install presidio-analyzer presidio-anonymizer
-              python -m spacy download en_core_web_lg
+    NER model (en_core_web_trf, ~430MB) is downloaded automatically on first use.
 
     Detects: PERSON, EMAIL_ADDRESS, PHONE_NUMBER, CREDIT_CARD, SSN, IP_ADDRESS,
              IBAN_CODE, US_BANK_NUMBER, US_PASSPORT, and more via Presidio.

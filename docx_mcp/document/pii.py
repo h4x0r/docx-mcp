@@ -41,22 +41,47 @@ def _next_drawing_id(doc_tree: etree._Element, _used: set[int] | None = None) ->
 
 
 # Lazy singleton — loading AnalyzerEngine instantiates spaCy (expensive once)
-_analyzer = None
+_analyzer = None  # lazy-loaded on first scrub_pii call
+
+_MODEL_NAME = "en_core_web_trf"
 
 
 def _get_analyzer():
+    """Lazy-load Presidio AnalyzerEngine with en_core_web_trf.
+
+    On first call, downloads en_core_web_trf (~430MB) if not already installed.
+    Download is one-time; cached in the spaCy data directory.
+    """
     global _analyzer
-    if _analyzer is None:
-        try:
-            from presidio_analyzer import AnalyzerEngine
-        except ImportError as exc:
-            raise ImportError(
-                "PII scrubbing requires presidio-analyzer and a spaCy model. "
-                "Install with:\n"
-                "  pip install presidio-analyzer presidio-anonymizer\n"
-                "  python -m spacy download en_core_web_lg"
-            ) from exc
-        _analyzer = AnalyzerEngine()
+    if _analyzer is not None:
+        return _analyzer
+
+    import spacy
+    from presidio_analyzer import AnalyzerEngine
+    from presidio_analyzer.nlp_engine import NlpEngineProvider
+
+    # Auto-download the transformer model on first use if not installed
+    try:
+        spacy.load(_MODEL_NAME)
+    except OSError:
+        import sys
+        print(
+            f"[docx-mcp] Downloading {_MODEL_NAME} NER model (~430MB, one-time)...",
+            file=sys.stderr,
+        )
+        from spacy.cli import download as _spacy_download
+        _spacy_download(_MODEL_NAME)
+
+    nlp_config = {
+        "nlp_engine_name": "spacy",
+        "models": [{"lang_code": "en", "model_name": _MODEL_NAME}],
+    }
+    provider = NlpEngineProvider(nlp_configuration=nlp_config)
+    nlp_engine = provider.create_engine()
+    _analyzer = AnalyzerEngine(
+        nlp_engine=nlp_engine,
+        supported_languages=["en"],
+    )
     return _analyzer
 
 
