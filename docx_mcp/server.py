@@ -959,6 +959,33 @@ def xpath_query(xpath: str, part: str = "word/document.xml") -> str:
     return _js(_require_doc().xpath_query(xpath, part))
 
 
+# ── Bookmarks ───────────────────────────────────────────────────────────────
+
+
+@mcp.tool()
+def list_bookmarks() -> str:
+    """List all bookmarks in the document."""
+    return _js(_require_doc().list_bookmarks())
+
+
+@mcp.tool()
+def add_bookmark(para_id: str, name: str) -> str:
+    """Add a named bookmark wrapping the specified paragraph."""
+    return _js(_require_doc().add_bookmark(para_id, name))
+
+
+@mcp.tool()
+def remove_bookmark(name: str) -> str:
+    """Remove a bookmark by name (keeps paragraph content)."""
+    return _js(_require_doc().remove_bookmark(name))
+
+
+@mcp.tool()
+def get_bookmarked_text(name: str) -> str:
+    """Get the text content within a named bookmark."""
+    return _js(_require_doc().get_bookmarked_text(name))
+
+
 # ── Entry point ─────────────────────────────────────────────────────────────
 
 

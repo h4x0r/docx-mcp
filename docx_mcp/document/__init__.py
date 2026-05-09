@@ -21,6 +21,7 @@ from .base import (
     _now_iso,
     _preserve,
 )
+from .bookmarks import BookmarksMixin
 from .comments import CommentsMixin
 from .compare import CompareMixin
 from .creation import CreationMixin
@@ -50,6 +51,7 @@ from .query import XPathMixin
 class DocxDocument(
     BaseMixin,
     CreationMixin,
+    BookmarksMixin,
     ReadingMixin,
     TracksMixin,
     RevisionsMixin,
