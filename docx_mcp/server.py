@@ -947,6 +947,18 @@ def write_part(part_path: str, xml: str) -> str:
     return _js(_require_doc().write_part(part_path, xml))
 
 
+@mcp.tool()
+def xpath_query(xpath: str, part: str = "word/document.xml") -> str:
+    """Run XPath against any DOCX part. Pre-bound namespaces: w, w14, r, wp, a, mc.
+
+    Examples:
+      xpath="//w:p" — all paragraphs
+      xpath="//w:t/text()" — all text content
+      xpath="//w:p[w:pPr/w:pStyle/@w:val='Heading1']" — Heading 1 paragraphs
+    """
+    return _js(_require_doc().xpath_query(xpath, part))
+
+
 # ── Entry point ─────────────────────────────────────────────────────────────
 
 

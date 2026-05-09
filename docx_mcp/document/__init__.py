@@ -44,6 +44,7 @@ from .revisions import RevisionsMixin
 from .tracks import TracksMixin
 from .rawparts import RawPartsMixin
 from .validation import ValidationMixin
+from .query import XPathMixin
 
 
 class DocxDocument(
@@ -71,6 +72,7 @@ class DocxDocument(
     CompareMixin,
     PiiMixin,
     RawPartsMixin,
+    XPathMixin,
 ):
     """Word document editor with OOXML-level control."""
 
