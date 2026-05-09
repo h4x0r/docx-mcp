@@ -385,6 +385,21 @@ def insert_image(
     )
 
 
+@mcp.tool()
+def insert_floating_image(
+    para_id: str,
+    image_path: str,
+    width_cm: float,
+    height_cm: float,
+    h_pos: float = 0.0,
+    v_pos: float = 0.0,
+    wrap: str = "square",
+) -> str:
+    """Insert a floating (anchored) image. wrap: square|topbottom|none."""
+    doc = _require_doc()
+    return _js(doc.insert_floating_image(para_id, image_path, width_cm, height_cm, h_pos, v_pos, wrap))
+
+
 # ── Endnotes ───────────────────────────────────────────────────────────────
 
 
