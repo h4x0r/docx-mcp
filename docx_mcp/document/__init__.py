@@ -26,6 +26,7 @@ from .comments import CommentsMixin
 from .compare import CompareMixin
 from .creation import CreationMixin
 from .endnotes import EndnotesMixin
+from .fields import FieldsMixin
 from .footnotes import FootnotesMixin
 from .formatting import FormattingMixin
 from .headers_footers import HeadersFootersMixin
@@ -65,6 +66,7 @@ class DocxDocument(
     HeadersFootersMixin,
     ListsMixin,
     PropertiesMixin,
+    FieldsMixin,
     HyperlinksMixin,
     ImagesMixin,
     EndnotesMixin,

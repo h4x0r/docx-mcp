@@ -1052,6 +1052,36 @@ def update_hyperlink(r_id: str, new_url: str) -> str:
     return _js(_require_doc().update_hyperlink(r_id, new_url))
 
 
+# ── Fields ──────────────────────────────────────────────────────────────────
+
+
+@mcp.tool()
+def add_field(para_id: str, field_code: str, cached_value: str = "") -> str:
+    """Insert a Word field at end of paragraph.
+
+    Common field codes: PAGE, NUMPAGES, DATE, SEQ Figure, REF MyBookmark,
+    STYLEREF Heading.
+
+    Args:
+        para_id: w14:paraId of the target paragraph.
+        field_code: The field instruction text (e.g. "PAGE").
+        cached_value: Optional display text cached in the document.
+    """
+    return _js(_require_doc().add_field(para_id, field_code, cached_value))
+
+
+@mcp.tool()
+def update_fields() -> str:
+    """Mark all fields as dirty so Word recalculates on open."""
+    return _js(_require_doc().update_fields())
+
+
+@mcp.tool()
+def list_fields() -> str:
+    """List all fields in the document with their codes and cached values."""
+    return _js(_require_doc().list_fields())
+
+
 # ── Entry point ─────────────────────────────────────────────────────────────
 
 
