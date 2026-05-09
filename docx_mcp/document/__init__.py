@@ -29,6 +29,7 @@ from .endnotes import EndnotesMixin
 from .footnotes import FootnotesMixin
 from .formatting import FormattingMixin
 from .headers_footers import HeadersFootersMixin
+from .hyperlinks import HyperlinksMixin
 from .images import ImagesMixin
 from .lists import ListsMixin
 from .merge import MergeMixin
@@ -64,6 +65,7 @@ class DocxDocument(
     HeadersFootersMixin,
     ListsMixin,
     PropertiesMixin,
+    HyperlinksMixin,
     ImagesMixin,
     EndnotesMixin,
     SectionsMixin,

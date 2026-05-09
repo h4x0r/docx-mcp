@@ -986,6 +986,72 @@ def get_bookmarked_text(name: str) -> str:
     return _js(_require_doc().get_bookmarked_text(name))
 
 
+# ── Hyperlinks ──────────────────────────────────────────────────────────────
+
+
+@mcp.tool()
+def list_hyperlinks() -> str:
+    """List all hyperlinks in the document.
+
+    Returns a list of dicts with keys: id, url_or_anchor, text, para_id, type.
+    type is "external" (r:id based) or "internal" (w:anchor based).
+    """
+    return _js(_require_doc().list_hyperlinks())
+
+
+@mcp.tool()
+def add_hyperlink(para_id: str, text: str, url: str) -> str:
+    """Append an external hyperlink at the end of a paragraph.
+
+    Creates a relationship entry in word/_rels/document.xml.rels and a
+    w:hyperlink element with a Hyperlink-styled run in word/document.xml.
+
+    Args:
+        para_id: w14:paraId of the target paragraph.
+        text: Display text for the hyperlink.
+        url: The URL the hyperlink points to.
+    """
+    return _js(_require_doc().add_hyperlink(para_id, text, url))
+
+
+@mcp.tool()
+def add_internal_link(para_id: str, text: str, bookmark: str) -> str:
+    """Append an internal anchor hyperlink (w:anchor) at the end of a paragraph.
+
+    Internal links reference bookmarks by name and do NOT add a relationship.
+
+    Args:
+        para_id: w14:paraId of the target paragraph.
+        text: Display text for the hyperlink.
+        bookmark: Name of the bookmark to link to.
+    """
+    return _js(_require_doc().add_internal_link(para_id, text, bookmark))
+
+
+@mcp.tool()
+def remove_hyperlink(para_id: str, url_or_anchor: str) -> str:
+    """Remove a hyperlink wrapper, preserving the text runs inside.
+
+    The paragraph text remains; only the w:hyperlink element is unwrapped.
+
+    Args:
+        para_id: w14:paraId of the paragraph containing the hyperlink.
+        url_or_anchor: URL (for external) or bookmark name (for internal) to match.
+    """
+    return _js(_require_doc().remove_hyperlink(para_id, url_or_anchor))
+
+
+@mcp.tool()
+def update_hyperlink(r_id: str, new_url: str) -> str:
+    """Update the target URL of an existing external hyperlink relationship.
+
+    Args:
+        r_id: The relationship ID (e.g. "rId7") to update.
+        new_url: The new target URL.
+    """
+    return _js(_require_doc().update_hyperlink(r_id, new_url))
+
+
 # ── Entry point ─────────────────────────────────────────────────────────────
 
 
