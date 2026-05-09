@@ -3,12 +3,8 @@ from __future__ import annotations
 
 from lxml import etree
 
-from .base import W, W14, _preserve
+from .base import W, W14, NSMAP, _preserve
 from .errors import DocxMcpError, ErrCode
-
-# W14 namespace URI (without braces) for element creation
-_W14_URI = "http://schemas.microsoft.com/office/word/2010/wordml"
-_W_URI = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 
 _TRUTHY = {"true", "1", "yes", "on"}
 
@@ -38,11 +34,11 @@ def _make_sdt(
     if control_type == "checkbox":
         checkbox_el = etree.SubElement(
             sdtPr,
-            f"{{{_W14_URI}}}checkbox",
-            nsmap={"w14": _W14_URI},
+            f"{W14}checkbox",
+            nsmap={"w14": NSMAP["w14"]},
         )
-        checked_el = etree.SubElement(checkbox_el, f"{{{_W14_URI}}}checked")
-        checked_el.set(f"{{{_W14_URI}}}val", "0")
+        checked_el = etree.SubElement(checkbox_el, f"{W14}checked")
+        checked_el.set(f"{W14}val", "0")
 
     elif control_type == "dropdown":
         ddl = etree.SubElement(sdtPr, f"{W}dropDownList")
@@ -53,7 +49,9 @@ def _make_sdt(
 
     elif control_type == "date":
         date_el = etree.SubElement(sdtPr, f"{W}date")
-        date_el.set(f"{W}fullDate", "2024-01-01T00:00:00Z")
+        if default:
+            full_date = default if "T" in default else f"{default}T00:00:00Z"
+            date_el.set(f"{W}fullDate", full_date)
         date_fmt = etree.SubElement(date_el, f"{W}dateFormat")
         date_fmt.set(f"{W}val", "MMMM d, yyyy")
 
@@ -80,7 +78,7 @@ def _find_sdt_by_tag(doc: etree._Element, tag: str) -> etree._Element | None:
 
 
 def _sdt_type(sdtPr: etree._Element) -> str:
-    if sdtPr.find(f"{{{_W14_URI}}}checkbox") is not None:
+    if sdtPr.find(f"{W14}checkbox") is not None:
         return "checkbox"
     if sdtPr.find(f"{W}dropDownList") is not None:
         return "dropdown"
@@ -100,9 +98,9 @@ def _sdt_value(sdt: etree._Element, ctrl_type: str) -> str:
     if ctrl_type == "checkbox":
         sdtPr = sdt.find(f"{W}sdtPr")
         if sdtPr is not None:
-            checked_el = sdtPr.find(f".//{{{_W14_URI}}}checked")
+            checked_el = sdtPr.find(f".//{W14}checked")
             if checked_el is not None:
-                return "true" if checked_el.get(f"{{{_W14_URI}}}val") == "1" else "false"
+                return "true" if checked_el.get(f"{W14}val") == "1" else "false"
     return text
 
 
@@ -215,11 +213,13 @@ class ContentControlsMixin:
             checked = value.lower() in _TRUTHY
             # Update w14:checked/@w14:val
             if sdtPr is not None:
-                checked_el = sdtPr.find(f".//{{{_W14_URI}}}checked")
+                checked_el = sdtPr.find(f".//{W14}checked")
                 if checked_el is not None:
-                    checked_el.set(f"{{{_W14_URI}}}val", "1" if checked else "0")
+                    checked_el.set(f"{W14}val", "1" if checked else "0")
             display = "☑" if checked else "☐"
             self._sdt_set_text(sdtContent, display)
+            self._mark("word/document.xml")  # type: ignore[attr-defined]
+            return {"tag": tag, "value": "true" if checked else "false"}
         else:
             self._sdt_set_text(sdtContent, value)
 
@@ -243,7 +243,7 @@ class ContentControlsMixin:
 
         sdtPr = sdt.find(f"{W}sdtPr")
         if sdtPr is None:
-            sdtPr = etree.SubElement(sdt, f"{W}sdtPr")
+            sdtPr = etree.Element(f"{W}sdtPr")
             sdt.insert(0, sdtPr)
 
         # Add or replace w:lock

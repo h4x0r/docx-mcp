@@ -9,8 +9,6 @@ from lxml import etree
 from docx_mcp.document import DocxDocument, W, W14
 from docx_mcp.document.errors import DocxMcpError, ErrCode
 
-_W14_NS = "http://schemas.microsoft.com/office/word/2010/wordml"
-
 
 def _make_doc(tmp_path: Path) -> tuple[DocxDocument, str]:
     """Create a fresh document and return (doc, first_para_id)."""
@@ -53,7 +51,7 @@ class TestContentControls:
         assert alias_el.get(f"{W}val") == "Accept Terms"
 
         # w14:checkbox
-        checkbox_el = sdtPr.find(f"{{{_W14_NS}}}checkbox")
+        checkbox_el = sdtPr.find(f"{W14}checkbox")
         assert checkbox_el is not None
 
         # sdtContent contains the paragraph with default unchecked char
@@ -163,9 +161,9 @@ class TestContentControls:
         tree2 = doc2._tree("word/document.xml")
         sdt2 = tree2.find(f".//{W}sdt")
         sdtPr2 = sdt2.find(f"{W}sdtPr")
-        checked_el = sdtPr2.find(f".//{{{_W14_NS}}}checked")
+        checked_el = sdtPr2.find(f".//{W14}checked")
         assert checked_el is not None
-        assert checked_el.get(f"{{{_W14_NS}}}val") == "1"
+        assert checked_el.get(f"{W14}val") == "1"
         sdtContent2 = sdt2.find(f"{W}sdtContent")
         text2 = "".join(t.text for t in sdtContent2.iter(f"{W}t") if t.text)
         assert text2 == "☑"
