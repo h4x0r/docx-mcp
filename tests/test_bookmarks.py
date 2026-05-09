@@ -155,19 +155,18 @@ class TestRemoveBookmark:
 
     def test_both_start_and_end_removed(self, tmp_path: Path, test_docx: Path):
         """Both bookmarkStart and bookmarkEnd are gone after remove."""
-        from lxml import etree
         doc = _open(tmp_path, test_docx)
-        doc.add_bookmark("00000002", "cleanup_test")
+        result = doc.add_bookmark("00000002", "cleanup_test")
+        bm_id = str(result["id"])
         doc.remove_bookmark("cleanup_test")
         W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
         tree = doc._require("word/document.xml")
         starts = [s for s in tree.findall(f".//{{{W}}}bookmarkStart")
                   if s.get(f"{{{W}}}name") == "cleanup_test"]
-        ends_id = None  # we already removed it; we just check starts is empty
         assert starts == []
-        # Also verify bookmarkEnd with that id is gone
-        # (id was returned by add_bookmark; we check none with that name remain)
-        # Since name is only on bookmarkStart, check that list is empty suffices.
+        ends = [e for e in tree.findall(f".//{{{W}}}bookmarkEnd")
+                if e.get(f"{{{W}}}id") == bm_id]
+        assert ends == []
 
 
 # ---------------------------------------------------------------------------
