@@ -12,3 +12,4 @@ venv/
 .mypy_cache/
 *.so
 .DS_Store
+.worktrees/
