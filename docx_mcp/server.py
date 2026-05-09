@@ -267,6 +267,47 @@ def delete_table_row(
     return _js(_require_doc().delete_table_row(table_idx, row_idx, author=author))
 
 
+@mcp.tool()
+def merge_cells(
+    table_index: int,
+    start_row: int,
+    start_col: int,
+    end_row: int,
+    end_col: int,
+) -> str:
+    """Merge a rectangular range of cells. Horizontal: gridSpan. Vertical: vMerge."""
+    doc = _require_doc()
+    return _js(doc.merge_cells(table_index, start_row, start_col, end_row, end_col))
+
+
+@mcp.tool()
+def set_header_row(table_index: int) -> str:
+    """Mark the first row as a repeating header row."""
+    doc = _require_doc()
+    return _js(doc.set_header_row(table_index))
+
+
+@mcp.tool()
+def set_column_widths(table_index: int, widths_cm: list[float]) -> str:
+    """Set column widths in cm. len(widths_cm) must match column count."""
+    doc = _require_doc()
+    return _js(doc.set_column_widths(table_index, widths_cm))
+
+
+@mcp.tool()
+def csv_to_table(para_id: str, csv_text: str, header_row: bool = True) -> str:
+    """Insert a table from CSV text."""
+    doc = _require_doc()
+    return _js(doc.csv_to_table(para_id, csv_text, header_row))
+
+
+@mcp.tool()
+def table_to_csv(table_index: int) -> str:
+    """Export a table as CSV string."""
+    doc = _require_doc()
+    return _js(doc.table_to_csv(table_index))
+
+
 # ── Lists ──────────────────────────────────────────────────────────────────
 
 
