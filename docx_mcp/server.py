@@ -1226,6 +1226,35 @@ def lock_content_control(tag: str, lock: str = "sdtLocked") -> str:
     return _js(doc.lock_content_control(tag, lock))
 
 
+# ── Template Filling ─────────────────────────────────────────────────────────
+
+
+@mcp.tool()
+def fill_template(data: dict[str, str | list[str]], remove_empty: bool = False) -> str:
+    """Fill SDT content controls from data dict. Keys match w:tag values.
+
+    Args:
+        data: Mapping of tag names to values. Use list[str] for repeating sections.
+        remove_empty: If True, remove SDTs with no matching key in data.
+    """
+    doc = _require_doc()
+    return _js(doc.fill_template(data, remove_empty))
+
+
+@mcp.tool()
+def list_template_fields() -> str:
+    """List all SDT template fields (tag, label, type) in the document."""
+    doc = _require_doc()
+    return _js(doc.list_template_fields())
+
+
+@mcp.tool()
+def validate_template_data(data: dict) -> str:
+    """Validate data dict covers all template fields. Returns missing and extra keys."""
+    doc = _require_doc()
+    return _js(doc.validate_template_data(data))
+
+
 # ── Multilevel Lists ─────────────────────────────────────────────────────────
 
 
@@ -1248,6 +1277,64 @@ def suppress_numbering(para_id: str) -> str:
     """Remove list numbering from a paragraph by setting numId to 0."""
     doc = _require_doc()
     return _js(doc.suppress_numbering(para_id))
+
+
+# ── Litigation Tools ────────────────────────────────────────────────────────
+
+
+@mcp.tool()
+def bates_number(prefix: str, start: int = 1, digits: int = 6, position: str = "footer-right") -> str:
+    """Add Bates numbering stamp to document footer.
+
+    Args:
+        prefix: Bates prefix string (e.g. "ACME-").
+        start: Starting Bates number.
+        digits: Zero-padding width for the number.
+        position: Hint for stamp position (currently "footer-right").
+    """
+    doc = _require_doc()
+    return _js(doc.bates_number(prefix, start, digits, position))
+
+
+@mcp.tool()
+def redact_text(
+    pattern: str | None = None,
+    para_ids: list[str] | None = None,
+    exact_text: str | None = None,
+    reason: str = "",
+) -> str:
+    """True redaction: remove text and replace with black rectangle. Use exact_text or pattern.
+
+    Args:
+        pattern: Regex pattern to match run text.
+        para_ids: Optional list of paragraph paraId values to limit scope.
+        exact_text: Exact string to match against run text.
+        reason: Reason for redaction (stored in log).
+    """
+    doc = _require_doc()
+    return _js(doc.redact_text(pattern, para_ids, exact_text, reason))
+
+
+@mcp.tool()
+def generate_redaction_log(output_path: str = "") -> str:
+    """Write a DOCX table of all redactions made this session.
+
+    Args:
+        output_path: Destination path. If empty, writes to a temp file.
+    """
+    doc = _require_doc()
+    return _js(doc.generate_redaction_log(output_path))
+
+
+@mcp.tool()
+def generate_privilege_log(output_path: str = "") -> str:
+    """Generate a privilege log DOCX from document metadata.
+
+    Args:
+        output_path: Destination path. If empty, writes to a temp file.
+    """
+    doc = _require_doc()
+    return _js(doc.generate_privilege_log(output_path))
 
 
 # ── Entry point ─────────────────────────────────────────────────────────────
