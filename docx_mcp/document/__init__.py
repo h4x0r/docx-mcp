@@ -60,6 +60,7 @@ from .sessionlog import SessionLogMixin
 from .markdown_export import MarkdownExportMixin
 from .theme import ThemeMixin
 from .captions import CaptionMixin
+from .watermark import WatermarkMixin
 
 
 class DocxDocument(
@@ -103,6 +104,7 @@ class DocxDocument(
     SessionLogMixin,
     ThemeMixin,
     CaptionMixin,
+    WatermarkMixin,
 ):
     """Word document editor with OOXML-level control."""
 
@@ -129,4 +131,5 @@ __all__ = [
     "CT_TYPES",
     "_now_iso",
     "_preserve",
+    "WatermarkMixin",
 ]

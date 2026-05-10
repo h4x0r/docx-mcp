@@ -879,6 +879,20 @@ def validate_paraids() -> str:
 
 
 @mcp.tool()
+def insert_watermark(text: str, diagonal: bool = True) -> str:
+    """Insert a VML watermark into the document's default header.
+
+    Places a <v:shape> with a <v:textpath> inside the default header, which is
+    the standard Word watermark pattern.
+
+    Args:
+        text: Watermark text (e.g. "DRAFT", "CONFIDENTIAL").
+        diagonal: If True (default), diagonal orientation; if False, horizontal.
+    """
+    return _js(_require_doc().insert_watermark(text, diagonal=diagonal))
+
+
+@mcp.tool()
 def remove_watermark() -> str:
     """Remove VML watermarks (e.g., DRAFT) from all document headers.
 
