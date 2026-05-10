@@ -91,6 +91,43 @@ class TestCharts:
         vals = [el.text for el in tree.iter(f"{C}v")]
         assert "99" in vals
 
+    def test_many_series_col_letters_valid(self, tmp_path):
+        """Column letters must stay valid past 24 series (no chr overflow)."""
+        doc = _make_doc(tmp_path)
+        para_id = _get_para_id(doc)
+        many = [{"name": f"S{i}", "values": [i]} for i in range(26)]
+        result = doc.insert_bar_chart(para_id, "Big", many, ["X"])
+        chart_xml = (doc.workdir / "word" / "charts" / "chart1.xml").read_text()
+        assert "[" not in chart_xml  # chr(91) sentinel for overflow
+        assert "\\" not in chart_xml
+
+    def test_update_chart_data_unknown_type_raises(self, tmp_path):
+        """update_chart_data raises OOXML_INVALID if chart type not recognised."""
+        from lxml import etree as _et
+        from docx_mcp.document.errors import DocxMcpError, ErrCode
+        doc = _make_doc(tmp_path)
+        para_id = _get_para_id(doc)
+        result = doc.insert_bar_chart(para_id, "Chart", _SERIES, _CATS)
+        chart_id = result["chart_id"]
+        # Replace barChart with areaChart to simulate unknown type
+        chart_path = doc.workdir / "word" / "charts" / f"{chart_id}.xml"
+        content = chart_path.read_text()
+        chart_path.write_text(content.replace("barChart", "areaChart"))
+        doc._trees.pop(f"word/charts/{chart_id}.xml", None)
+        with pytest.raises(DocxMcpError) as exc:
+            doc.update_chart_data(chart_id, _SERIES)
+        assert exc.value.code == ErrCode.OOXML_INVALID
+
+    def test_doc_pr_id_unique_across_charts(self, tmp_path):
+        """Each chart drawing gets a unique docPr/@id (no collision)."""
+        doc = _make_doc(tmp_path)
+        para_id = _get_para_id(doc)
+        doc.insert_bar_chart(para_id, "C1", _SERIES, _CATS)
+        doc.insert_line_chart(para_id, "C2", _SERIES, _CATS)
+        tree = doc._tree("word/document.xml")
+        ids = [dp.get("id") for dp in tree.iter(f"{WP}docPr")]
+        assert len(ids) == len(set(ids)), f"duplicate docPr ids: {ids}"
+
     def test_chart_attributes_are_unqualified(self, tmp_path):
         """Chart element attributes must be unqualified (no c: namespace prefix)."""
         doc = _make_doc(tmp_path)

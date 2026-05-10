@@ -21,6 +21,15 @@ _CHART_CT = (
 )
 
 
+def _col_letter(n: int) -> str:
+    """Convert 1-based column index to Excel-style letter (1=A, 26=Z, 27=AA)."""
+    result = ""
+    while n:
+        n, rem = divmod(n - 1, 26)
+        result = chr(65 + rem) + result
+    return result
+
+
 def _build_chart_xml(
     title: str,
     series: list[dict],
@@ -77,7 +86,7 @@ def _build_chart_xml(
         # Series name
         tx2 = etree.SubElement(ser, f"{C}tx")
         str_ref = etree.SubElement(tx2, f"{C}strRef")
-        etree.SubElement(str_ref, f"{C}f").text = f"Sheet1!${chr(66 + idx)}$1"
+        etree.SubElement(str_ref, f"{C}f").text = f"Sheet1!${_col_letter(idx + 2)}$1"
         str_cache = etree.SubElement(str_ref, f"{C}strCache")
         etree.SubElement(str_cache, f"{C}ptCount", {"val": "1"})
         pt = etree.SubElement(str_cache, f"{C}pt", {"idx": "0"})
@@ -101,7 +110,7 @@ def _build_chart_xml(
         num_ref = etree.SubElement(val_el, f"{C}numRef")
         values = ser_data.get("values", [])
         etree.SubElement(num_ref, f"{C}f").text = (
-            f"Sheet1!${chr(66 + idx)}$2:${chr(66 + idx)}${len(values) + 1}"
+            f"Sheet1!${_col_letter(idx + 2)}$2:${_col_letter(idx + 2)}${len(values) + 1}"
         )
         num_cache = etree.SubElement(num_ref, f"{C}numCache")
         etree.SubElement(num_cache, f"{C}formatCode").text = "General"
@@ -130,7 +139,7 @@ def _rebuild_series(chart_el: etree._Element, series: list[dict]) -> None:
         # Series name
         tx2 = etree.SubElement(ser, f"{C}tx")
         str_ref = etree.SubElement(tx2, f"{C}strRef")
-        etree.SubElement(str_ref, f"{C}f").text = f"Sheet1!${chr(66 + idx)}$1"
+        etree.SubElement(str_ref, f"{C}f").text = f"Sheet1!${_col_letter(idx + 2)}$1"
         str_cache = etree.SubElement(str_ref, f"{C}strCache")
         etree.SubElement(str_cache, f"{C}ptCount", {"val": "1"})
         pt = etree.SubElement(str_cache, f"{C}pt", {"idx": "0"})
@@ -141,7 +150,7 @@ def _rebuild_series(chart_el: etree._Element, series: list[dict]) -> None:
         num_ref = etree.SubElement(val_el, f"{C}numRef")
         values = ser_data.get("values", [])
         etree.SubElement(num_ref, f"{C}f").text = (
-            f"Sheet1!${chr(66 + idx)}$2:${chr(66 + idx)}${len(values) + 1}"
+            f"Sheet1!${_col_letter(idx + 2)}$2:${_col_letter(idx + 2)}${len(values) + 1}"
         )
         num_cache = etree.SubElement(num_ref, f"{C}numCache")
         etree.SubElement(num_cache, f"{C}formatCode").text = "General"
@@ -222,9 +231,15 @@ class ChartsMixin:
             self._trees[chart_path] = chart_tree
 
         # Find the chart-type element and rebuild series
+        chart_el = None
         for chart_el in chart_tree.iter(f"{C}barChart", f"{C}lineChart", f"{C}pieChart"):
             _rebuild_series(chart_el, series)
             break
+        if chart_el is None:
+            raise DocxMcpError(
+                ErrCode.OOXML_INVALID,
+                f"No recognised chart type in {chart_id!r}",
+            )
 
         # Write back to disk immediately (tests read disk directly)
         fp = self.workdir / chart_path
@@ -311,6 +326,14 @@ class ChartsMixin:
                 f"Paragraph {para_id!r} not found",
             )
 
+        # docPr id must be unique across ALL drawing objects (images + charts)
+        existing_doc_pr_ids = [
+            int(dp.get("id", "0"))
+            for dp in doc.iter(f"{WP}docPr")
+            if dp.get("id", "").isdigit()
+        ]
+        doc_pr_id = max(existing_doc_pr_ids, default=0) + 1
+
         new_para = etree.Element(f"{W}p")
         new_para.set(f"{W14}paraId", self._new_para_id())
         run = etree.SubElement(new_para, f"{W}r")
@@ -328,7 +351,7 @@ class ChartsMixin:
         extent.set("cy", str(height_emu))
 
         doc_pr = etree.SubElement(inline, f"{WP}docPr")
-        doc_pr.set("id", str(chart_num))
+        doc_pr.set("id", str(doc_pr_id))
         doc_pr.set("name", f"Chart {chart_num}")
 
         graphic = etree.SubElement(inline, f"{A}graphic")
