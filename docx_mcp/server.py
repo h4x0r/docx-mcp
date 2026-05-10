@@ -2144,6 +2144,26 @@ def split_document(output_dir: str = "", at_heading_level: int = 1) -> str:
     """
     return _js(_require_doc().split_document(output_dir=output_dir, at_heading_level=at_heading_level))
 
+
+@mcp.tool()
+def get_word_count() -> str:
+    """Return the word count of the open document body.
+
+    Returns: {"word_count": int}
+    """
+    return _js({"word_count": _require_doc().get_word_count()})
+
+
+@mcp.tool()
+def get_statistics() -> str:
+    """Return document statistics for the open document.
+
+    Returns a dict with keys: word_count, character_count, paragraph_count,
+    table_count, image_count, section_count.
+    """
+    return _js(_require_doc().get_statistics())
+
+
 # ── Entry point ─────────────────────────────────────────────────────────────
 
 

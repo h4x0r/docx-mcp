@@ -62,6 +62,7 @@ from .theme import ThemeMixin
 from .captions import CaptionMixin
 from .watermark import WatermarkMixin
 from .splitting import SplittingMixin
+from .statistics import StatisticsMixin
 
 
 class DocxDocument(
@@ -107,6 +108,7 @@ class DocxDocument(
     CaptionMixin,
     WatermarkMixin,
     SplittingMixin,
+    StatisticsMixin,
 ):
     """Word document editor with OOXML-level control."""
 

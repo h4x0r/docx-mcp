@@ -1,0 +1,73 @@
+"""Document statistics mixin: word count, character count, paragraph/table/image/section counts."""
+
+from __future__ import annotations
+
+from .base import W, WP
+
+
+class StatisticsMixin:
+
+    def get_word_count(self) -> int:
+        root = self._tree("word/document.xml")
+        if root is None:
+            return 0
+        body = root.find(f"{W}body")
+        if body is None:
+            return 0
+        return sum(
+            len(t.text.split()) for t in body.iter(f"{W}t") if t.text
+        )
+
+    def get_statistics(self) -> dict:
+        root = self._tree("word/document.xml")
+        if root is None:
+            return {
+                "word_count": 0,
+                "character_count": 0,
+                "paragraph_count": 0,
+                "table_count": 0,
+                "image_count": 0,
+                "section_count": 1,
+            }
+        body = root.find(f"{W}body")
+        if body is None:
+            return {
+                "word_count": 0,
+                "character_count": 0,
+                "paragraph_count": 0,
+                "table_count": 0,
+                "image_count": 0,
+                "section_count": 1,
+            }
+
+        texts = [t.text for t in body.iter(f"{W}t") if t.text]
+        word_count = sum(len(t.split()) for t in texts)
+        character_count = sum(len(t) for t in texts)
+
+        paragraph_count = sum(
+            1 for child in body if child.tag == f"{W}p"
+        )
+        table_count = sum(
+            1 for child in body if child.tag == f"{W}tbl"
+        )
+        image_count = sum(
+            1 for _ in body.iter(f"{WP}inline")
+        ) + sum(
+            1 for _ in body.iter(f"{WP}anchor")
+        )
+
+        explicit_sect_pr = sum(
+            1 for p in body.iter(f"{W}p")
+            for ppr in [p.find(f"{W}pPr")]
+            if ppr is not None and ppr.find(f"{W}sectPr") is not None
+        )
+        section_count = explicit_sect_pr + 1
+
+        return {
+            "word_count": word_count,
+            "character_count": character_count,
+            "paragraph_count": paragraph_count,
+            "table_count": table_count,
+            "image_count": image_count,
+            "section_count": section_count,
+        }
