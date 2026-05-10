@@ -356,6 +356,35 @@ def set_table_alignment(table_idx: int, alignment: str) -> str:
     return _js(_require_doc().set_table_alignment(table_idx, alignment))
 
 
+@mcp.tool()
+def set_table_borders(
+    table_idx: int,
+    border_style: str = "single",
+    color: str = "000000",
+    size: int = 4,
+) -> str:
+    """Set borders on all six sides of a table (top, bottom, left, right, insideH, insideV)."""
+    return _js(_require_doc().set_table_borders(table_idx, border_style=border_style, color=color, size=size))
+
+
+@mcp.tool()
+def set_cell_shading(
+    table_idx: int,
+    row_idx: int,
+    col_idx: int,
+    fill_color: str,
+    pattern: str = "clear",
+) -> str:
+    """Set background shading fill color on a table cell."""
+    return _js(_require_doc().set_cell_shading(table_idx, row_idx, col_idx, fill_color, pattern=pattern))
+
+
+@mcp.tool()
+def set_table_style(table_idx: int, style_name: str) -> str:
+    """Apply a named table style (e.g. TableGrid, LightShading-Accent1) to a table."""
+    return _js(_require_doc().set_table_style(table_idx, style_name))
+
+
 # ── Lists ──────────────────────────────────────────────────────────────────
 
 

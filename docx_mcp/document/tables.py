@@ -669,3 +669,70 @@ class TablesMixin:
         jc.set(f"{W}val", alignment)
         self._mark("word/document.xml")
         return {"table_idx": table_idx, "alignment": alignment}
+
+    def set_table_borders(
+        self,
+        table_idx: int,
+        border_style: str = "single",
+        color: str = "000000",
+        size: int = 4,
+    ) -> dict:
+        tbl = self._get_table(table_idx)
+        tbl_pr = tbl.find(f"{W}tblPr")
+        if tbl_pr is None:
+            tbl_pr = etree.Element(f"{W}tblPr")
+            tbl.insert(0, tbl_pr)
+        existing = tbl_pr.find(f"{W}tblBorders")
+        if existing is not None:
+            tbl_pr.remove(existing)
+        borders = etree.SubElement(tbl_pr, f"{W}tblBorders")
+        for side in ("top", "bottom", "left", "right", "insideH", "insideV"):
+            el = etree.SubElement(borders, f"{W}{side}")
+            el.set(f"{W}val", border_style)
+            el.set(f"{W}sz", str(size))
+            el.set(f"{W}space", "0")
+            el.set(f"{W}color", color)
+        self._mark("word/document.xml")
+        return {"table_idx": table_idx, "border_style": border_style, "color": color, "size": size}
+
+    def set_cell_shading(
+        self,
+        table_idx: int,
+        row_idx: int,
+        col_idx: int,
+        fill_color: str,
+        pattern: str = "clear",
+    ) -> dict:
+        tbl = self._get_table(table_idx)
+        rows = tbl.findall(f"{W}tr")
+        if row_idx < 0 or row_idx >= len(rows):
+            raise IndexError(f"Row {row_idx} out of range (have {len(rows)})")
+        cells = rows[row_idx].findall(f"{W}tc")
+        if col_idx < 0 or col_idx >= len(cells):
+            raise IndexError(f"Column {col_idx} out of range (have {len(cells)})")
+        tc = cells[col_idx]
+        tc_pr = tc.find(f"{W}tcPr")
+        if tc_pr is None:
+            tc_pr = etree.Element(f"{W}tcPr")
+            tc.insert(0, tc_pr)
+        shd = tc_pr.find(f"{W}shd")
+        if shd is None:
+            shd = etree.SubElement(tc_pr, f"{W}shd")
+        shd.set(f"{W}val", pattern)
+        shd.set(f"{W}color", "auto")
+        shd.set(f"{W}fill", fill_color)
+        self._mark("word/document.xml")
+        return {"table_idx": table_idx, "row_idx": row_idx, "col_idx": col_idx, "fill_color": fill_color}
+
+    def set_table_style(self, table_idx: int, style_name: str) -> dict:
+        tbl = self._get_table(table_idx)
+        tbl_pr = tbl.find(f"{W}tblPr")
+        if tbl_pr is None:
+            tbl_pr = etree.Element(f"{W}tblPr")
+            tbl.insert(0, tbl_pr)
+        tbl_style = tbl_pr.find(f"{W}tblStyle")
+        if tbl_style is None:
+            tbl_style = etree.SubElement(tbl_pr, f"{W}tblStyle")
+        tbl_style.set(f"{W}val", style_name)
+        self._mark("word/document.xml")
+        return {"table_idx": table_idx, "style_name": style_name}
