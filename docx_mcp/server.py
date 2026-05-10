@@ -336,6 +336,50 @@ def get_styles() -> str:
     return _js(_require_doc().get_styles())
 
 
+@mcp.tool()
+def create_style(
+    name: str,
+    style_type: str,
+    based_on: str | None = None,
+    next_style: str | None = None,
+) -> str:
+    """Create a new style in the document.
+
+    Args:
+        name: Style name (used as styleId after removing spaces).
+        style_type: "paragraph", "character", "table", or "numbering".
+        based_on: Optional styleId this style inherits from.
+        next_style: Optional styleId applied to the next paragraph.
+    """
+    return _js(_require_doc().create_style(name, style_type, based_on=based_on, next_style=next_style))
+
+
+@mcp.tool()
+def update_style(
+    name: str,
+    based_on: str | None = None,
+    next_style: str | None = None,
+) -> str:
+    """Update an existing style's basedOn and/or next properties.
+
+    Args:
+        name: Style name or styleId (case-insensitive).
+        based_on: New basedOn styleId (replaces existing).
+        next_style: New next styleId (replaces existing).
+    """
+    return _js(_require_doc().update_style(name, based_on=based_on, next_style=next_style))
+
+
+@mcp.tool()
+def delete_style(name: str) -> str:
+    """Delete a style from the document.
+
+    Args:
+        name: Style name or styleId (case-insensitive).
+    """
+    return _js(_require_doc().delete_style(name))
+
+
 # ── Headers / Footers ──────────────────────────────────────────────────────
 
 
