@@ -804,6 +804,12 @@ class TablesMixin:
         original = rows[row_index]
         new_row = copy.deepcopy(original)
 
+        # Replace row-level paraId / textId
+        if new_row.get(f"{W14}paraId") is not None:
+            new_row.set(f"{W14}paraId", self._new_para_id())
+        if new_row.get(f"{W14}textId") is not None:
+            new_row.set(f"{W14}textId", "77777777")
+
         # Replace paraId / textId attributes on all w:p in the copy
         for p in new_row.iter(f"{W}p"):
             if p.get(f"{W14}paraId") is not None:
