@@ -97,7 +97,9 @@ def _doc_with_header_footer(tmp_path):
         zf.writestr("word/styles.xml", styles_xml.strip())
         zf.writestr("word/settings.xml", settings_xml.strip())
 
-    return DocxDocument(str(path))
+    doc = DocxDocument(str(path))
+    doc.open()
+    return doc
 
 
 # ── delete_header / delete_footer ────────────────────────────────────────────

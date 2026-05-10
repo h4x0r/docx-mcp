@@ -535,3 +535,117 @@ class TablesMixin:
             writer.writerow(row)
 
         return {"csv": buf.getvalue(), "rows": len(rows_data), "cols": col_count}
+
+    def delete_table(self, table_idx: int) -> dict:
+        doc = self._require("word/document.xml")
+        tables = list(doc.iter(f"{W}tbl"))
+        if table_idx < 0 or table_idx >= len(tables):
+            raise IndexError(f"Table index {table_idx} out of range (have {len(tables)})")
+        tbl = tables[table_idx]
+        tbl.getparent().remove(tbl)
+        self._mark("word/document.xml")
+        return {"deleted": table_idx}
+
+    def add_column_to_table(self, table_idx: int, header_text: str = "") -> dict:
+        tbl = self._get_table(table_idx)
+        rows = tbl.findall(f"{W}tr")
+        for i, tr in enumerate(rows):
+            tc = etree.SubElement(tr, f"{W}tc")
+            p = etree.SubElement(tc, f"{W}p")
+            p.set(f"{W14}paraId", self._new_para_id())
+            p.set(f"{W14}textId", "77777777")
+            if i == 0 and header_text:
+                r = etree.SubElement(p, f"{W}r")
+                t = etree.SubElement(r, f"{W}t")
+                t.text = header_text
+        col_count = len(tbl.findall(f"{W}tr")[0].findall(f"{W}tc")) if rows else 0
+        self._mark("word/document.xml")
+        return {"table_idx": table_idx, "columns": col_count}
+
+    def delete_column_from_table(self, table_idx: int, col_idx: int) -> dict:
+        tbl = self._get_table(table_idx)
+        for tr in tbl.findall(f"{W}tr"):
+            cells = tr.findall(f"{W}tc")
+            if col_idx < 0 or col_idx >= len(cells):
+                raise IndexError(f"Column index {col_idx} out of range (have {len(cells)})")
+            tr.remove(cells[col_idx])
+        self._mark("word/document.xml")
+        return {"table_idx": table_idx, "col_idx": col_idx}
+
+    def set_cell_width(self, table_idx: int, row_idx: int, col_idx: int, width_mm: float) -> dict:
+        tbl = self._get_table(table_idx)
+        rows = tbl.findall(f"{W}tr")
+        if row_idx < 0 or row_idx >= len(rows):
+            raise IndexError(f"Row {row_idx} out of range")
+        cells = rows[row_idx].findall(f"{W}tc")
+        if col_idx < 0 or col_idx >= len(cells):
+            raise IndexError(f"Column {col_idx} out of range")
+        tc = cells[col_idx]
+        tc_pr = tc.find(f"{W}tcPr")
+        if tc_pr is None:
+            tc_pr = etree.Element(f"{W}tcPr")
+            tc.insert(0, tc_pr)
+        tc_w = tc_pr.find(f"{W}tcW")
+        if tc_w is None:
+            tc_w = etree.SubElement(tc_pr, f"{W}tcW")
+        dxa = round(width_mm * 1440 / 25.4)
+        tc_w.set(f"{W}w", str(dxa))
+        tc_w.set(f"{W}type", "dxa")
+        self._mark("word/document.xml")
+        return {"table_idx": table_idx, "row_idx": row_idx, "col_idx": col_idx, "width_dxa": dxa}
+
+    def set_cell_vertical_alignment(
+        self, table_idx: int, row_idx: int, col_idx: int, alignment: str
+    ) -> dict:
+        tbl = self._get_table(table_idx)
+        rows = tbl.findall(f"{W}tr")
+        if row_idx < 0 or row_idx >= len(rows):
+            raise IndexError(f"Row {row_idx} out of range")
+        cells = rows[row_idx].findall(f"{W}tc")
+        if col_idx < 0 or col_idx >= len(cells):
+            raise IndexError(f"Column {col_idx} out of range")
+        tc = cells[col_idx]
+        tc_pr = tc.find(f"{W}tcPr")
+        if tc_pr is None:
+            tc_pr = etree.Element(f"{W}tcPr")
+            tc.insert(0, tc_pr)
+        v_align = tc_pr.find(f"{W}vAlign")
+        if v_align is None:
+            v_align = etree.SubElement(tc_pr, f"{W}vAlign")
+        v_align.set(f"{W}val", alignment)
+        self._mark("word/document.xml")
+        return {"table_idx": table_idx, "row_idx": row_idx, "col_idx": col_idx, "alignment": alignment}
+
+    def set_row_height(
+        self, table_idx: int, row_idx: int, height_mm: float, rule: str = "exact"
+    ) -> dict:
+        tbl = self._get_table(table_idx)
+        rows = tbl.findall(f"{W}tr")
+        if row_idx < 0 or row_idx >= len(rows):
+            raise IndexError(f"Row {row_idx} out of range")
+        tr = rows[row_idx]
+        tr_pr = tr.find(f"{W}trPr")
+        if tr_pr is None:
+            tr_pr = etree.Element(f"{W}trPr")
+            tr.insert(0, tr_pr)
+        tr_height = tr_pr.find(f"{W}trHeight")
+        if tr_height is None:
+            tr_height = etree.SubElement(tr_pr, f"{W}trHeight")
+        dxa = round(height_mm * 1440 / 25.4)
+        tr_height.set(f"{W}val", str(dxa))
+        tr_height.set(f"{W}hRule", rule)
+        self._mark("word/document.xml")
+        return {"table_idx": table_idx, "row_idx": row_idx, "height_dxa": dxa}
+
+    def set_table_alignment(self, table_idx: int, alignment: str) -> dict:
+        tbl = self._get_table(table_idx)
+        tbl_pr = tbl.find(f"{W}tblPr")
+        if tbl_pr is None:
+            tbl_pr = etree.Element(f"{W}tblPr")
+            tbl.insert(0, tbl_pr)
+        jc = tbl_pr.find(f"{W}jc")
+        if jc is None:
+            jc = etree.SubElement(tbl_pr, f"{W}jc")
+        jc.set(f"{W}val", alignment)
+        self._mark("word/document.xml")
+        return {"table_idx": table_idx, "alignment": alignment}

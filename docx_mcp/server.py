@@ -308,6 +308,54 @@ def table_to_csv(table_index: int) -> str:
     return _js(doc.table_to_csv(table_index))
 
 
+@mcp.tool()
+def delete_table(table_idx: int) -> str:
+    """Delete a table by index (0-based). Raises IndexError if out of range."""
+    return _js(_require_doc().delete_table(table_idx))
+
+
+@mcp.tool()
+def add_column_to_table(table_idx: int, header_text: str = "") -> str:
+    """Add a new column to every row of a table. First row gets header_text."""
+    return _js(_require_doc().add_column_to_table(table_idx, header_text=header_text))
+
+
+@mcp.tool()
+def delete_column_from_table(table_idx: int, col_idx: int) -> str:
+    """Delete a column (0-based) from every row of a table."""
+    return _js(_require_doc().delete_column_from_table(table_idx, col_idx))
+
+
+@mcp.tool()
+def set_cell_width(table_idx: int, row_idx: int, col_idx: int, width_mm: float) -> str:
+    """Set the width of a table cell in millimetres (stored as DXA)."""
+    return _js(_require_doc().set_cell_width(table_idx, row_idx, col_idx, width_mm))
+
+
+@mcp.tool()
+def set_cell_vertical_alignment(
+    table_idx: int, row_idx: int, col_idx: int, alignment: str
+) -> str:
+    """Set vertical alignment of a table cell: top, center, or bottom."""
+    return _js(
+        _require_doc().set_cell_vertical_alignment(table_idx, row_idx, col_idx, alignment)
+    )
+
+
+@mcp.tool()
+def set_row_height(
+    table_idx: int, row_idx: int, height_mm: float, rule: str = "exact"
+) -> str:
+    """Set row height in millimetres. rule: exact, atLeast, or auto."""
+    return _js(_require_doc().set_row_height(table_idx, row_idx, height_mm, rule=rule))
+
+
+@mcp.tool()
+def set_table_alignment(table_idx: int, alignment: str) -> str:
+    """Set table alignment: left, center, or right."""
+    return _js(_require_doc().set_table_alignment(table_idx, alignment))
+
+
 # ── Lists ──────────────────────────────────────────────────────────────────
 
 
@@ -405,6 +453,18 @@ def edit_header_footer(
         author: Author name for the revision.
     """
     return _js(_require_doc().edit_header_footer(location, old_text, new_text, author=author))
+
+
+@mcp.tool()
+def delete_header(location: str = "default") -> str:
+    """Delete a header by location: default, first, or even."""
+    return _js(_require_doc().delete_header(location=location))
+
+
+@mcp.tool()
+def delete_footer(location: str = "default") -> str:
+    """Delete a footer by location: default, first, or even."""
+    return _js(_require_doc().delete_footer(location=location))
 
 
 # ── Properties ─────────────────────────────────────────────────────────────
