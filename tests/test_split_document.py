@@ -144,7 +144,8 @@ def test_split_at_heading2(tmp_path):
     doc = _make_doc_with_heading2(tmp_path)
     out_dir = str(tmp_path / "out2")
     result = doc.split_document(output_dir=out_dir, at_heading_level=2)
-    assert result["parts"] == 2
+    # H1 paragraph before first H2 becomes non-empty preamble: 1 preamble + 2 H2 sections
+    assert result["parts"] == 3
 
 
 def test_split_default_output_dir(tmp_path):

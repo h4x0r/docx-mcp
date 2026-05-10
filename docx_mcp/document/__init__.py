@@ -61,6 +61,7 @@ from .markdown_export import MarkdownExportMixin
 from .theme import ThemeMixin
 from .captions import CaptionMixin
 from .watermark import WatermarkMixin
+from .splitting import SplittingMixin
 
 
 class DocxDocument(
@@ -105,6 +106,7 @@ class DocxDocument(
     ThemeMixin,
     CaptionMixin,
     WatermarkMixin,
+    SplittingMixin,
 ):
     """Word document editor with OOXML-level control."""
 
@@ -132,4 +134,5 @@ __all__ = [
     "_now_iso",
     "_preserve",
     "WatermarkMixin",
+    "SplittingMixin",
 ]

@@ -2044,6 +2044,20 @@ def find_replace_formatted(
     ))
 
 
+
+
+@mcp.tool()
+def split_document(output_dir: str = "", at_heading_level: int = 1) -> str:
+    """Split the open document into multiple DOCX files, one per heading section.
+
+    Args:
+        output_dir: Directory for output files. Defaults to <workdir>/split_output.
+        at_heading_level: Heading level to split on (default 1).
+
+    Returns: {"output_dir": str, "files": list[str], "parts": int}
+    """
+    return _js(_require_doc().split_document(output_dir=output_dir, at_heading_level=at_heading_level))
+
 # ── Entry point ─────────────────────────────────────────────────────────────
 
 
