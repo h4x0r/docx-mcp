@@ -602,6 +602,55 @@ def insert_floating_image(
     return _js(doc.insert_floating_image(para_id, image_path, width_cm, height_cm, h_pos, v_pos, wrap))
 
 
+@mcp.tool()
+def delete_image(rId: str) -> str:
+    """Remove the drawing containing the image with the given rId from the document.
+
+    Also removes the relationship entry from word/_rels/document.xml.rels.
+
+    Args:
+        rId: The relationship ID of the image to delete (e.g. 'rId5').
+    """
+    return _js(_require_doc().delete_image(rId))
+
+
+@mcp.tool()
+def update_image(rId: str, new_image_path: str) -> str:
+    """Replace the binary for an existing image in-place.
+
+    The image dimensions and position in the document are preserved.
+
+    Args:
+        rId: The relationship ID of the image to replace.
+        new_image_path: Absolute path to the new image file on disk.
+    """
+    return _js(_require_doc().update_image(rId, new_image_path))
+
+
+@mcp.tool()
+def set_image_size(rId: str, width_cm: float, height_cm: float) -> str:
+    """Resize an embedded image by updating its EMU extent attributes.
+
+    Args:
+        rId: The relationship ID of the image to resize.
+        width_cm: New width in centimetres.
+        height_cm: New height in centimetres.
+    """
+    return _js(_require_doc().set_image_size(rId, width_cm, height_cm))
+
+
+@mcp.tool()
+def set_image_alt_text(rId: str, alt_text: str, title: str = "") -> str:
+    """Set accessibility alt text and title on an embedded image.
+
+    Args:
+        rId: The relationship ID of the image.
+        alt_text: Alt text (descr attribute on wp:docPr).
+        title: Optional title attribute on wp:docPr.
+    """
+    return _js(_require_doc().set_image_alt_text(rId, alt_text, title=title))
+
+
 # ── Endnotes ───────────────────────────────────────────────────────────────
 
 

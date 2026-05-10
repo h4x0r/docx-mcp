@@ -146,6 +146,167 @@ class ImagesMixin:
             "height_emu": height_emu,
         }
 
+    # ── Image management ────────────────────────────────────────────────────
+
+    def delete_image(self, rId: str) -> dict:
+        """Remove the drawing containing image *rId* from the document body.
+
+        Also removes the relationship entry from word/_rels/document.xml.rels.
+        Raises ValueError if rId is not found.
+        """
+        doc = self._require("word/document.xml")
+        rels = self._require("word/_rels/document.xml.rels")
+
+        # Find the blip element
+        blip = None
+        for b in doc.iter(f"{A}blip"):
+            if b.get(f"{R}embed") == rId:
+                blip = b
+                break
+        if blip is None:
+            raise ValueError(f"Image rId '{rId}' not found in document")
+
+        # Walk up to the enclosing w:drawing
+        drawing = blip.getparent()
+        while drawing is not None and drawing.tag != f"{W}drawing":
+            drawing = drawing.getparent()
+        if drawing is None:
+            raise ValueError(f"Could not find w:drawing for rId '{rId}'")
+
+        # Walk up one more to find the w:r parent, then remove it from w:p
+        run = drawing.getparent()
+        if run is not None:
+            parent = run.getparent()
+            if parent is not None:
+                parent.remove(run)
+            else:
+                # drawing is top-level — remove drawing directly
+                drawing.getparent().remove(drawing)
+        else:
+            # No run parent — remove drawing directly from its parent
+            drawing.getparent().remove(drawing)
+
+        # Remove the relationship entry
+        rel = rels.find(f'{RELS}Relationship[@Id="{rId}"]')
+        if rel is not None:
+            rels.remove(rel)
+
+        self._mark("word/document.xml")
+        self._mark("word/_rels/document.xml.rels")
+        return {"deleted": rId}
+
+    def update_image(self, rId: str, new_image_path: str) -> dict:
+        """Replace the binary for an existing image in-place.
+
+        Stores the new bytes in self._binaries keyed by zip path so they are
+        written to the workdir on the next save().
+        Raises ValueError if rId is not found.
+        """
+        rels = self._require("word/_rels/document.xml.rels")
+        rel = rels.find(f'{RELS}Relationship[@Id="{rId}"]')
+        if rel is None:
+            raise ValueError(f"Image rId '{rId}' not found in relationships")
+
+        target = rel.get("Target", "")
+        if target.startswith("/"):
+            zip_path = target.lstrip("/")
+        else:
+            zip_path = f"word/{target}"
+
+        new_bytes = Path(new_image_path).read_bytes()
+        self._binaries[zip_path] = new_bytes
+        return {"rId": rId, "new_path": new_image_path}
+
+    def set_image_size(self, rId: str, width_cm: float, height_cm: float) -> dict:
+        """Resize an embedded image by updating wp:extent (and a:ext if present).
+
+        1 cm = 914400 / 2.54 ≈ 360000 EMU.
+        Raises ValueError if rId is not found.
+        """
+        doc = self._require("word/document.xml")
+
+        blip = None
+        for b in doc.iter(f"{A}blip"):
+            if b.get(f"{R}embed") == rId:
+                blip = b
+                break
+        if blip is None:
+            raise ValueError(f"Image rId '{rId}' not found in document")
+
+        cx = round(width_cm * 360000)
+        cy = round(height_cm * 360000)
+
+        # Walk up to w:drawing
+        drawing = blip.getparent()
+        while drawing is not None and drawing.tag != f"{W}drawing":
+            drawing = drawing.getparent()
+        if drawing is None:
+            raise ValueError(f"Could not find w:drawing for rId '{rId}'")
+
+        # Update wp:extent
+        extent = drawing.find(f".//{WP}extent")
+        if extent is not None:
+            extent.set("cx", str(cx))
+            extent.set("cy", str(cy))
+
+        # Update a:ext inside pic:spPr/a:xfrm if present
+        for ext_el in drawing.iter(f"{A}ext"):
+            ext_el.set("cx", str(cx))
+            ext_el.set("cy", str(cy))
+
+        self._mark("word/document.xml")
+        return {
+            "rId": rId,
+            "width_cm": width_cm,
+            "height_cm": height_cm,
+            "width_emu": cx,
+            "height_emu": cy,
+        }
+
+    def set_image_alt_text(self, rId: str, alt_text: str, title: str = "") -> dict:
+        """Set accessibility alt text (descr) and title on a drawing's wp:docPr.
+
+        Raises ValueError if rId is not found.
+        """
+        doc = self._require("word/document.xml")
+
+        blip = None
+        for b in doc.iter(f"{A}blip"):
+            if b.get(f"{R}embed") == rId:
+                blip = b
+                break
+        if blip is None:
+            raise ValueError(f"Image rId '{rId}' not found in document")
+
+        # Walk up to w:drawing
+        drawing = blip.getparent()
+        while drawing is not None and drawing.tag != f"{W}drawing":
+            drawing = drawing.getparent()
+        if drawing is None:
+            raise ValueError(f"Could not find w:drawing for rId '{rId}'")
+
+        # Find wp:docPr (under wp:inline or wp:anchor)
+        doc_pr = drawing.find(f".//{WP}docPr")
+        if doc_pr is None:
+            # Create one under the inline/anchor container
+            container = drawing.find(f"{WP}inline")
+            if container is None:
+                container = drawing.find(f"{WP}anchor")
+            if container is None:
+                # Fallback: attach directly to drawing
+                container = drawing
+            doc_pr = container.makeelement(f"{WP}docPr", {})
+            doc_pr.set("id", "1")
+            doc_pr.set("name", "Image")
+            container.insert(0, doc_pr)
+
+        doc_pr.set("descr", alt_text)
+        if title:
+            doc_pr.set("title", title)
+
+        self._mark("word/document.xml")
+        return {"rId": rId, "alt_text": alt_text}
+
     # ── Floating image helpers ───────────────────────────────────────────────
 
     def _next_drawing_id(self, doc_tree: etree._Element) -> int:
