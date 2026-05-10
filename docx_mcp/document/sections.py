@@ -166,6 +166,45 @@ class SectionsMixin:
 
         return result
 
+    def set_document_language(self, language_code: str) -> dict:
+        """Set the default document language via the default paragraph style's rPr.
+
+        Writes ``<w:lang w:val="language_code"/>`` into the ``<w:rPr>`` of
+        the ``w:style[@w:type='paragraph'][@w:default='1']`` element in
+        ``word/styles.xml``.
+
+        Args:
+            language_code: BCP-47 language tag, e.g. "en-US", "fr-FR", "de-DE".
+
+        Returns:
+            {"language": language_code}
+        """
+        styles = self._require("word/styles.xml")
+
+        # Find the default paragraph style
+        default_style = None
+        for s in styles.findall(f"{W}style"):
+            if s.get(f"{W}type") == "paragraph" and s.get(f"{W}default") == "1":
+                default_style = s
+                break
+
+        if default_style is None:
+            raise RuntimeError("No default paragraph style found in word/styles.xml")
+
+        # Get or create w:rPr
+        rpr = default_style.find(f"{W}rPr")
+        if rpr is None:
+            rpr = etree.SubElement(default_style, f"{W}rPr")
+
+        # Get or create w:lang
+        lang = rpr.find(f"{W}lang")
+        if lang is None:
+            lang = etree.SubElement(rpr, f"{W}lang")
+
+        lang.set(f"{W}val", language_code)
+        self._mark("word/styles.xml")
+        return {"language": language_code}
+
     # ── Convenience wrappers ─────────────────────────────────────────────────
 
     @staticmethod

@@ -2281,6 +2281,54 @@ def get_statistics() -> str:
     return _js(_require_doc().get_statistics())
 
 
+@mcp.tool()
+def get_document_outline(max_level: int = 6) -> str:
+    """Return a flat list of headings as a document outline.
+
+    Walks the document body and returns every heading paragraph up to the
+    specified level.
+
+    Args:
+        max_level: Maximum heading level to include (1–6, default 6).
+
+    Returns:
+        JSON list of dicts with keys: level (int), text (str), para_id (str).
+    """
+    return _js(_require_doc().get_document_outline(max_level=max_level))
+
+
+@mcp.tool()
+def set_document_language(language_code: str) -> str:
+    """Set the default document language.
+
+    Writes the BCP-47 language tag into the default paragraph style's run
+    properties (``w:rPr/w:lang``) in ``word/styles.xml``.
+
+    Args:
+        language_code: BCP-47 language tag, e.g. "en-US", "fr-FR", "de-DE".
+
+    Returns:
+        {"language": language_code}
+    """
+    return _js(_require_doc().set_document_language(language_code))
+
+
+@mcp.tool()
+def set_track_changes(enabled: bool, author: str = "") -> str:
+    """Enable or disable revision tracking in the document.
+
+    When enabled, Word/LibreOffice will record future edits as tracked changes.
+
+    Args:
+        enabled: True to enable tracking, False to disable.
+        author: Optional author name (stored in response for reference only).
+
+    Returns:
+        {"track_changes": bool, "author": str}
+    """
+    return _js(_require_doc().set_track_changes(enabled=enabled, author=author))
+
+
 # ── Entry point ─────────────────────────────────────────────────────────────
 
 

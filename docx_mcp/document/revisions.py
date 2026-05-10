@@ -60,6 +60,38 @@ class RevisionsMixin:
 
         return results
 
+    def set_track_changes(self, enabled: bool, author: str = "") -> dict:
+        """Enable or disable revision tracking in word/settings.xml.
+
+        Args:
+            enabled: True to enable tracking, False to disable.
+            author: Author name for reference (returned in response only).
+
+        Returns:
+            {"track_changes": bool, "author": str}
+        """
+        # Get or create settings tree
+        settings = self._tree("word/settings.xml")
+        if settings is None:
+            settings = etree.Element(
+                f"{W}settings",
+                nsmap={"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"},
+            )
+            self._trees["word/settings.xml"] = settings
+
+        tc_tag = f"{W}trackChanges"
+        existing = settings.find(tc_tag)
+
+        if enabled:
+            if existing is None:
+                etree.SubElement(settings, tc_tag)
+        else:
+            if existing is not None:
+                settings.remove(existing)
+
+        self._mark("word/settings.xml")
+        return {"track_changes": enabled, "author": author}
+
     def accept_change(self, change_id: int) -> dict:
         doc = self._require("word/document.xml")
         el = _find_change(doc, change_id)
