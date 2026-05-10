@@ -1964,6 +1964,74 @@ def set_paragraph_shading(
     return _js(_require_doc().set_paragraph_shading(para_id, fill_color, pattern=pattern))
 
 
+@mcp.tool()
+def set_paragraph_indentation(
+    para_id: str,
+    left_cm: float = 0.0,
+    right_cm: float = 0.0,
+    first_line_cm: float = 0.0,
+    hanging_cm: float = 0.0,
+) -> str:
+    """Set indentation on a paragraph.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        left_cm: Left indent in centimetres (0 = unchanged).
+        right_cm: Right indent in centimetres (0 = unchanged).
+        first_line_cm: First-line indent in cm (mutually exclusive with hanging_cm).
+        hanging_cm: Hanging indent in cm (mutually exclusive with first_line_cm).
+    """
+    return _js(
+        _require_doc().set_paragraph_indentation(
+            para_id,
+            left_cm=left_cm or None,
+            right_cm=right_cm or None,
+            first_line_cm=first_line_cm or None,
+            hanging_cm=hanging_cm or None,
+        )
+    )
+
+
+@mcp.tool()
+def set_line_spacing(
+    para_id: str,
+    line_rule: str = "",
+    line_value: int = 0,
+    space_before_pt: float = 0.0,
+    space_after_pt: float = 0.0,
+) -> str:
+    """Set line spacing and paragraph spacing.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        line_rule: "auto" | "exact" | "atLeast". Empty string leaves unchanged.
+        line_value: For "auto": 240=single, 360=1.5x, 480=double. For "exact"/"atLeast": twips.
+        space_before_pt: Space before paragraph in points (0 = unchanged).
+        space_after_pt: Space after paragraph in points (0 = unchanged).
+    """
+    return _js(
+        _require_doc().set_line_spacing(
+            para_id,
+            line_rule=line_rule or None,
+            line_value=line_value or None,
+            space_before_pt=space_before_pt or None,
+            space_after_pt=space_after_pt or None,
+        )
+    )
+
+
+@mcp.tool()
+def get_paragraph_format(para_id: str) -> str:
+    """Read all formatting attributes of a paragraph.
+
+    Returns style, alignment, indentation, line spacing, border, shading, and list info.
+
+    Args:
+        para_id: paraId of the target paragraph.
+    """
+    return _js(_require_doc().get_paragraph_format(para_id))
+
+
 # ── Run-level formatting ───────────────────────────────────────────────────
 
 

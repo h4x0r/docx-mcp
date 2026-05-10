@@ -243,6 +243,198 @@ class FormattingMixin:
         self._mark("word/document.xml")
         return {"para_id": para_id, "fill_color": fill_color}
 
+    # ── Paragraph-level formatting ────────────────────────────────────────────
+
+    _CM_TO_TWIPS = round(1440 / 2.54)  # 567
+
+    def set_paragraph_indentation(
+        self,
+        para_id: str,
+        *,
+        left_cm: float | None = None,
+        right_cm: float | None = None,
+        first_line_cm: float | None = None,
+        hanging_cm: float | None = None,
+    ) -> dict:
+        """Set indentation on a paragraph.
+
+        Args:
+            para_id: Target paragraph paraId.
+            left_cm: Left indent in cm.
+            right_cm: Right indent in cm.
+            first_line_cm: First-line indent in cm (mutually exclusive with hanging_cm).
+            hanging_cm: Hanging indent in cm (mutually exclusive with first_line_cm).
+        """
+        if first_line_cm is not None and hanging_cm is not None:
+            raise ValueError("first_line_cm and hanging_cm are mutually exclusive")
+
+        doc = self._require("word/document.xml")
+        para = self._find_para(doc, para_id)
+        if para is None:
+            raise ValueError(f"Paragraph '{para_id}' not found")
+
+        ppr = para.find(f"{W}pPr")
+        if ppr is None:
+            ppr = etree.Element(f"{W}pPr")
+            para.insert(0, ppr)
+
+        ind = ppr.find(f"{W}ind")
+        if ind is None:
+            ind = etree.SubElement(ppr, f"{W}ind")
+
+        if left_cm is not None:
+            ind.set(f"{W}left", str(round(left_cm * self._CM_TO_TWIPS)))
+        if right_cm is not None:
+            ind.set(f"{W}right", str(round(right_cm * self._CM_TO_TWIPS)))
+        if first_line_cm is not None:
+            ind.set(f"{W}firstLine", str(round(first_line_cm * self._CM_TO_TWIPS)))
+        elif hanging_cm is not None:
+            ind.set(f"{W}hanging", str(round(hanging_cm * self._CM_TO_TWIPS)))
+
+        self._mark("word/document.xml")
+        return {
+            "para_id": para_id,
+            "left_cm": left_cm,
+            "right_cm": right_cm,
+            "first_line_cm": first_line_cm,
+            "hanging_cm": hanging_cm,
+        }
+
+    def set_line_spacing(
+        self,
+        para_id: str,
+        *,
+        line_rule: str | None = None,
+        line_value: int | None = None,
+        space_before_pt: float | None = None,
+        space_after_pt: float | None = None,
+    ) -> dict:
+        """Set line spacing and paragraph spacing.
+
+        Args:
+            para_id: Target paragraph paraId.
+            line_rule: "auto" | "exact" | "atLeast" maps to w:lineRule.
+            line_value: For "auto": 240ths of a line (240=single, 360=1.5x, 480=double).
+                        For "exact"/"atLeast": value in twips.
+            space_before_pt: Space before paragraph in points.
+            space_after_pt: Space after paragraph in points.
+        """
+        doc = self._require("word/document.xml")
+        para = self._find_para(doc, para_id)
+        if para is None:
+            raise ValueError(f"Paragraph '{para_id}' not found")
+
+        ppr = para.find(f"{W}pPr")
+        if ppr is None:
+            ppr = etree.Element(f"{W}pPr")
+            para.insert(0, ppr)
+
+        spacing = ppr.find(f"{W}spacing")
+        if spacing is None:
+            spacing = etree.SubElement(ppr, f"{W}spacing")
+
+        if line_rule is not None:
+            spacing.set(f"{W}lineRule", line_rule)
+        if line_value is not None:
+            spacing.set(f"{W}line", str(line_value))
+        if space_before_pt is not None:
+            spacing.set(f"{W}before", str(round(space_before_pt * 20)))
+        if space_after_pt is not None:
+            spacing.set(f"{W}after", str(round(space_after_pt * 20)))
+
+        self._mark("word/document.xml")
+        return {
+            "para_id": para_id,
+            "line_rule": line_rule,
+            "line_value": line_value,
+            "space_before_pt": space_before_pt,
+            "space_after_pt": space_after_pt,
+        }
+
+    def get_paragraph_format(self, para_id: str) -> dict:
+        """Read all formatting attributes of a paragraph.
+
+        Returns a dict with style, alignment, indentation, spacing, border,
+        shading, and numPr keys.
+        """
+        doc = self._require("word/document.xml")
+        para = self._find_para(doc, para_id)
+        if para is None:
+            raise ValueError(f"Paragraph '{para_id}' not found")
+
+        ppr = para.find(f"{W}pPr")
+
+        # Style
+        style = ""
+        if ppr is not None:
+            ps = ppr.find(f"{W}pStyle")
+            if ps is not None:
+                style = ps.get(f"{W}val") or ""
+
+        # Alignment
+        alignment = ""
+        if ppr is not None:
+            jc = ppr.find(f"{W}jc")
+            if jc is not None:
+                alignment = jc.get(f"{W}val") or ""
+
+        # Indentation
+        ind_dict = {"left_twips": 0, "right_twips": 0, "first_line_twips": 0, "hanging_twips": 0}
+        if ppr is not None:
+            ind = ppr.find(f"{W}ind")
+            if ind is not None:
+                def _int(attr: str) -> int:
+                    v = ind.get(f"{W}{attr}")
+                    return int(v) if v is not None else 0
+                ind_dict["left_twips"] = _int("left")
+                ind_dict["right_twips"] = _int("right")
+                ind_dict["first_line_twips"] = _int("firstLine")
+                ind_dict["hanging_twips"] = _int("hanging")
+
+        # Spacing
+        sp_dict = {"before_twips": 0, "after_twips": 0, "line_value": 0, "line_rule": ""}
+        if ppr is not None:
+            sp = ppr.find(f"{W}spacing")
+            if sp is not None:
+                def _int_sp(attr: str) -> int:
+                    v = sp.get(f"{W}{attr}")
+                    return int(v) if v is not None else 0
+                sp_dict["before_twips"] = _int_sp("before")
+                sp_dict["after_twips"] = _int_sp("after")
+                sp_dict["line_value"] = _int_sp("line")
+                sp_dict["line_rule"] = sp.get(f"{W}lineRule") or ""
+
+        # Border
+        border = False
+        if ppr is not None:
+            border = ppr.find(f"{W}pBdr") is not None
+
+        # Shading
+        shading = False
+        if ppr is not None:
+            shading = ppr.find(f"{W}shd") is not None
+
+        # numPr
+        num_pr = None
+        if ppr is not None:
+            np_el = ppr.find(f"{W}numPr")
+            if np_el is not None:
+                ilvl_el = np_el.find(f"{W}ilvl")
+                numid_el = np_el.find(f"{W}numId")
+                ilvl = int(ilvl_el.get(f"{W}val", "0")) if ilvl_el is not None else 0
+                numid = int(numid_el.get(f"{W}val", "0")) if numid_el is not None else 0
+                num_pr = {"numId": numid, "ilvl": ilvl}
+
+        return {
+            "style": style,
+            "alignment": alignment,
+            "indentation": ind_dict,
+            "spacing": sp_dict,
+            "border": border,
+            "shading": shading,
+            "numPr": num_pr,
+        }
+
     def _get_run(self, para, run_idx: int):
         runs = para.findall(f"{W}r")
         if run_idx < 0 or run_idx >= len(runs):
