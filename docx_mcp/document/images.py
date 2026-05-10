@@ -173,18 +173,21 @@ class ImagesMixin:
         if drawing is None:
             raise ValueError(f"Could not find w:drawing for rId '{rId}'")
 
-        # Walk up one more to find the w:r parent, then remove it from w:p
-        run = drawing.getparent()
-        if run is not None:
-            parent = run.getparent()
-            if parent is not None:
-                parent.remove(run)
+        # Walk up one more level: handle w:r wrapper or direct w:p child
+        parent = drawing.getparent()
+        if parent is None:
+            raise ValueError(f"Drawing has no parent for rId '{rId}'")
+
+        if parent.tag == f"{W}r":
+            # normal case: drawing wrapped in a run — remove the whole run
+            grandparent = parent.getparent()
+            if grandparent is not None:
+                grandparent.remove(parent)
             else:
-                # drawing is top-level — remove drawing directly
-                drawing.getparent().remove(drawing)
+                parent.remove(drawing)
         else:
-            # No run parent — remove drawing directly from its parent
-            drawing.getparent().remove(drawing)
+            # drawing is a direct child of w:p or other element
+            parent.remove(drawing)
 
         # Remove the relationship entry
         rel = rels.find(f'{RELS}Relationship[@Id="{rId}"]')
@@ -303,6 +306,10 @@ class ImagesMixin:
         doc_pr.set("descr", alt_text)
         if title:
             doc_pr.set("title", title)
+        else:
+            # Remove title attribute if present to keep XML clean
+            if "title" in doc_pr.attrib:
+                del doc_pr.attrib["title"]
 
         self._mark("word/document.xml")
         return {"rId": rId, "alt_text": alt_text}
