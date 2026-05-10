@@ -65,34 +65,30 @@ class TestGetLists:
     def test_get_lists_returns_abstract_nums(self, tmp_path):
         """get_lists returns list of dicts for each abstractNum in numbering.xml."""
         doc = _make_doc(tmp_path)
-        # Bootstrap a numbering.xml with two abstractNums via add_list
-        pid1 = _add_para(doc, "item1")
-        pid2 = _add_para(doc, "item2")
-        doc.add_list([pid1], style="bullet")
-        doc.add_list([pid2], style="numbered")
-
+        # DocxDocument.create() bootstraps a numbering.xml with 2 abstractNums
+        # (bullet abs_id=0 and decimal abs_id=1). Verify the existing ones.
         result = doc.get_lists()
 
         assert isinstance(result, list)
-        assert len(result) == 2
-        abstract_ids = [r["abstract_num_id"] for r in result]
-        assert 0 in abstract_ids
-        assert 1 in abstract_ids
-        # Check required keys
+        assert len(result) >= 2
+        # Check required keys on each entry
         for item in result:
             assert "abstract_num_id" in item
             assert "num_format" in item
             assert "levels" in item
             assert item["levels"] >= 1
-        # First is bullet, second is decimal
+        # First abstractNum (id=0) is bullet
         by_id = {r["abstract_num_id"]: r for r in result}
         assert by_id[0]["num_format"] == "bullet"
         assert by_id[1]["num_format"] == "decimal"
+        assert by_id[0]["levels"] == 9
+        assert by_id[1]["levels"] == 9
 
     def test_get_lists_empty_when_no_numbering(self, tmp_path):
-        """get_lists returns [] when numbering.xml is absent."""
+        """get_lists returns [] when numbering.xml is absent (patched to None)."""
         doc = _make_doc(tmp_path)
-        # No add_list calls, numbering.xml won't exist
+        # Remove numbering.xml from the tree cache to simulate missing file
+        doc._trees.pop("word/numbering.xml", None)
         result = doc.get_lists()
         assert result == []
 

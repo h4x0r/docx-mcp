@@ -1707,6 +1707,34 @@ def suppress_numbering(para_id: str) -> str:
     return _js(doc.suppress_numbering(para_id))
 
 
+@mcp.tool()
+def get_lists() -> str:
+    """Return all list definitions from numbering.xml.
+
+    Each entry: {abstract_num_id, num_format, levels}.
+    Returns [] if no numbering.xml exists.
+    """
+    return _js(_require_doc().get_lists())
+
+
+@mcp.tool()
+def promote_list_item(para_id: str) -> str:
+    """Decrease the list indentation level (ilvl) of a paragraph by 1, minimum 0.
+
+    Returns {para_id, ilvl}. Raises ValueError if paragraph is not a list item.
+    """
+    return _js(_require_doc().promote_list_item(para_id))
+
+
+@mcp.tool()
+def demote_list_item(para_id: str) -> str:
+    """Increase the list indentation level (ilvl) of a paragraph by 1, maximum 8.
+
+    Returns {para_id, ilvl}. Raises ValueError if paragraph is not a list item.
+    """
+    return _js(_require_doc().demote_list_item(para_id))
+
+
 # ── Litigation Tools ────────────────────────────────────────────────────────
 
 
