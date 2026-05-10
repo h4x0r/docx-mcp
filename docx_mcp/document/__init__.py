@@ -54,6 +54,7 @@ from .template import TemplateMixin
 from .litigation import LitigationMixin
 from .equations import EquationsMixin
 from .charts import ChartsMixin
+from .reviewmerge import ReviewMergeMixin
 
 
 class DocxDocument(
@@ -91,6 +92,7 @@ class DocxDocument(
     LitigationMixin,
     EquationsMixin,
     ChartsMixin,
+    ReviewMergeMixin,
 ):
     """Word document editor with OOXML-level control."""
 

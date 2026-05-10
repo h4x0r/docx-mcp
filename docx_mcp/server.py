@@ -1421,6 +1421,12 @@ def update_chart_data(chart_id: str, series: list[dict]) -> str:
     return _js(doc.update_chart_data(chart_id, series))
 
 
+@mcp.tool()
+def merge_review_rounds(reviewer_paths: list[str], base_path: str | None = None) -> str:
+    """Merge tracked changes from N reviewer copies into the open document."""
+    return _js(_require_doc().merge_review_rounds(reviewer_paths, base_path))
+
+
 # ── Entry point ─────────────────────────────────────────────────────────────
 
 
