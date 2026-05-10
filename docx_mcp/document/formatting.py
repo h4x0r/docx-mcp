@@ -165,7 +165,8 @@ class FormattingMixin:
                 ppr.insert(0, pstyle)
             pstyle.set(f"{W}val", style)
 
-        self._mark("word/document.xml")
+        if text is not None or style is not None:
+            self._mark("word/document.xml")
         return {"para_id": para_id}
 
     def delete_paragraph(self, para_id: str) -> dict:
@@ -196,7 +197,13 @@ class FormattingMixin:
 
         pbdr = ppr.find(f"{W}pBdr")
         if pbdr is None:
-            pbdr = etree.SubElement(ppr, f"{W}pBdr")
+            pbdr = etree.Element(f"{W}pBdr")
+            # Insert before w:shd to maintain CT_PPr schema order
+            shd = ppr.find(f"{W}shd")
+            if shd is not None:
+                shd.addprevious(pbdr)
+            else:
+                ppr.append(pbdr)
 
         for side in sides:
             el = pbdr.find(f"{W}{side}")
