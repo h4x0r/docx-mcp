@@ -28,6 +28,9 @@ dependencies = [
     "spacy-transformers>=1.2,<2",
 ]
 
+[project.optional-dependencies]
+equations = ["latex2mathml>=3.0"]
+
 [dependency-groups]
 dev = [
     "pytest>=8.0",
