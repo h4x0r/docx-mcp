@@ -161,8 +161,6 @@ class WatermarkMixin:
         tp.set("trim", "t")
         tp.set("fitshape", "t")
 
-        etree.SubElement(shape, f"{{{_V_NS}}}imagedata")
-
         self._mark(path)
         return {"header": "default", "text": text, "diagonal": diagonal}
 
@@ -172,8 +170,21 @@ class WatermarkMixin:
         Returns:
             {"removed": int} count of watermark <w:r> elements removed.
         """
+        # Eagerly load all header parts so lazy-loaded ones are not missed
+        for rel_path in list(self._trees):
+            pass
+        ct = self._tree("[Content_Types].xml")
+        if ct is not None:
+            CT = "{http://schemas.openxmlformats.org/package/2006/content-types}"
+            for ov in ct.findall(f"{CT}Override"):
+                ct_val = ov.get("ContentType", "")
+                if ct_val == _HEADER_CT:
+                    part = ov.get("PartName", "").lstrip("/")
+                    if part:
+                        self._tree(part)
+
         removed = 0
-        for rel_path, tree in self._trees.items():
+        for rel_path, tree in list(self._trees.items()):
             if not rel_path.startswith("word/header"):
                 continue
             for run in list(tree.iter(f"{W}r")):

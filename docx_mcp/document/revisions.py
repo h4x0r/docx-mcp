@@ -132,7 +132,7 @@ def _unwrap_del(el) -> None:
         for dt in r.findall(f"{W}delText"):
             t = etree.Element(f"{W}t")
             t.text = dt.text
-            if dt.text and (dt.text.startswith(" ") or dt.text.endswith(" ")):
+            if dt.text and any(c.isspace() for c in dt.text):
                 t.set("{http://www.w3.org/XML/1998/namespace}space", "preserve")
             r.remove(dt)
             r.append(t)
