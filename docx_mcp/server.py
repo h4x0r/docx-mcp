@@ -1421,6 +1421,18 @@ def update_chart_data(chart_id: str, series: list[dict]) -> str:
     return _js(doc.update_chart_data(chart_id, series))
 
 
+@mcp.tool()
+def merge_review_rounds(reviewer_paths: list[str], base_path: str | None = None) -> str:
+    """Merge tracked changes from N reviewer copies into the open document."""
+    return _js(_require_doc().merge_review_rounds(reviewer_paths, base_path))
+
+
+@mcp.tool()
+def compare_contracts(other_path: str, output_path: str = "", align_by: str = "heading") -> str:
+    """Clause-aware diff between the open contract and another .docx file."""
+    return _js(_require_doc().compare_contracts(other_path, output_path, align_by))
+
+
 # ── Entry point ─────────────────────────────────────────────────────────────
 
 
