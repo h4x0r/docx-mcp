@@ -507,6 +507,54 @@ def validate_footnotes() -> str:
     return _js(_require_doc().validate_footnotes())
 
 
+@mcp.tool()
+def update_footnote(footnote_id: int, text: str) -> str:
+    """Update the text of an existing footnote.
+
+    Args:
+        footnote_id: The numeric ID of the footnote to update (must be >= 1).
+        text: The new text content for the footnote.
+    """
+    return _js(_require_doc().update_footnote(footnote_id, text))
+
+
+@mcp.tool()
+def delete_footnote(footnote_id: int) -> str:
+    """Delete a footnote and its in-body reference.
+
+    Removes the footnote definition from footnotes.xml and removes the
+    footnoteReference run from the document body.
+
+    Args:
+        footnote_id: The numeric ID of the footnote to delete.
+    """
+    return _js(_require_doc().delete_footnote(footnote_id))
+
+
+@mcp.tool()
+def update_endnote(endnote_id: int, text: str) -> str:
+    """Update the text of an existing endnote.
+
+    Args:
+        endnote_id: The numeric ID of the endnote to update (must be >= 1).
+        text: The new text content for the endnote.
+    """
+    return _js(_require_doc().update_endnote(endnote_id, text))
+
+
+@mcp.tool()
+def delete_endnote(endnote_id: int) -> str:
+    """Delete an endnote and its in-body reference.
+
+    Removes the endnote definition from endnotes.xml and removes the
+    endnoteReference run from the document body.
+
+    Args:
+        endnote_id: The numeric ID of the endnote to delete.
+    """
+    return _js(_require_doc().delete_endnote(endnote_id))
+
+
 # ── Sections / Page breaks ─────────────────────────────────────────────
 
 
