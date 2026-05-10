@@ -57,7 +57,8 @@ class StatisticsMixin:
         )
 
         explicit_sect_pr = sum(
-            1 for p in body.iter(f"{W}p")
+            1 for p in body
+            if p.tag == f"{W}p"
             for ppr in [p.find(f"{W}pPr")]
             if ppr is not None and ppr.find(f"{W}sectPr") is not None
         )
