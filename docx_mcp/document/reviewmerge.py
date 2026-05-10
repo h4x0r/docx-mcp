@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import copy
+import os
 import zipfile
 
 from lxml import etree
 
-from .base import W, W14
+from .base import W
 from .errors import DocxMcpError, ErrCode
 
 
@@ -24,10 +25,12 @@ def _del_text(del_el: etree._Element) -> str:
 
 
 def _preceding_text(para: etree._Element, paras: list[etree._Element]) -> str:
-    idx = paras.index(para)
-    if idx == 0:
-        return ""
-    return _para_text(paras[idx - 1])[:40]
+    for i, p in enumerate(paras):
+        if p is para:
+            if i == 0:
+                return ""
+            return _para_text(paras[i - 1])[:40]
+    return ""
 
 
 def _extract_changes(doc_xml: bytes) -> list[dict]:
@@ -82,11 +85,9 @@ class ReviewMergeMixin:
         Raises: DocxMcpError(ErrCode.PART_NOT_FOUND) if a reviewer path doesn't exist.
         """
         doc = self._require("word/document.xml")
-        body = doc.find(f"{W}body")
 
         all_changes: list[dict] = []
         for rpath in reviewer_paths:
-            import os
             if not os.path.exists(rpath):
                 raise DocxMcpError(
                     ErrCode.PART_NOT_FOUND,
