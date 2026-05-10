@@ -103,7 +103,7 @@ class EndnotesMixin:
                 if is_ref:
                     continue
                 t_el = run.find(f"{W}t")
-                if t_el is not None:
+                if t_el is not None and t_el.text and t_el.text.strip():
                     text_run = run
                     break
             if text_run is not None:
@@ -131,6 +131,8 @@ class EndnotesMixin:
         Removes w:endnote from word/endnotes.xml and removes the w:r
         containing w:endnoteReference[@w:id="{endnote_id}"] from document.xml.
         """
+        if endnote_id < 1:
+            raise ValueError(f"Endnote id {endnote_id} not found")
         en_tree = self._require("word/endnotes.xml")
         target = None
         for en in en_tree.findall(f"{W}endnote"):

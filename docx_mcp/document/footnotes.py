@@ -109,9 +109,9 @@ class FootnotesMixin:
                         is_ref = True
                 if is_ref:
                     continue
-                # First non-ref run — look for w:t
+                # First non-ref run with real content (skip whitespace separators)
                 t_el = run.find(f"{W}t")
-                if t_el is not None:
+                if t_el is not None and t_el.text and t_el.text.strip():
                     text_run = run
                     break
             if text_run is not None:
@@ -139,6 +139,8 @@ class FootnotesMixin:
         Removes w:footnote from word/footnotes.xml and removes the w:r
         containing w:footnoteReference[@w:id="{footnote_id}"] from document.xml.
         """
+        if footnote_id < 1:
+            raise ValueError(f"Footnote id {footnote_id} not found")
         fn_tree = self._require("word/footnotes.xml")
         target = None
         for fn in fn_tree.findall(f"{W}footnote"):
