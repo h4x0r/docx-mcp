@@ -576,6 +576,58 @@ def set_section_properties(
     )
 
 
+
+@mcp.tool()
+def set_page_size(width_mm: float, height_mm: float, para_id: str | None = None) -> str:
+    """Set page size from millimetre values.
+
+    Args:
+        width_mm: Page width in mm (e.g. 210 for A4, 215.9 for Letter).
+        height_mm: Page height in mm (e.g. 297 for A4, 279.4 for Letter).
+        para_id: paraId of paragraph with section break. None = body section.
+    """
+    return _js(_require_doc().set_page_size(width_mm, height_mm, para_id=para_id))
+
+
+@mcp.tool()
+def set_page_margins(
+    top_mm: float | None = None,
+    bottom_mm: float | None = None,
+    left_mm: float | None = None,
+    right_mm: float | None = None,
+    para_id: str | None = None,
+) -> str:
+    """Set page margins from millimetre values.
+
+    Args:
+        top_mm: Top margin in mm. None = unchanged.
+        bottom_mm: Bottom margin in mm. None = unchanged.
+        left_mm: Left margin in mm. None = unchanged.
+        right_mm: Right margin in mm. None = unchanged.
+        para_id: paraId of paragraph with section break. None = body section.
+    """
+    return _js(
+        _require_doc().set_page_margins(
+            top_mm=top_mm,
+            bottom_mm=bottom_mm,
+            left_mm=left_mm,
+            right_mm=right_mm,
+            para_id=para_id,
+        )
+    )
+
+
+@mcp.tool()
+def set_page_orientation(orientation: str, para_id: str | None = None) -> str:
+    """Set page orientation, swapping width/height dimensions if needed.
+
+    Args:
+        orientation: "portrait" or "landscape".
+        para_id: paraId of paragraph with section break. None = body section.
+    """
+    return _js(_require_doc().set_page_orientation(orientation, para_id=para_id))
+
+
 # ── Cross-references ──────────────────────────────────────────────────
 
 
@@ -873,6 +925,46 @@ def reply_to_comment(
         author: Author name.
     """
     return _js(_require_doc().reply_to_comment(parent_id, text, author=author))
+
+
+@mcp.tool()
+def update_comment(comment_id: int, text: str) -> str:
+    """Replace the text of an existing comment.
+
+    Args:
+        comment_id: ID of the comment to update.
+        text: New comment text.
+    """
+    return _js(_require_doc().update_comment(comment_id, text))
+
+
+@mcp.tool()
+def delete_comment(comment_id: int) -> str:
+    """Delete a comment and remove its range markers from the document.
+
+    Args:
+        comment_id: ID of the comment to delete.
+    """
+    return _js(_require_doc().delete_comment(comment_id))
+
+
+@mcp.tool()
+def resolve_comment(comment_id: int) -> str:
+    """Mark a comment as resolved (sets w15:done='1' in commentsExtended.xml).
+
+    Args:
+        comment_id: ID of the comment to resolve.
+    """
+    return _js(_require_doc().resolve_comment(comment_id))
+
+
+@mcp.tool()
+def list_comment_threads() -> str:
+    """List all comment threads (root comments with their replies).
+
+    Returns a list of thread dicts: {root: {id, author, date, text}, replies: [...]}.
+    """
+    return _js(_require_doc().list_comment_threads())
 
 
 # ── Save ────────────────────────────────────────────────────────────────────

@@ -165,3 +165,141 @@ class SectionsMixin:
                     result[f"margin_{attr}"] = int(val)
 
         return result
+
+    # ── Convenience wrappers ─────────────────────────────────────────────────
+
+    @staticmethod
+    def _mm_to_dxa(mm: float) -> int:
+        """Convert millimetres to DXA (twips). 1 inch = 1440 twips = 25.4 mm."""
+        return round(mm * 1440 / 25.4)
+
+    def set_page_size(
+        self,
+        width_mm: float,
+        height_mm: float,
+        *,
+        para_id: str | None = None,
+    ) -> dict:
+        """Set page size from millimetre values.
+
+        Args:
+            width_mm: Page width in mm (e.g. 210 for A4).
+            height_mm: Page height in mm (e.g. 297 for A4).
+            para_id: paraId of paragraph with section break. None = body section.
+        """
+        width_dxa = self._mm_to_dxa(width_mm)
+        height_dxa = self._mm_to_dxa(height_mm)
+        self.set_section_properties(para_id=para_id, width=width_dxa, height=height_dxa)
+        return {
+            "width_mm": width_mm,
+            "height_mm": height_mm,
+            "width_dxa": width_dxa,
+            "height_dxa": height_dxa,
+        }
+
+    def set_page_margins(
+        self,
+        *,
+        top_mm: float | None = None,
+        bottom_mm: float | None = None,
+        left_mm: float | None = None,
+        right_mm: float | None = None,
+        para_id: str | None = None,
+    ) -> dict:
+        """Set page margins from millimetre values.
+
+        Args:
+            top_mm: Top margin in mm. None = unchanged.
+            bottom_mm: Bottom margin in mm. None = unchanged.
+            left_mm: Left margin in mm. None = unchanged.
+            right_mm: Right margin in mm. None = unchanged.
+            para_id: paraId of paragraph with section break. None = body section.
+        """
+        self.set_section_properties(
+            para_id=para_id,
+            margin_top=self._mm_to_dxa(top_mm) if top_mm is not None else None,
+            margin_bottom=self._mm_to_dxa(bottom_mm) if bottom_mm is not None else None,
+            margin_left=self._mm_to_dxa(left_mm) if left_mm is not None else None,
+            margin_right=self._mm_to_dxa(right_mm) if right_mm is not None else None,
+        )
+        margins: dict = {}
+        if top_mm is not None:
+            margins["top"] = top_mm
+        if bottom_mm is not None:
+            margins["bottom"] = bottom_mm
+        if left_mm is not None:
+            margins["left"] = left_mm
+        if right_mm is not None:
+            margins["right"] = right_mm
+        return {"margins_mm": margins}
+
+    def set_page_orientation(
+        self,
+        orientation: str,
+        *,
+        para_id: str | None = None,
+    ) -> dict:
+        """Set page orientation, swapping width/height if needed.
+
+        Args:
+            orientation: "portrait" or "landscape".
+            para_id: paraId of paragraph with section break. None = body section.
+        """
+        if orientation not in ("portrait", "landscape"):
+            raise ValueError(
+                f"orientation must be 'portrait' or 'landscape', got {orientation!r}"
+            )
+
+        doc = self._require("word/document.xml")
+
+        if para_id is not None:
+            para = self._find_para(doc, para_id)
+            if para is None:
+                raise ValueError(f"Paragraph '{para_id}' not found")
+            ppr = para.find(f"{W}pPr")
+            sect_pr = ppr.find(f"{W}sectPr") if ppr is not None else None
+            if sect_pr is None:
+                raise ValueError(
+                    f"No section break on paragraph '{para_id}'. Use add_section_break first."
+                )
+        else:
+            body = doc.find(f"{W}body")
+            sect_pr = body.find(f"{W}sectPr")
+            if sect_pr is None:
+                sect_pr = etree.SubElement(body, f"{W}sectPr")
+
+        # Get or create pgSz
+        pg_sz = sect_pr.find(f"{W}pgSz")
+        if pg_sz is None:
+            pg_sz = etree.SubElement(sect_pr, f"{W}pgSz")
+
+        w_val = int(pg_sz.get(f"{W}w", "0") or "0")
+        h_val = int(pg_sz.get(f"{W}h", "0") or "0")
+
+        if orientation == "landscape":
+            if w_val < h_val or (w_val == 0 and h_val == 0):
+                # Swap
+                new_w, new_h = h_val, w_val
+            else:
+                new_w, new_h = w_val, h_val
+            pg_sz.set(f"{W}w", str(new_w))
+            pg_sz.set(f"{W}h", str(new_h))
+            pg_sz.set(f"{W}orient", "landscape")
+        else:  # portrait
+            if w_val > h_val:
+                # Swap
+                new_w, new_h = h_val, w_val
+            else:
+                new_w, new_h = w_val, h_val
+            pg_sz.set(f"{W}w", str(new_w))
+            pg_sz.set(f"{W}h", str(new_h))
+            # Set to portrait explicitly (or remove orient attr)
+            pg_sz.set(f"{W}orient", "portrait")
+
+        self._mark("word/document.xml")
+
+        return {
+            "orientation": orientation,
+            "width_dxa": int(pg_sz.get(f"{W}w", "0")),
+            "height_dxa": int(pg_sz.get(f"{W}h", "0")),
+        }
