@@ -1226,6 +1226,35 @@ def lock_content_control(tag: str, lock: str = "sdtLocked") -> str:
     return _js(doc.lock_content_control(tag, lock))
 
 
+# ── Template Filling ─────────────────────────────────────────────────────────
+
+
+@mcp.tool()
+def fill_template(data: dict[str, str | list[str]], remove_empty: bool = False) -> str:
+    """Fill SDT content controls from data dict. Keys match w:tag values.
+
+    Args:
+        data: Mapping of tag names to values. Use list[str] for repeating sections.
+        remove_empty: If True, remove SDTs with no matching key in data.
+    """
+    doc = _require_doc()
+    return _js(doc.fill_template(data, remove_empty))
+
+
+@mcp.tool()
+def list_template_fields() -> str:
+    """List all SDT template fields (tag, label, type) in the document."""
+    doc = _require_doc()
+    return _js(doc.list_template_fields())
+
+
+@mcp.tool()
+def validate_template_data(data: dict) -> str:
+    """Validate data dict covers all template fields. Returns missing and extra keys."""
+    doc = _require_doc()
+    return _js(doc.validate_template_data(data))
+
+
 # ── Multilevel Lists ─────────────────────────────────────────────────────────
 
 
