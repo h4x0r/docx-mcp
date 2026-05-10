@@ -530,6 +530,34 @@ def set_properties(
     )
 
 
+@mcp.tool()
+def get_custom_properties() -> str:
+    """Get custom document properties from docProps/custom.xml."""
+    return _js(_require_doc().get_custom_properties())
+
+
+@mcp.tool()
+def set_custom_property(name: str, value: str, vt_type: str = "lpwstr") -> str:
+    """Set (upsert) a custom document property.
+
+    Args:
+        name: Property name.
+        value: Property value as a string.
+        vt_type: VT type element name (lpwstr, i4, bool, etc.).
+    """
+    return _js(_require_doc().set_custom_property(name, value, vt_type=vt_type))
+
+
+@mcp.tool()
+def delete_custom_property(name: str) -> str:
+    """Delete a custom document property by name.
+
+    Args:
+        name: Property name to delete.
+    """
+    return _js(_require_doc().delete_custom_property(name))
+
+
 # ── Images ─────────────────────────────────────────────────────────────────
 
 
