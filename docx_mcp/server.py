@@ -1337,6 +1337,28 @@ def generate_privilege_log(output_path: str = "") -> str:
     return _js(doc.generate_privilege_log(output_path))
 
 
+# ── Equations ───────────────────────────────────────────────────────────────
+
+
+@mcp.tool()
+def add_equation(para_id: str, latex: str) -> str:
+    """Insert a LaTeX equation as OMML. Requires: pip install latex2mathml.
+
+    Args:
+        para_id: paraId of the paragraph after which the equation is inserted.
+        latex: LaTeX source string (e.g. r"\\frac{1}{2}").
+    """
+    doc = _require_doc()
+    return _js(doc.add_equation(para_id, latex))
+
+
+@mcp.tool()
+def get_equations() -> str:
+    """Return all equations in the document as OMML XML strings."""
+    doc = _require_doc()
+    return _js(doc.get_equations())
+
+
 # ── Entry point ─────────────────────────────────────────────────────────────
 
 
