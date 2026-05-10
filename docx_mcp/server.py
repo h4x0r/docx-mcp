@@ -1359,6 +1359,68 @@ def get_equations() -> str:
     return _js(doc.get_equations())
 
 
+# ── Charts ───────────────────────────────────────────────────────────────────
+
+
+@mcp.tool()
+def insert_bar_chart(
+    para_id: str,
+    title: str,
+    series: list[dict],
+    categories: list[str],
+    width_cm: float = 14.0,
+    height_cm: float = 9.0,
+) -> str:
+    """Insert a native bar chart (no Excel required).
+
+    series: [{"name": str, "values": [float, ...]}]
+    """
+    doc = _require_doc()
+    return _js(doc.insert_bar_chart(para_id, title, series, categories, width_cm, height_cm))
+
+
+@mcp.tool()
+def insert_line_chart(
+    para_id: str,
+    title: str,
+    series: list[dict],
+    categories: list[str],
+    width_cm: float = 14.0,
+    height_cm: float = 9.0,
+) -> str:
+    """Insert a native line chart.
+
+    series: [{"name": str, "values": [float, ...]}]
+    """
+    doc = _require_doc()
+    return _js(doc.insert_line_chart(para_id, title, series, categories, width_cm, height_cm))
+
+
+@mcp.tool()
+def insert_pie_chart(
+    para_id: str,
+    title: str,
+    series: list[dict],
+    categories: list[str],
+) -> str:
+    """Insert a native pie chart (single series, fixed 14x9 cm).
+
+    series: [{"name": str, "values": [float, ...]}]
+    """
+    doc = _require_doc()
+    return _js(doc.insert_pie_chart(para_id, title, series, categories))
+
+
+@mcp.tool()
+def update_chart_data(chart_id: str, series: list[dict]) -> str:
+    """Replace data series in an existing chart by chart_id.
+
+    series: [{"name": str, "values": [float, ...]}]
+    """
+    doc = _require_doc()
+    return _js(doc.update_chart_data(chart_id, series))
+
+
 # ── Entry point ─────────────────────────────────────────────────────────────
 
 
