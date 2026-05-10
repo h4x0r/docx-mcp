@@ -2357,6 +2357,55 @@ def set_track_changes(enabled: bool, author: str = "") -> str:
     return _js(_require_doc().set_track_changes(enabled=enabled, author=author))
 
 
+@mcp.tool()
+def split_table(table_idx: int, at_row_index: int) -> str:
+    """Split a table into two tables at the given row index.
+
+    Rows 0..at_row_index-1 remain in the original table; rows
+    at_row_index..end move to a new table inserted immediately after.
+
+    Args:
+        table_idx: 0-based table index.
+        at_row_index: 0-based row index to split at (must be > 0 and < row_count).
+
+    Returns:
+        {"table1_rows": int, "table2_rows": int}
+    """
+    return _js(_require_doc().split_table(table_idx, at_row_index))
+
+
+@mcp.tool()
+def duplicate_table_row(table_idx: int, row_index: int) -> str:
+    """Deep-copy a table row and insert the copy immediately after it.
+
+    Args:
+        table_idx: 0-based table index.
+        row_index: 0-based index of the row to duplicate.
+
+    Returns:
+        {"row_index": int, "new_row_index": int}
+    """
+    return _js(_require_doc().duplicate_table_row(table_idx, row_index))
+
+
+@mcp.tool()
+def sort_table(table_idx: int, column_index: int, ascending: bool = True) -> str:
+    """Sort the non-header rows of a table by the text content of a column.
+
+    Header rows (marked with w:tblHeader) remain at the top. Rows with a
+    missing cell at column_index sort as empty string.
+
+    Args:
+        table_idx: 0-based table index.
+        column_index: 0-based column to sort by.
+        ascending: True for A→Z (default), False for Z→A.
+
+    Returns:
+        {"sorted_rows": int, "column_index": int, "ascending": bool}
+    """
+    return _js(_require_doc().sort_table(table_idx, column_index, ascending))
+
+
 # ── Entry point ─────────────────────────────────────────────────────────────
 
 

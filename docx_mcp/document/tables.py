@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import csv
 import io
 
@@ -736,3 +737,125 @@ class TablesMixin:
         tbl_style.set(f"{W}val", style_name)
         self._mark("word/document.xml")
         return {"table_idx": table_idx, "style_name": style_name}
+
+    # ── Advanced table operations ────────────────────────────────────────────
+
+    def split_table(self, table_idx: int, at_row_index: int) -> dict:
+        """Split a table at at_row_index into two separate tables.
+
+        Rows 0..at_row_index-1 stay in table 1; rows at_row_index..end go to
+        the new table 2 inserted immediately after table 1 in the body.
+
+        Args:
+            table_idx: 0-based table index.
+            at_row_index: 0-based row index; must be > 0 and < row_count.
+
+        Returns:
+            {"table1_rows": int, "table2_rows": int}
+        """
+        tbl = self._get_table(table_idx)
+        rows = tbl.findall(f"{W}tr")
+        row_count = len(rows)
+        if at_row_index <= 0 or at_row_index >= row_count:
+            raise ValueError(
+                f"Split index out of range: at_row_index={at_row_index}, row_count={row_count}"
+            )
+
+        # Build table 2 as a deep copy of the original (preserves tblPr, tblGrid, etc.)
+        tbl2 = copy.deepcopy(tbl)
+        # Clear all w:tr children from tbl2, then repopulate with split rows
+        for tr in tbl2.findall(f"{W}tr"):
+            tbl2.remove(tr)
+        for tr in rows[at_row_index:]:
+            tbl2.append(copy.deepcopy(tr))
+
+        # Remove split rows from original table 1
+        for tr in rows[at_row_index:]:
+            tbl.remove(tr)
+
+        # Insert tbl2 immediately after tbl in its parent
+        parent = tbl.getparent()
+        tbl_pos = list(parent).index(tbl)
+        parent.insert(tbl_pos + 1, tbl2)
+
+        self._mark("word/document.xml")
+        return {"table1_rows": at_row_index, "table2_rows": row_count - at_row_index}
+
+    def duplicate_table_row(self, table_idx: int, row_index: int) -> dict:
+        """Deep-copy a table row and insert the copy immediately after it.
+
+        Clears w14:paraId / w14:textId attributes on copied paragraphs and
+        assigns fresh unique IDs to avoid duplicates.
+
+        Args:
+            table_idx: 0-based table index.
+            row_index: 0-based row to duplicate.
+
+        Returns:
+            {"row_index": row_index, "new_row_index": row_index + 1}
+        """
+        tbl = self._get_table(table_idx)
+        rows = tbl.findall(f"{W}tr")
+        if row_index < 0 or row_index >= len(rows):
+            raise ValueError(
+                f"Row index {row_index} out of range (have {len(rows)})"
+            )
+
+        original = rows[row_index]
+        new_row = copy.deepcopy(original)
+
+        # Replace paraId / textId attributes on all w:p in the copy
+        for p in new_row.iter(f"{W}p"):
+            if p.get(f"{W14}paraId") is not None:
+                p.set(f"{W14}paraId", self._new_para_id())
+            if p.get(f"{W14}textId") is not None:
+                p.set(f"{W14}textId", self._new_para_id())
+
+        # Insert after the original row
+        original.addnext(new_row)
+
+        self._mark("word/document.xml")
+        return {"row_index": row_index, "new_row_index": row_index + 1}
+
+    def sort_table(self, table_idx: int, column_index: int, ascending: bool = True) -> dict:
+        """Sort the non-header rows of a table by the text content of a column.
+
+        Header rows (rows with w:tr/w:trPr/w:tblHeader) are kept at the top
+        in their original order.
+
+        Args:
+            table_idx: 0-based table index.
+            column_index: 0-based column to sort by.
+            ascending: True for A→Z, False for Z→A.
+
+        Returns:
+            {"sorted_rows": int, "column_index": int, "ascending": bool}
+        """
+        tbl = self._get_table(table_idx)
+        all_rows = tbl.findall(f"{W}tr")
+
+        header_rows = []
+        data_rows = []
+        for tr in all_rows:
+            tr_pr = tr.find(f"{W}trPr")
+            if tr_pr is not None and tr_pr.find(f"{W}tblHeader") is not None:
+                header_rows.append(tr)
+            else:
+                data_rows.append(tr)
+
+        def _row_sort_key(tr: etree._Element) -> str:
+            cells = tr.findall(f"{W}tc")
+            if column_index < len(cells):
+                return "".join(t.text for t in cells[column_index].iter(f"{W}t") if t.text)
+            return ""
+
+        data_rows.sort(key=_row_sort_key, reverse=not ascending)
+
+        # Remove all rows from table, then re-append in order
+        for tr in all_rows:
+            tbl.remove(tr)
+        for tr in header_rows + data_rows:
+            tbl.append(tr)
+
+        self._mark("word/document.xml")
+        return {"sorted_rows": len(data_rows), "column_index": column_index, "ascending": ascending}
