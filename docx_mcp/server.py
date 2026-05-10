@@ -1028,6 +1028,50 @@ def reject_changes(author: str = "") -> str:
 
 
 @mcp.tool()
+def accept_change(change_id: int) -> str:
+    """Accept a single tracked change by its change_id.
+
+    For insertions: keeps the inserted text (unwraps w:ins).
+    For deletions: discards the deleted text (removes w:del).
+
+    Args:
+        change_id: The integer id attribute of the w:ins or w:del element.
+    """
+    return _js(_require_doc().accept_change(change_id))
+
+
+@mcp.tool()
+def reject_change(change_id: int) -> str:
+    """Reject a single tracked change by its change_id.
+
+    For insertions: discards the inserted text (removes w:ins).
+    For deletions: keeps the deleted text (unwraps w:del, restoring text).
+
+    Args:
+        change_id: The integer id attribute of the w:ins or w:del element.
+    """
+    return _js(_require_doc().reject_change(change_id))
+
+
+@mcp.tool()
+def accept_all_changes() -> str:
+    """Accept all tracked changes in document order.
+
+    Returns a JSON object with the count of accepted changes: {"accepted": int}.
+    """
+    return _js(_require_doc().accept_all_changes())
+
+
+@mcp.tool()
+def reject_all_changes() -> str:
+    """Reject all tracked changes in document order.
+
+    Returns a JSON object with the count of rejected changes: {"rejected": int}.
+    """
+    return _js(_require_doc().reject_all_changes())
+
+
+@mcp.tool()
 def set_formatting(
     para_id: str,
     text: str,

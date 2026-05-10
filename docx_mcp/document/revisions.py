@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from lxml import etree
+
 from .base import W, W14
 
 
@@ -57,6 +59,84 @@ class RevisionsMixin:
                     })
 
         return results
+
+    def accept_change(self, change_id: int) -> dict:
+        doc = self._require("word/document.xml")
+        el = _find_change(doc, change_id)
+        if el is None:
+            raise ValueError(f"No tracked change with id={change_id}")
+        if el.tag == f"{W}ins":
+            _unwrap(el)
+            return {"change_id": change_id, "action": "accepted", "type": "insertion"}
+        else:
+            el.getparent().remove(el)
+            return {"change_id": change_id, "action": "accepted", "type": "deletion"}
+
+    def reject_change(self, change_id: int) -> dict:
+        doc = self._require("word/document.xml")
+        el = _find_change(doc, change_id)
+        if el is None:
+            raise ValueError(f"No tracked change with id={change_id}")
+        if el.tag == f"{W}ins":
+            el.getparent().remove(el)
+            return {"change_id": change_id, "action": "rejected", "type": "insertion"}
+        else:
+            _unwrap_del(el)
+            return {"change_id": change_id, "action": "rejected", "type": "deletion"}
+
+    def accept_all_changes(self) -> dict:
+        doc = self._require("word/document.xml")
+        elements = list(doc.iter(f"{W}ins")) + list(doc.iter(f"{W}del"))
+        count = 0
+        for el in elements:
+            if el.tag == f"{W}ins":
+                _unwrap(el)
+            else:
+                el.getparent().remove(el)
+            count += 1
+        return {"accepted": count}
+
+    def reject_all_changes(self) -> dict:
+        doc = self._require("word/document.xml")
+        elements = list(doc.iter(f"{W}ins")) + list(doc.iter(f"{W}del"))
+        count = 0
+        for el in elements:
+            if el.tag == f"{W}ins":
+                el.getparent().remove(el)
+            else:
+                _unwrap_del(el)
+            count += 1
+        return {"rejected": count}
+
+
+def _find_change(doc, change_id: int):
+    id_str = str(change_id)
+    for tag in (f"{W}ins", f"{W}del"):
+        for el in doc.iter(tag):
+            if el.get(f"{W}id") == id_str:
+                return el
+    return None
+
+
+def _unwrap(el) -> None:
+    parent = el.getparent()
+    idx = list(parent).index(el)
+    children = list(el)
+    parent.remove(el)
+    for i, child in enumerate(children):
+        parent.insert(idx + i, child)
+
+
+def _unwrap_del(el) -> None:
+    for r in el.findall(f"{W}r"):
+        for dt in r.findall(f"{W}delText"):
+            t = etree.Element(f"{W}t")
+            t.text = dt.text
+            if dt.text and (dt.text.startswith(" ") or dt.text.endswith(" ")):
+                t.set("{http://www.w3.org/XML/1998/namespace}space", "preserve")
+            r.remove(dt)
+            r.append(t)
+    _unwrap(el)
 
 
 def _int_id(val: str | None) -> int:
