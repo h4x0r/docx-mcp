@@ -90,3 +90,16 @@ class TestCharts:
         tree = etree.fromstring(chart_xml)
         vals = [el.text for el in tree.iter(f"{C}v")]
         assert "99" in vals
+
+    def test_chart_attributes_are_unqualified(self, tmp_path):
+        """Chart element attributes must be unqualified (no c: namespace prefix)."""
+        doc = _make_doc(tmp_path)
+        para_id = _get_para_id(doc)
+        doc.insert_bar_chart(para_id, "Chart", _SERIES, _CATS)
+        chart_xml = (doc.workdir / "word" / "charts" / "chart1.xml").read_text(encoding="utf-8")
+        # Attributes like val and idx on chart elements must NOT have the c: prefix
+        assert 'c:val=' not in chart_xml
+        assert 'c:idx=' not in chart_xml
+        # But the actual values should be present as plain attributes
+        assert 'val=' in chart_xml
+        assert 'idx=' in chart_xml

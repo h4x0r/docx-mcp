@@ -48,39 +48,39 @@ def _build_chart_xml(
     r = etree.SubElement(p, f"{A}r")
     t = etree.SubElement(r, f"{A}t")
     t.text = title
-    etree.SubElement(title_el, f"{C}overlay", {f"{C}val": "0"})
+    etree.SubElement(title_el, f"{C}overlay", {"val": "0"})
 
-    etree.SubElement(chart, f"{C}autoTitleDeleted", {f"{C}val": "0"})
+    etree.SubElement(chart, f"{C}autoTitleDeleted", {"val": "0"})
 
     plot_area = etree.SubElement(chart, f"{C}plotArea")
 
     # Chart-type element
     if chart_type == "bar":
         chart_el = etree.SubElement(plot_area, f"{C}barChart")
-        etree.SubElement(chart_el, f"{C}barDir", {f"{C}val": "col"})
-        etree.SubElement(chart_el, f"{C}grouping", {f"{C}val": "clustered"})
+        etree.SubElement(chart_el, f"{C}barDir", {"val": "col"})
+        etree.SubElement(chart_el, f"{C}grouping", {"val": "clustered"})
     elif chart_type == "line":
         chart_el = etree.SubElement(plot_area, f"{C}lineChart")
-        etree.SubElement(chart_el, f"{C}grouping", {f"{C}val": "standard"})
+        etree.SubElement(chart_el, f"{C}grouping", {"val": "standard"})
     elif chart_type == "pie":
         chart_el = etree.SubElement(plot_area, f"{C}pieChart")
-        etree.SubElement(chart_el, f"{C}firstSliceAng", {f"{C}val": "0"})
+        etree.SubElement(chart_el, f"{C}firstSliceAng", {"val": "0"})
     else:
         raise ValueError(f"Unknown chart_type: {chart_type!r}")
 
     # Add series
     for idx, ser_data in enumerate(series):
         ser = etree.SubElement(chart_el, f"{C}ser")
-        etree.SubElement(ser, f"{C}idx", {f"{C}val": str(idx)})
-        etree.SubElement(ser, f"{C}order", {f"{C}val": str(idx)})
+        etree.SubElement(ser, f"{C}idx", {"val": str(idx)})
+        etree.SubElement(ser, f"{C}order", {"val": str(idx)})
 
         # Series name
         tx2 = etree.SubElement(ser, f"{C}tx")
         str_ref = etree.SubElement(tx2, f"{C}strRef")
         etree.SubElement(str_ref, f"{C}f").text = f"Sheet1!${chr(66 + idx)}$1"
         str_cache = etree.SubElement(str_ref, f"{C}strCache")
-        etree.SubElement(str_cache, f"{C}ptCount", {f"{C}val": "1"})
-        pt = etree.SubElement(str_cache, f"{C}pt", {f"{C}idx": "0"})
+        etree.SubElement(str_cache, f"{C}ptCount", {"val": "1"})
+        pt = etree.SubElement(str_cache, f"{C}pt", {"idx": "0"})
         etree.SubElement(pt, f"{C}v").text = ser_data.get("name", f"Series {idx + 1}")
 
         # Categories
@@ -91,9 +91,9 @@ def _build_chart_xml(
                 f"Sheet1!$A$2:$A${len(categories) + 1}"
             )
             cat_cache = etree.SubElement(cat_ref, f"{C}strCache")
-            etree.SubElement(cat_cache, f"{C}ptCount", {f"{C}val": str(len(categories))})
+            etree.SubElement(cat_cache, f"{C}ptCount", {"val": str(len(categories))})
             for ci, cat_name in enumerate(categories):
-                cpt = etree.SubElement(cat_cache, f"{C}pt", {f"{C}idx": str(ci)})
+                cpt = etree.SubElement(cat_cache, f"{C}pt", {"idx": str(ci)})
                 etree.SubElement(cpt, f"{C}v").text = str(cat_name)
 
         # Values
@@ -105,14 +105,14 @@ def _build_chart_xml(
         )
         num_cache = etree.SubElement(num_ref, f"{C}numCache")
         etree.SubElement(num_cache, f"{C}formatCode").text = "General"
-        etree.SubElement(num_cache, f"{C}ptCount", {f"{C}val": str(len(values))})
+        etree.SubElement(num_cache, f"{C}ptCount", {"val": str(len(values))})
         for vi, v in enumerate(values):
-            vpt = etree.SubElement(num_cache, f"{C}pt", {f"{C}idx": str(vi)})
+            vpt = etree.SubElement(num_cache, f"{C}pt", {"idx": str(vi)})
             etree.SubElement(vpt, f"{C}v").text = str(v)
 
     # Legend
     legend = etree.SubElement(chart, f"{C}legend")
-    etree.SubElement(legend, f"{C}legendPos", {f"{C}val": "b"})
+    etree.SubElement(legend, f"{C}legendPos", {"val": "b"})
 
     return cs
 
@@ -124,16 +124,16 @@ def _rebuild_series(chart_el: etree._Element, series: list[dict]) -> None:
 
     for idx, ser_data in enumerate(series):
         ser = etree.SubElement(chart_el, f"{C}ser")
-        etree.SubElement(ser, f"{C}idx", {f"{C}val": str(idx)})
-        etree.SubElement(ser, f"{C}order", {f"{C}val": str(idx)})
+        etree.SubElement(ser, f"{C}idx", {"val": str(idx)})
+        etree.SubElement(ser, f"{C}order", {"val": str(idx)})
 
         # Series name
         tx2 = etree.SubElement(ser, f"{C}tx")
         str_ref = etree.SubElement(tx2, f"{C}strRef")
         etree.SubElement(str_ref, f"{C}f").text = f"Sheet1!${chr(66 + idx)}$1"
         str_cache = etree.SubElement(str_ref, f"{C}strCache")
-        etree.SubElement(str_cache, f"{C}ptCount", {f"{C}val": "1"})
-        pt = etree.SubElement(str_cache, f"{C}pt", {f"{C}idx": "0"})
+        etree.SubElement(str_cache, f"{C}ptCount", {"val": "1"})
+        pt = etree.SubElement(str_cache, f"{C}pt", {"idx": "0"})
         etree.SubElement(pt, f"{C}v").text = ser_data.get("name", f"Series {idx + 1}")
 
         # Values
@@ -145,9 +145,9 @@ def _rebuild_series(chart_el: etree._Element, series: list[dict]) -> None:
         )
         num_cache = etree.SubElement(num_ref, f"{C}numCache")
         etree.SubElement(num_cache, f"{C}formatCode").text = "General"
-        etree.SubElement(num_cache, f"{C}ptCount", {f"{C}val": str(len(values))})
+        etree.SubElement(num_cache, f"{C}ptCount", {"val": str(len(values))})
         for vi, v in enumerate(values):
-            vpt = etree.SubElement(num_cache, f"{C}pt", {f"{C}idx": str(vi)})
+            vpt = etree.SubElement(num_cache, f"{C}pt", {"idx": str(vi)})
             etree.SubElement(vpt, f"{C}v").text = str(v)
 
 
