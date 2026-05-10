@@ -79,19 +79,23 @@ class StylesMixin:
         if target is None:
             raise ValueError(f"Style '{name}' not found")
         style_id = target.get(f"{W}styleId", "")
+        changed = False
         if based_on is not None:
             old = target.find(f"{W}basedOn")
             if old is not None:
                 target.remove(old)
             based_el = etree.SubElement(target, f"{W}basedOn")
             based_el.set(f"{W}val", based_on)
+            changed = True
         if next_style is not None:
             old = target.find(f"{W}next")
             if old is not None:
                 target.remove(old)
             next_el = etree.SubElement(target, f"{W}next")
             next_el.set(f"{W}val", next_style)
-        self._mark("word/styles.xml")
+            changed = True
+        if changed:
+            self._mark("word/styles.xml")
         return {"style_id": style_id, "name": name}
 
     def delete_style(self, name: str) -> dict:

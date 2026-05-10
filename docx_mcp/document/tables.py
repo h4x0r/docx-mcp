@@ -558,17 +558,37 @@ class TablesMixin:
                 r = etree.SubElement(p, f"{W}r")
                 t = etree.SubElement(r, f"{W}t")
                 t.text = header_text
+        # Keep tblGrid in sync
+        tbl_pr = tbl.find(f"{W}tblPr")
+        tbl_grid = tbl.find(f"{W}tblGrid")
+        if tbl_grid is None:
+            tbl_grid = etree.Element(f"{W}tblGrid")
+            if tbl_pr is not None:
+                tbl_pr.addnext(tbl_grid)
+            else:
+                tbl.insert(0, tbl_grid)
+        etree.SubElement(tbl_grid, f"{W}gridCol")
         col_count = len(tbl.findall(f"{W}tr")[0].findall(f"{W}tc")) if rows else 0
         self._mark("word/document.xml")
         return {"table_idx": table_idx, "columns": col_count}
 
     def delete_column_from_table(self, table_idx: int, col_idx: int) -> dict:
         tbl = self._get_table(table_idx)
-        for tr in tbl.findall(f"{W}tr"):
+        rows = tbl.findall(f"{W}tr")
+        # Validate all rows first to avoid partial mutation
+        for tr in rows:
             cells = tr.findall(f"{W}tc")
             if col_idx < 0 or col_idx >= len(cells):
                 raise IndexError(f"Column index {col_idx} out of range (have {len(cells)})")
+        for tr in rows:
+            cells = tr.findall(f"{W}tc")
             tr.remove(cells[col_idx])
+        # Keep tblGrid in sync
+        tbl_grid = tbl.find(f"{W}tblGrid")
+        if tbl_grid is not None:
+            grid_cols = tbl_grid.findall(f"{W}gridCol")
+            if col_idx < len(grid_cols):
+                tbl_grid.remove(grid_cols[col_idx])
         self._mark("word/document.xml")
         return {"table_idx": table_idx, "col_idx": col_idx}
 
