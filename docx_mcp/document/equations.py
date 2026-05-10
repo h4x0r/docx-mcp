@@ -171,10 +171,16 @@ class EquationsMixin:
             return []
         results = []
         for omath in doc.iter(f"{M}oMath"):
-            ancestor = omath.getparent()
-            while ancestor is not None and ancestor.tag != f"{W}p":
-                ancestor = ancestor.getparent()
-            para_id = ancestor.get(f"{W14}paraId") if ancestor is not None else None
+            # Find the containing m:oMathPara first
+            omath_para = omath.getparent()
+            while omath_para is not None and omath_para.tag != f"{M}oMathPara":
+                omath_para = omath_para.getparent()
+
+            para_id = None
+            if omath_para is not None:
+                prev = omath_para.getprevious()
+                if prev is not None and prev.tag == f"{W}p":
+                    para_id = prev.get(f"{W14}paraId")
             results.append({
                 "omml_xml": etree.tostring(omath, encoding="unicode"),
                 "para_id": para_id,

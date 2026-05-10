@@ -52,8 +52,9 @@ class TestEquations:
         monkeypatch.setattr("builtins.__import__", _make_import_blocker("latex2mathml"))
         doc = _make_doc(tmp_path)
         para_id = _get_para_id(doc)
-        with pytest.raises((DocxMcpError, ImportError)):
+        with pytest.raises(DocxMcpError) as exc_info:
             doc.add_equation(para_id, r"x^2")
+        assert exc_info.value.code == ErrCode.PII_DEPS_MISSING
 
 
 def _make_import_blocker(blocked_module):
