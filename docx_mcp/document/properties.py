@@ -113,7 +113,7 @@ class PropertiesMixin:
             vt_el.text = value
         else:
             pids = [int(p.get("pid", 2)) for p in root.findall(f"{CUSTOM}property")]
-            next_pid = max(pids) + 1 if pids else 2
+            next_pid = max(max(pids) + 1, 2) if pids else 2
             prop = etree.SubElement(root, f"{CUSTOM}property")
             prop.set("fmtid", FMTID)
             prop.set("pid", str(next_pid))
