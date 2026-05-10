@@ -32,7 +32,6 @@ class SessionLogMixin:
         """
         log = getattr(self, "_session_log", [])
         lines = [
-            "import json",
             "from docx_mcp import server",
             "",
         ]
