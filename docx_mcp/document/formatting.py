@@ -288,8 +288,10 @@ class FormattingMixin:
             ind.set(f"{W}right", str(round(right_cm * self._CM_TO_TWIPS)))
         if first_line_cm is not None:
             ind.set(f"{W}firstLine", str(round(first_line_cm * self._CM_TO_TWIPS)))
+            ind.attrib.pop(f"{W}hanging", None)
         elif hanging_cm is not None:
             ind.set(f"{W}hanging", str(round(hanging_cm * self._CM_TO_TWIPS)))
+            ind.attrib.pop(f"{W}firstLine", None)
 
         self._mark("word/document.xml")
         return {
