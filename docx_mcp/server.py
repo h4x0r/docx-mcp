@@ -1279,6 +1279,64 @@ def suppress_numbering(para_id: str) -> str:
     return _js(doc.suppress_numbering(para_id))
 
 
+# ── Litigation Tools ────────────────────────────────────────────────────────
+
+
+@mcp.tool()
+def bates_number(prefix: str, start: int = 1, digits: int = 6, position: str = "footer-right") -> str:
+    """Add Bates numbering stamp to document footer.
+
+    Args:
+        prefix: Bates prefix string (e.g. "ACME-").
+        start: Starting Bates number.
+        digits: Zero-padding width for the number.
+        position: Hint for stamp position (currently "footer-right").
+    """
+    doc = _require_doc()
+    return _js(doc.bates_number(prefix, start, digits, position))
+
+
+@mcp.tool()
+def redact_text(
+    pattern: str | None = None,
+    para_ids: list[str] | None = None,
+    exact_text: str | None = None,
+    reason: str = "",
+) -> str:
+    """True redaction: remove text and replace with black rectangle. Use exact_text or pattern.
+
+    Args:
+        pattern: Regex pattern to match run text.
+        para_ids: Optional list of paragraph paraId values to limit scope.
+        exact_text: Exact string to match against run text.
+        reason: Reason for redaction (stored in log).
+    """
+    doc = _require_doc()
+    return _js(doc.redact_text(pattern, para_ids, exact_text, reason))
+
+
+@mcp.tool()
+def generate_redaction_log(output_path: str = "") -> str:
+    """Write a DOCX table of all redactions made this session.
+
+    Args:
+        output_path: Destination path. If empty, writes to a temp file.
+    """
+    doc = _require_doc()
+    return _js(doc.generate_redaction_log(output_path))
+
+
+@mcp.tool()
+def generate_privilege_log(output_path: str = "") -> str:
+    """Generate a privilege log DOCX from document metadata.
+
+    Args:
+        output_path: Destination path. If empty, writes to a temp file.
+    """
+    doc = _require_doc()
+    return _js(doc.generate_privilege_log(output_path))
+
+
 # ── Entry point ─────────────────────────────────────────────────────────────
 
 
