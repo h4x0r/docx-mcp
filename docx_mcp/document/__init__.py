@@ -58,6 +58,8 @@ from .reviewmerge import ReviewMergeMixin
 from .clausediff import ClauseDiffMixin
 from .sessionlog import SessionLogMixin
 from .markdown_export import MarkdownExportMixin
+from .theme import ThemeMixin
+from .captions import CaptionMixin
 
 
 class DocxDocument(
@@ -99,6 +101,8 @@ class DocxDocument(
     ClauseDiffMixin,
     MarkdownExportMixin,
     SessionLogMixin,
+    ThemeMixin,
+    CaptionMixin,
 ):
     """Word document editor with OOXML-level control."""
 

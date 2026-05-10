@@ -1869,6 +1869,39 @@ def export_markdown(output_path: str = "") -> str:
     return _js(_require_doc().export_markdown(output_path))
 
 
+
+
+@mcp.tool()
+def get_theme_colors() -> str:
+    """Return the named color slots from word/theme/theme1.xml.
+
+    Returns a dict mapping slot names (dk1, lt1, accent1, ...) to 6-digit hex strings.
+    Returns an empty dict if the document has no theme file.
+    """
+    return _js(_require_doc().get_theme_colors())
+
+
+@mcp.tool()
+def set_theme_color(slot: str, hex_color: str) -> str:
+    """Update a named color slot in the document theme.
+
+    Args:
+        slot: One of dk1, lt1, dk2, lt2, accent1-accent6, hlink, folHlink.
+        hex_color: 6-character hex string without # (e.g. "FF0000").
+    """
+    return _js(_require_doc().set_theme_color(slot, hex_color))
+
+
+@mcp.tool()
+def insert_caption(after_para_id: str, text: str, label: str = "Figure") -> str:
+    """Insert a caption paragraph after the specified paragraph.
+
+    Args:
+        after_para_id: paraId of the paragraph to insert after.
+        text: Caption description text (without label/number prefix).
+        label: Caption label, e.g. "Figure" or "Table" (default "Figure").
+    """
+    return _js(_require_doc().insert_caption(after_para_id, text, label=label))
 # ── Entry point ─────────────────────────────────────────────────────────────
 
 
