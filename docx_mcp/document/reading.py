@@ -121,9 +121,7 @@ class ReadingMixin:
             if pstyle is None:
                 continue
             style_val = pstyle.get(f"{W}val", "")
-            # Match "Heading1".."HeadingN" and "Heading 1".."Heading N" (case-insensitive)
-            import re as _re
-            m = _re.match(r"(?i)^heading\s*(\d+)$", style_val)
+            m = re.match(r"^Heading(\d+)$", style_val)
             if not m:
                 continue
             level = int(m.group(1))

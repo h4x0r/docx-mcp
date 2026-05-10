@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import contextlib
+
 from lxml import etree
 
-from .base import W, W14
+from .base import CT, RELS, W, W14
 
 
 class RevisionsMixin:
@@ -78,6 +80,50 @@ class RevisionsMixin:
                 nsmap={"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"},
             )
             self._trees["word/settings.xml"] = settings
+
+            # Write to disk so workdir is consistent
+            fp = self.workdir / "word" / "settings.xml"
+            fp.parent.mkdir(parents=True, exist_ok=True)
+            etree.ElementTree(settings).write(
+                str(fp), xml_declaration=True, encoding="UTF-8"
+            )
+
+            # Register content-type Override
+            ct = self._tree("[Content_Types].xml")
+            if ct is not None:
+                existing = {e.get("PartName") for e in ct.findall(f"{CT}Override")}
+                if "/word/settings.xml" not in existing:
+                    ov = etree.SubElement(ct, f"{CT}Override")
+                    ov.set("PartName", "/word/settings.xml")
+                    ov.set(
+                        "ContentType",
+                        "application/vnd.openxmlformats-officedocument"
+                        ".wordprocessingml.settings+xml",
+                    )
+                    self._mark("[Content_Types].xml")
+
+            # Register relationship entry
+            rels = self._tree("word/_rels/document.xml.rels")
+            if rels is not None:
+                existing_targets = {
+                    r.get("Target") for r in rels.findall(f"{RELS}Relationship")
+                }
+                if "settings.xml" not in existing_targets:
+                    max_rid = 0
+                    for r in rels.findall(f"{RELS}Relationship"):
+                        rid = r.get("Id", "")
+                        if rid.startswith("rId"):
+                            with contextlib.suppress(ValueError):
+                                max_rid = max(max_rid, int(rid[3:]))
+                    rel = etree.SubElement(rels, f"{RELS}Relationship")
+                    rel.set("Id", f"rId{max_rid + 1}")
+                    rel.set(
+                        "Type",
+                        "http://schemas.openxmlformats.org/officeDocument"
+                        "/2006/relationships/settings",
+                    )
+                    rel.set("Target", "settings.xml")
+                    self._mark("word/_rels/document.xml.rels")
 
         tc_tag = f"{W}trackChanges"
         existing = settings.find(tc_tag)

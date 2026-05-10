@@ -341,3 +341,57 @@ class TestSetTrackChanges:
         W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
         elements = settings.findall(f"{W}trackChanges")
         assert len(elements) == 1, "Should not have duplicate w:trackChanges"
+
+
+def _build_no_settings_docx(path: Path) -> None:
+    """DOCX that deliberately omits word/settings.xml."""
+    _write_minimal_docx(path, _minimal_doc_xml())
+
+
+class TestSetTrackChangesCreatesSettings:
+    """set_track_changes must register settings.xml when it doesn't exist yet."""
+
+    def test_set_track_changes_creates_settings_if_absent(self, tmp_path: Path):
+        path = tmp_path / "no_settings.docx"
+        _build_no_settings_docx(path)
+        server.open_document(str(path))
+
+        # Confirm settings.xml is absent before the call
+        doc = server._doc
+        assert doc._tree("word/settings.xml") is None
+
+        server.set_track_changes(enabled=True)
+
+        W_NS = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+        settings = doc._tree("word/settings.xml")
+        assert settings is not None, "settings.xml tree must be created"
+        tc = settings.find(f"{W_NS}trackChanges")
+        assert tc is not None, "w:trackChanges must be present after enabling"
+
+    def test_content_type_registered_when_settings_created(self, tmp_path: Path):
+        path = tmp_path / "no_settings_ct.docx"
+        _build_no_settings_docx(path)
+        server.open_document(str(path))
+
+        server.set_track_changes(enabled=True)
+
+        doc = server._doc
+        CT_NS = "{http://schemas.openxmlformats.org/package/2006/content-types}"
+        ct = doc._tree("[Content_Types].xml")
+        assert ct is not None
+        parts = {e.get("PartName") for e in ct.findall(f"{CT_NS}Override")}
+        assert "/word/settings.xml" in parts, "content-type Override must be registered"
+
+    def test_relationship_registered_when_settings_created(self, tmp_path: Path):
+        path = tmp_path / "no_settings_rels.docx"
+        _build_no_settings_docx(path)
+        server.open_document(str(path))
+
+        server.set_track_changes(enabled=True)
+
+        doc = server._doc
+        RELS_NS = "{http://schemas.openxmlformats.org/package/2006/relationships}"
+        rels = doc._tree("word/_rels/document.xml.rels")
+        assert rels is not None
+        targets = {r.get("Target") for r in rels.findall(f"{RELS_NS}Relationship")}
+        assert "settings.xml" in targets, "relationship to settings.xml must be registered"
