@@ -1853,6 +1853,22 @@ def set_character_position(para_id: str, run_idx: int, position_pt: float) -> st
     return _js(_require_doc().set_character_position(para_id, run_idx, position_pt))
 
 
+@mcp.tool()
+def export_markdown(output_path: str = "") -> str:
+    """Export the open document as Markdown.
+
+    Converts the document body (headings, bold/italic runs, lists, tables,
+    plain paragraphs) to GitHub-Flavoured Markdown and writes it to a file.
+
+    Args:
+        output_path: Destination path for the .md file.
+            Defaults to <workdir>/export.md when empty.
+
+    Returns: {"output_path": str, "paragraphs": int, "tables": int}
+    """
+    return _js(_require_doc().export_markdown(output_path))
+
+
 # ── Entry point ─────────────────────────────────────────────────────────────
 
 
