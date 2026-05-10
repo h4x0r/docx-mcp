@@ -92,7 +92,8 @@ class SplittingMixin:
             final_sections.append(sec)
 
         # Save the parent to a temp zip so we can copy it
-        tmp_docx = Path(tempfile.mktemp(suffix=".docx"))
+        with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as _tf:
+            tmp_docx = Path(_tf.name)
         self.save(str(tmp_docx), backup=False)
 
         files: list[str] = []

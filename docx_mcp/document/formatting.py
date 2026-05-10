@@ -450,7 +450,8 @@ class FormattingMixin:
                         insert_at += 1
 
                     fmt_run = etree.Element(f"{W}r")
-                    new_rpr = etree.SubElement(fmt_run, f"{W}rPr")
+                    has_fmt = bold is not None or italic is not None or color is not None or size_pt is not None
+                    new_rpr = etree.SubElement(fmt_run, f"{W}rPr") if has_fmt else None
 
                     if bold is True:
                         etree.SubElement(new_rpr, f"{W}b")

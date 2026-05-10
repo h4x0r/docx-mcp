@@ -272,7 +272,10 @@ class TocMixin:
         if para is None:
             raise ValueError(f"Paragraph with paraId '{para_id}' not found")
         body_children = list(body)
-        idx = body_children.index(para)
+        try:
+            idx = body_children.index(para)
+        except ValueError:
+            raise ValueError(f"Paragraph with paraId '{para_id}' not found")
         entries = self._collect_captions(doc, "Figure")
         self._insert_toc_block(_LOF_FIELD, entries, title, idx + 1)
         return {"para_id": para_id, "title": title, "entry_count": len(entries)}
@@ -289,7 +292,10 @@ class TocMixin:
         if para is None:
             raise ValueError(f"Paragraph with paraId '{para_id}' not found")
         body_children = list(body)
-        idx = body_children.index(para)
+        try:
+            idx = body_children.index(para)
+        except ValueError:
+            raise ValueError(f"Paragraph with paraId '{para_id}' not found")
         entries = self._collect_captions(doc, "Table")
         self._insert_toc_block(_LOT_FIELD, entries, title, idx + 1)
         return {"para_id": para_id, "title": title, "entry_count": len(entries)}
