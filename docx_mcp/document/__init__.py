@@ -55,6 +55,7 @@ from .litigation import LitigationMixin
 from .equations import EquationsMixin
 from .charts import ChartsMixin
 from .reviewmerge import ReviewMergeMixin
+from .clausediff import ClauseDiffMixin
 
 
 class DocxDocument(
@@ -93,6 +94,7 @@ class DocxDocument(
     EquationsMixin,
     ChartsMixin,
     ReviewMergeMixin,
+    ClauseDiffMixin,
 ):
     """Word document editor with OOXML-level control."""
 
