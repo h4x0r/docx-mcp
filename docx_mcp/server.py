@@ -1433,6 +1433,24 @@ def compare_contracts(other_path: str, output_path: str = "", align_by: str = "h
     return _js(_require_doc().compare_contracts(other_path, output_path, align_by))
 
 
+# ── Session log ──────────────────────────────────────────────────────────────
+
+
+@mcp.tool()
+def get_session_log() -> str:
+    """Return all operations performed this session as replayable JSON."""
+    return _js(_require_doc().get_session_log())
+
+
+@mcp.tool()
+def export_session_script(output_path: str) -> str:
+    """Write session operations as a Python replay script.
+
+    Returns: {"output_path": str, "operations": int}
+    """
+    return _js(_require_doc().export_session_script(output_path))
+
+
 # ── Entry point ─────────────────────────────────────────────────────────────
 
 

@@ -56,6 +56,7 @@ from .equations import EquationsMixin
 from .charts import ChartsMixin
 from .reviewmerge import ReviewMergeMixin
 from .clausediff import ClauseDiffMixin
+from .sessionlog import SessionLogMixin
 
 
 class DocxDocument(
@@ -95,6 +96,7 @@ class DocxDocument(
     ChartsMixin,
     ReviewMergeMixin,
     ClauseDiffMixin,
+    SessionLogMixin,
 ):
     """Word document editor with OOXML-level control."""
 
