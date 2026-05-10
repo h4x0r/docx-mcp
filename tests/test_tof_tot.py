@@ -117,9 +117,14 @@ class TestGenerateTof:
             i for i, el in enumerate(children)
             if el.get(f"{W14}paraId") == "A0000001"
         )
-        field_para = children[target_idx + 1]
-        instr_texts = [it.text for it in field_para.iter(f"{W}instrText") if it.text]
-        assert any('\\c "Figure"' in t for t in instr_texts)
+        inserted_texts = []
+        for el in children[target_idx + 1:]:
+            inserted_texts.extend(it.text for it in el.iter(f"{W}instrText") if it.text)
+        assert any('\\c "Figure"' in t for t in inserted_texts)
+        pre_target_texts = []
+        for el in children[:target_idx]:
+            pre_target_texts.extend(it.text for it in el.iter(f"{W}instrText") if it.text)
+        assert not any('\\c "Figure"' in t for t in pre_target_texts)
 
     def test_raises_value_error_on_bad_para_id(self, tmp_path: Path) -> None:
         p = tmp_path / "doc.docx"
@@ -218,9 +223,14 @@ class TestGenerateTot:
             i for i, el in enumerate(children)
             if el.get(f"{W14}paraId") == "A0000006"
         )
-        field_para = children[target_idx + 1]
-        instr_texts = [it.text for it in field_para.iter(f"{W}instrText") if it.text]
-        assert any('\\c "Table"' in t for t in instr_texts)
+        inserted_texts = []
+        for el in children[target_idx + 1:]:
+            inserted_texts.extend(it.text for it in el.iter(f"{W}instrText") if it.text)
+        assert any('\\c "Table"' in t for t in inserted_texts)
+        pre_target_texts = []
+        for el in children[:target_idx]:
+            pre_target_texts.extend(it.text for it in el.iter(f"{W}instrText") if it.text)
+        assert not any('\\c "Table"' in t for t in pre_target_texts)
 
     def test_case_insensitive_caption_style_match(self, tmp_path: Path) -> None:
         p = tmp_path / "doc.docx"

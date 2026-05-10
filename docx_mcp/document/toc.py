@@ -243,6 +243,57 @@ class TocMixin:
         self._mark("word/document.xml")
         return {"entry_count": len(headings), "updated": True}
 
+    def _collect_captions(self, doc_tree, prefix: str) -> list[tuple[str, int]]:
+        """Return [(text, 1), ...] for caption paragraphs whose text starts with prefix."""
+        results = []
+        for p in doc_tree.iter(f"{W}p"):
+            pPr = p.find(f"{W}pPr")
+            if pPr is None:
+                continue
+            pStyle = pPr.find(f"{W}pStyle")
+            if pStyle is None:
+                continue
+            if pStyle.get(f"{W}val", "").lower() != "caption":
+                continue
+            text = "".join(t.text for t in p.iter(f"{W}t") if t.text)
+            if text.startswith(prefix):
+                results.append((text, 1))
+        return results
+
+    def generate_tof(self, para_id: str, title: str = "List of Figures") -> dict:
+        """Insert a Table of Figures field block AFTER the paragraph with para_id.
+
+        Returns {"para_id": str, "title": str, "entry_count": int}.
+        Raises ValueError if para_id not found.
+        """
+        doc = self._tree("word/document.xml")
+        body = doc.find(f"{W}body")
+        para = self._find_para(doc, para_id)
+        if para is None:
+            raise ValueError(f"Paragraph with paraId '{para_id}' not found")
+        body_children = list(body)
+        idx = body_children.index(para)
+        entries = self._collect_captions(doc, "Figure")
+        self._insert_toc_block(_LOF_FIELD, entries, title, idx + 1)
+        return {"para_id": para_id, "title": title, "entry_count": len(entries)}
+
+    def generate_tot(self, para_id: str, title: str = "List of Tables") -> dict:
+        """Insert a Table of Tables field block AFTER the paragraph with para_id.
+
+        Returns {"para_id": str, "title": str, "entry_count": int}.
+        Raises ValueError if para_id not found.
+        """
+        doc = self._tree("word/document.xml")
+        body = doc.find(f"{W}body")
+        para = self._find_para(doc, para_id)
+        if para is None:
+            raise ValueError(f"Paragraph with paraId '{para_id}' not found")
+        body_children = list(body)
+        idx = body_children.index(para)
+        entries = self._collect_captions(doc, "Table")
+        self._insert_toc_block(_LOT_FIELD, entries, title, idx + 1)
+        return {"para_id": para_id, "title": title, "entry_count": len(entries)}
+
     def generate_list_of_figures(self) -> dict:
         """Insert a List of Figures (TOC \\c "Figure") field.
 
