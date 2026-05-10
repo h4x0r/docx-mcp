@@ -400,6 +400,101 @@ class FormattingMixin:
         self._mark("word/document.xml")
         return {"para_id": para_id, "run_idx": run_idx, "position_pt": position_pt}
 
+    def set_run_highlight(self, para_id: str, run_idx: int, color: str) -> dict:
+        doc = self._require("word/document.xml")
+        para = self._find_para(doc, para_id)
+        if para is None:
+            raise ValueError(f"Paragraph '{para_id}' not found")
+
+        run = self._get_run(para, run_idx)
+        rpr = self._upsert_rpr(run)
+
+        hl = rpr.find(f"{W}highlight")
+        if hl is None:
+            hl = etree.SubElement(rpr, f"{W}highlight")
+        hl.set(f"{W}val", color)
+
+        self._mark("word/document.xml")
+        return {"para_id": para_id, "run_idx": run_idx, "color": color}
+
+    def set_run_strikethrough(self, para_id: str, run_idx: int, double: bool = False) -> dict:
+        doc = self._require("word/document.xml")
+        para = self._find_para(doc, para_id)
+        if para is None:
+            raise ValueError(f"Paragraph '{para_id}' not found")
+
+        run = self._get_run(para, run_idx)
+        rpr = self._upsert_rpr(run)
+
+        if double:
+            strike = rpr.find(f"{W}strike")
+            if strike is not None:
+                rpr.remove(strike)
+            dstrike = rpr.find(f"{W}dstrike")
+            if dstrike is None:
+                dstrike = etree.SubElement(rpr, f"{W}dstrike")
+        else:
+            dstrike = rpr.find(f"{W}dstrike")
+            if dstrike is not None:
+                rpr.remove(dstrike)
+            strike = rpr.find(f"{W}strike")
+            if strike is None:
+                strike = etree.SubElement(rpr, f"{W}strike")
+
+        self._mark("word/document.xml")
+        return {"para_id": para_id, "run_idx": run_idx, "double": double}
+
+    def set_run_superscript(self, para_id: str, run_idx: int) -> dict:
+        doc = self._require("word/document.xml")
+        para = self._find_para(doc, para_id)
+        if para is None:
+            raise ValueError(f"Paragraph '{para_id}' not found")
+
+        run = self._get_run(para, run_idx)
+        rpr = self._upsert_rpr(run)
+
+        va = rpr.find(f"{W}vertAlign")
+        if va is None:
+            va = etree.SubElement(rpr, f"{W}vertAlign")
+        va.set(f"{W}val", "superscript")
+
+        self._mark("word/document.xml")
+        return {"para_id": para_id, "run_idx": run_idx, "valign": "superscript"}
+
+    def set_run_subscript(self, para_id: str, run_idx: int) -> dict:
+        doc = self._require("word/document.xml")
+        para = self._find_para(doc, para_id)
+        if para is None:
+            raise ValueError(f"Paragraph '{para_id}' not found")
+
+        run = self._get_run(para, run_idx)
+        rpr = self._upsert_rpr(run)
+
+        va = rpr.find(f"{W}vertAlign")
+        if va is None:
+            va = etree.SubElement(rpr, f"{W}vertAlign")
+        va.set(f"{W}val", "subscript")
+
+        self._mark("word/document.xml")
+        return {"para_id": para_id, "run_idx": run_idx, "valign": "subscript"}
+
+    def set_run_underline(self, para_id: str, run_idx: int, style: str = "single") -> dict:
+        doc = self._require("word/document.xml")
+        para = self._find_para(doc, para_id)
+        if para is None:
+            raise ValueError(f"Paragraph '{para_id}' not found")
+
+        run = self._get_run(para, run_idx)
+        rpr = self._upsert_rpr(run)
+
+        u = rpr.find(f"{W}u")
+        if u is None:
+            u = etree.SubElement(rpr, f"{W}u")
+        u.set(f"{W}val", style)
+
+        self._mark("word/document.xml")
+        return {"para_id": para_id, "run_idx": run_idx, "style": style}
+
     def find_replace_formatted(
         self,
         find: str,

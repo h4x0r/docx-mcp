@@ -1961,6 +1961,64 @@ def set_character_position(para_id: str, run_idx: int, position_pt: float) -> st
 
 
 @mcp.tool()
+def set_run_highlight(para_id: str, run_idx: int, color: str) -> str:
+    """Set highlight color of a specific run in a paragraph.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        run_idx: Zero-based index of the run.
+        color: Word highlight color name (e.g., "yellow", "green", "cyan", "none").
+    """
+    return _js(_require_doc().set_run_highlight(para_id, run_idx, color))
+
+
+@mcp.tool()
+def set_run_strikethrough(para_id: str, run_idx: int, double: bool = False) -> str:
+    """Set strikethrough on a specific run in a paragraph.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        run_idx: Zero-based index of the run.
+        double: False for single strikethrough, True for double strikethrough.
+    """
+    return _js(_require_doc().set_run_strikethrough(para_id, run_idx, double))
+
+
+@mcp.tool()
+def set_run_superscript(para_id: str, run_idx: int) -> str:
+    """Set superscript vertical alignment on a specific run in a paragraph.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        run_idx: Zero-based index of the run.
+    """
+    return _js(_require_doc().set_run_superscript(para_id, run_idx))
+
+
+@mcp.tool()
+def set_run_subscript(para_id: str, run_idx: int) -> str:
+    """Set subscript vertical alignment on a specific run in a paragraph.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        run_idx: Zero-based index of the run.
+    """
+    return _js(_require_doc().set_run_subscript(para_id, run_idx))
+
+
+@mcp.tool()
+def set_run_underline(para_id: str, run_idx: int, style: str = "single") -> str:
+    """Set underline style on a specific run in a paragraph.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        run_idx: Zero-based index of the run.
+        style: Underline style (e.g., "single", "double", "dotted", "none").
+    """
+    return _js(_require_doc().set_run_underline(para_id, run_idx, style))
+
+
+@mcp.tool()
 def export_markdown(output_path: str = "") -> str:
     """Export the open document as Markdown.
 
