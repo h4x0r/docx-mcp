@@ -1591,6 +1591,91 @@ def export_session_script(output_path: str) -> str:
     return _js(_require_doc().export_session_script(output_path))
 
 
+# ── Paragraph CRUD + border/shading ────────────────────────────────────────
+
+
+@mcp.tool()
+def insert_paragraph(
+    after_para_id: str,
+    text: str,
+    style: str = "",
+) -> str:
+    """Insert a new paragraph after the paragraph with the given paraId.
+
+    Args:
+        after_para_id: paraId of the paragraph to insert after.
+        text: Text content for the new paragraph.
+        style: Optional paragraph style name (e.g., "Heading1", "Normal").
+    """
+    return _js(_require_doc().insert_paragraph(after_para_id, text, style=style or None))
+
+
+@mcp.tool()
+def update_paragraph(
+    para_id: str,
+    text: str = "",
+    style: str = "",
+) -> str:
+    """Update the text and/or style of an existing paragraph.
+
+    Args:
+        para_id: paraId of the paragraph to update.
+        text: New text content. Empty string leaves text unchanged.
+        style: New paragraph style name. Empty string leaves style unchanged.
+    """
+    return _js(
+        _require_doc().update_paragraph(
+            para_id,
+            text=text or None,
+            style=style or None,
+        )
+    )
+
+
+@mcp.tool()
+def delete_paragraph(para_id: str) -> str:
+    """Delete the paragraph with the given paraId.
+
+    Args:
+        para_id: paraId of the paragraph to remove.
+    """
+    return _js(_require_doc().delete_paragraph(para_id))
+
+
+@mcp.tool()
+def set_paragraph_border(
+    para_id: str,
+    sides: list[str],
+    color: str = "000000",
+    size: int = 4,
+) -> str:
+    """Set borders on one or more sides of a paragraph.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        sides: List of sides: "top", "bottom", "left", "right", "between".
+        color: Border color as 6-digit hex (default "000000").
+        size: Border width in eighths of a point (default 4 = 0.5pt).
+    """
+    return _js(_require_doc().set_paragraph_border(para_id, sides, color=color, size=size))
+
+
+@mcp.tool()
+def set_paragraph_shading(
+    para_id: str,
+    fill_color: str,
+    pattern: str = "clear",
+) -> str:
+    """Set background shading on a paragraph.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        fill_color: Fill color as 6-digit hex (e.g., "FFFF00").
+        pattern: Shading pattern (default "clear").
+    """
+    return _js(_require_doc().set_paragraph_shading(para_id, fill_color, pattern=pattern))
+
+
 # ── Entry point ─────────────────────────────────────────────────────────────
 
 
