@@ -9,7 +9,7 @@ import zipfile
 
 from lxml import etree
 
-from .base import W, W14
+from .base import W
 from .errors import DocxMcpError, ErrCode
 
 _HEADING_RE = re.compile(r"^heading\s*[123]$", re.IGNORECASE)
@@ -105,6 +105,8 @@ class ClauseDiffMixin:
         Returns: {"output_path": str, "clauses_compared": int, "clauses_changed": int, "reordered": int}
         Raises: DocxMcpError(ErrCode.PART_NOT_FOUND) if other_path doesn't exist.
         """
+        if align_by != "heading":
+            raise ValueError(f"Only align_by='heading' is supported; got {align_by!r}")
         if not os.path.exists(other_path):
             raise DocxMcpError(
                 ErrCode.PART_NOT_FOUND,
@@ -115,7 +117,7 @@ class ClauseDiffMixin:
             other_xml = zf.read("word/document.xml")
 
         doc = self._require("word/document.xml")
-        self_xml = etree.tostring(doc, encoding="unicode").encode("utf-8")
+        self_xml = etree.tostring(doc)
 
         clauses_a = _extract_clauses(self_xml)
         clauses_b = _extract_clauses(other_xml)
@@ -135,7 +137,6 @@ class ClauseDiffMixin:
             cb = clauses_b[j]
             renamed = ratio < 1.0
             body_changed = _clause_text(ca) != _clause_text(cb)
-            changed = renamed or body_changed
 
             if j <= max_b_idx:
                 reordered += 1
@@ -178,8 +179,8 @@ class ClauseDiffMixin:
         out = output_path if output_path else str(self.workdir / "compare_contracts_output.docx")
         self.save(out, backup=False)
 
-        heading_clauses = [c for c in clauses_a if c["heading"]]
-        clauses_compared = len(matched_pairs) + len(
+        heading_matches = [(i, j, r) for i, j, r in matched_pairs if clauses_a[i]["heading"] or clauses_b[j]["heading"]]
+        clauses_compared = len(heading_matches) + len(
             [i for i in range(len(clauses_a)) if i not in matched_a and clauses_a[i]["heading"]]
         ) + len(
             [j for j in range(len(clauses_b)) if j not in matched_b and clauses_b[j]["heading"]]
