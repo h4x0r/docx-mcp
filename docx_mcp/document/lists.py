@@ -289,7 +289,7 @@ class ListsMixin:
         if para is None:
             raise ValueError(f"Paragraph '{para_id}' not found")
 
-        ilvl_el = para.find(f".//{W}numPr/{W}ilvl")
+        ilvl_el = para.find(f"{W}pPr/{W}numPr/{W}ilvl")
         if ilvl_el is None:
             raise ValueError("Paragraph is not a list item")
 
@@ -310,7 +310,7 @@ class ListsMixin:
         if para is None:
             raise ValueError(f"Paragraph '{para_id}' not found")
 
-        ilvl_el = para.find(f".//{W}numPr/{W}ilvl")
+        ilvl_el = para.find(f"{W}pPr/{W}numPr/{W}ilvl")
         if ilvl_el is None:
             raise ValueError("Paragraph is not a list item")
 
