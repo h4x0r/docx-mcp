@@ -399,3 +399,97 @@ class FormattingMixin:
 
         self._mark("word/document.xml")
         return {"para_id": para_id, "run_idx": run_idx, "position_pt": position_pt}
+
+    def find_replace_formatted(
+        self,
+        find: str,
+        replace: str,
+        *,
+        bold: bool | None = None,
+        italic: bool | None = None,
+        color: str | None = None,
+        size_pt: float | None = None,
+    ) -> dict:
+        if not find:
+            raise ValueError("find must be non-empty")
+
+        doc = self._require("word/document.xml")
+        body = doc.find(f"{W}body")
+        if body is None:
+            body = doc
+
+        count = 0
+
+        for para in body.iter(f"{W}p"):
+            changed = True
+            while changed:
+                changed = False
+                for run_el in list(para):
+                    if run_el.tag != f"{W}r":
+                        continue
+                    t_el = run_el.find(f"{W}t")
+                    if t_el is None or t_el.text is None:
+                        continue
+                    full = t_el.text
+                    if find not in full:
+                        continue
+
+                    idx = full.index(find)
+                    old_rpr = run_el.find(f"{W}rPr")
+                    rpr_bytes = etree.tostring(old_rpr) if old_rpr is not None else None
+                    parent = run_el.getparent()
+                    pos = list(parent).index(run_el)
+                    parent.remove(run_el)
+
+                    insert_at = pos
+
+                    before_text = full[:idx]
+                    if before_text:
+                        before_run = self._make_run(before_text, rpr_bytes)
+                        parent.insert(insert_at, before_run)
+                        insert_at += 1
+
+                    fmt_run = etree.Element(f"{W}r")
+                    new_rpr = etree.SubElement(fmt_run, f"{W}rPr")
+
+                    if bold is True:
+                        etree.SubElement(new_rpr, f"{W}b")
+                    elif bold is False:
+                        b_el = etree.SubElement(new_rpr, f"{W}b")
+                        b_el.set(f"{W}val", "0")
+
+                    if italic is True:
+                        etree.SubElement(new_rpr, f"{W}i")
+                    elif italic is False:
+                        i_el = etree.SubElement(new_rpr, f"{W}i")
+                        i_el.set(f"{W}val", "0")
+
+                    if color is not None:
+                        c_el = etree.SubElement(new_rpr, f"{W}color")
+                        c_el.set(f"{W}val", color)
+
+                    if size_pt is not None:
+                        half = str(round(size_pt * 2))
+                        sz_el = etree.SubElement(new_rpr, f"{W}sz")
+                        sz_el.set(f"{W}val", half)
+                        sz_cs_el = etree.SubElement(new_rpr, f"{W}szCs")
+                        sz_cs_el.set(f"{W}val", half)
+
+                    repl_t = etree.SubElement(fmt_run, f"{W}t")
+                    _preserve(repl_t, replace)
+                    parent.insert(insert_at, fmt_run)
+                    insert_at += 1
+
+                    after_text = full[idx + len(find):]
+                    if after_text:
+                        after_run = self._make_run(after_text, rpr_bytes)
+                        parent.insert(insert_at, after_run)
+
+                    count += 1
+                    changed = True
+                    break
+
+        if count > 0:
+            self._mark("word/document.xml")
+
+        return {"find": find, "replace": replace, "count": count}

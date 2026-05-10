@@ -1500,6 +1500,26 @@ def generate_list_of_tables() -> str:
     return _js(doc.generate_list_of_tables())
 
 
+@mcp.tool()
+def generate_tof(para_id: str, title: str = "List of Figures") -> str:
+    """Insert a Table of Figures field block after the paragraph with para_id.
+
+    Collects caption-styled paragraphs starting with 'Figure' as entries.
+    """
+    doc = _require_doc()
+    return _js(doc.generate_tof(para_id, title))
+
+
+@mcp.tool()
+def generate_tot(para_id: str, title: str = "List of Tables") -> str:
+    """Insert a Table of Tables field block after the paragraph with para_id.
+
+    Collects caption-styled paragraphs starting with 'Table' as entries.
+    """
+    doc = _require_doc()
+    return _js(doc.generate_tot(para_id, title))
+
+
 # ── Content Controls ────────────────────────────────────────────────────────
 
 
@@ -1989,6 +2009,41 @@ def insert_caption(after_para_id: str, text: str, label: str = "Figure") -> str:
         label: Caption label, e.g. "Figure" or "Table" (default "Figure").
     """
     return _js(_require_doc().insert_caption(after_para_id, text, label=label))
+
+
+@mcp.tool()
+def find_replace_formatted(
+    find: str,
+    replace: str,
+    bold: bool | None = None,
+    italic: bool | None = None,
+    color: str | None = None,
+    size_pt: float | None = None,
+) -> str:
+    """Find all occurrences of a string and replace with formatted text.
+
+    Replaces every occurrence of `find` across all paragraphs in the document
+    with `replace`, applying the specified character formatting to the replacement
+    run only.
+
+    Args:
+        find: Text to search for (must be non-empty).
+        replace: Replacement text.
+        bold: True to bold, False to explicitly un-bold, None to leave unchanged.
+        italic: True to italicise, False to explicitly un-italicise, None to leave unchanged.
+        color: Font color as 6-digit hex (e.g. "FF0000"). None leaves color unchanged.
+        size_pt: Font size in points (e.g. 12.0). None leaves size unchanged.
+    """
+    return _js(_require_doc().find_replace_formatted(
+        find,
+        replace,
+        bold=bold,
+        italic=italic,
+        color=color,
+        size_pt=size_pt,
+    ))
+
+
 # ── Entry point ─────────────────────────────────────────────────────────────
 
 
