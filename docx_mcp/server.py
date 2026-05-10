@@ -1780,6 +1780,79 @@ def set_paragraph_shading(
     return _js(_require_doc().set_paragraph_shading(para_id, fill_color, pattern=pattern))
 
 
+# ── Run-level formatting ───────────────────────────────────────────────────
+
+
+@mcp.tool()
+def get_runs(para_id: str) -> str:
+    """Get all runs in a paragraph with their formatting properties.
+
+    Args:
+        para_id: paraId of the target paragraph.
+    """
+    return _js(_require_doc().get_runs(para_id))
+
+
+@mcp.tool()
+def set_run_font(para_id: str, run_idx: int, font_name: str) -> str:
+    """Set the font of a specific run (zero-based index) in a paragraph.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        run_idx: Zero-based index of the run.
+        font_name: Font name (e.g., "Arial", "Times New Roman").
+    """
+    return _js(_require_doc().set_run_font(para_id, run_idx, font_name))
+
+
+@mcp.tool()
+def set_run_color(para_id: str, run_idx: int, color: str) -> str:
+    """Set the font color of a specific run in a paragraph.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        run_idx: Zero-based index of the run.
+        color: Hex color without # (e.g., "FF0000").
+    """
+    return _js(_require_doc().set_run_color(para_id, run_idx, color))
+
+
+@mcp.tool()
+def set_run_size(para_id: str, run_idx: int, size_pt: float) -> str:
+    """Set the font size of a specific run in a paragraph.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        run_idx: Zero-based index of the run.
+        size_pt: Font size in points (e.g., 12.0).
+    """
+    return _js(_require_doc().set_run_size(para_id, run_idx, size_pt))
+
+
+@mcp.tool()
+def set_character_spacing(para_id: str, run_idx: int, spacing_pt: float) -> str:
+    """Set character spacing (tracking) for a specific run in a paragraph.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        run_idx: Zero-based index of the run.
+        spacing_pt: Spacing in points (positive = expanded, negative = condensed).
+    """
+    return _js(_require_doc().set_character_spacing(para_id, run_idx, spacing_pt))
+
+
+@mcp.tool()
+def set_character_position(para_id: str, run_idx: int, position_pt: float) -> str:
+    """Set vertical character position (raised/lowered) for a specific run.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        run_idx: Zero-based index of the run.
+        position_pt: Offset in points (positive = raised, negative = lowered).
+    """
+    return _js(_require_doc().set_character_position(para_id, run_idx, position_pt))
+
+
 # ── Entry point ─────────────────────────────────────────────────────────────
 
 

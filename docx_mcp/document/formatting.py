@@ -242,3 +242,160 @@ class FormattingMixin:
 
         self._mark("word/document.xml")
         return {"para_id": para_id, "fill_color": fill_color}
+
+    def _get_run(self, para, run_idx: int):
+        runs = para.findall(f"{W}r")
+        if run_idx < 0 or run_idx >= len(runs):
+            raise IndexError(f"Run index {run_idx} out of range (have {len(runs)})")
+        return runs[run_idx]
+
+    def _upsert_rpr(self, run):
+        rpr = run.find(f"{W}rPr")
+        if rpr is None:
+            rpr = etree.Element(f"{W}rPr")
+            run.insert(0, rpr)
+        return rpr
+
+    def get_runs(self, para_id: str) -> list:
+        doc = self._require("word/document.xml")
+        para = self._find_para(doc, para_id)
+        if para is None:
+            raise ValueError(f"Paragraph '{para_id}' not found")
+
+        result = []
+        for idx, run in enumerate(para.findall(f"{W}r")):
+            text = "".join(t.text or "" for t in run.findall(f"{W}t"))
+            rpr = run.find(f"{W}rPr")
+
+            bold = False
+            italic = False
+            font = None
+            size_pt = None
+            color = None
+
+            if rpr is not None:
+                b_el = rpr.find(f"{W}b")
+                bold = b_el is not None and b_el.get(f"{W}val") != "0"
+
+                i_el = rpr.find(f"{W}i")
+                italic = i_el is not None and i_el.get(f"{W}val") != "0"
+
+                rfonts = rpr.find(f"{W}rFonts")
+                if rfonts is not None:
+                    font = rfonts.get(f"{W}ascii")
+
+                sz_el = rpr.find(f"{W}sz")
+                if sz_el is not None:
+                    val = sz_el.get(f"{W}val")
+                    if val is not None:
+                        size_pt = int(val) / 2
+
+                color_el = rpr.find(f"{W}color")
+                if color_el is not None:
+                    color = color_el.get(f"{W}val")
+
+            result.append({
+                "run_idx": idx,
+                "text": text,
+                "bold": bold,
+                "italic": italic,
+                "font": font,
+                "size_pt": size_pt,
+                "color": color,
+            })
+
+        return result
+
+    def set_run_font(self, para_id: str, run_idx: int, font_name: str) -> dict:
+        doc = self._require("word/document.xml")
+        para = self._find_para(doc, para_id)
+        if para is None:
+            raise ValueError(f"Paragraph '{para_id}' not found")
+
+        run = self._get_run(para, run_idx)
+        rpr = self._upsert_rpr(run)
+
+        rfonts = rpr.find(f"{W}rFonts")
+        if rfonts is None:
+            rfonts = etree.SubElement(rpr, f"{W}rFonts")
+        rfonts.set(f"{W}ascii", font_name)
+        rfonts.set(f"{W}hAnsi", font_name)
+        rfonts.set(f"{W}cs", font_name)
+
+        self._mark("word/document.xml")
+        return {"para_id": para_id, "run_idx": run_idx, "font": font_name}
+
+    def set_run_color(self, para_id: str, run_idx: int, color: str) -> dict:
+        doc = self._require("word/document.xml")
+        para = self._find_para(doc, para_id)
+        if para is None:
+            raise ValueError(f"Paragraph '{para_id}' not found")
+
+        run = self._get_run(para, run_idx)
+        rpr = self._upsert_rpr(run)
+
+        color_el = rpr.find(f"{W}color")
+        if color_el is None:
+            color_el = etree.SubElement(rpr, f"{W}color")
+        color_el.set(f"{W}val", color)
+
+        self._mark("word/document.xml")
+        return {"para_id": para_id, "run_idx": run_idx, "color": color}
+
+    def set_run_size(self, para_id: str, run_idx: int, size_pt: float) -> dict:
+        doc = self._require("word/document.xml")
+        para = self._find_para(doc, para_id)
+        if para is None:
+            raise ValueError(f"Paragraph '{para_id}' not found")
+
+        run = self._get_run(para, run_idx)
+        rpr = self._upsert_rpr(run)
+
+        half_pts = str(round(size_pt * 2))
+
+        sz_el = rpr.find(f"{W}sz")
+        if sz_el is None:
+            sz_el = etree.SubElement(rpr, f"{W}sz")
+        sz_el.set(f"{W}val", half_pts)
+
+        sz_cs_el = rpr.find(f"{W}szCs")
+        if sz_cs_el is None:
+            sz_cs_el = etree.SubElement(rpr, f"{W}szCs")
+        sz_cs_el.set(f"{W}val", half_pts)
+
+        self._mark("word/document.xml")
+        return {"para_id": para_id, "run_idx": run_idx, "size_pt": size_pt}
+
+    def set_character_spacing(self, para_id: str, run_idx: int, spacing_pt: float) -> dict:
+        doc = self._require("word/document.xml")
+        para = self._find_para(doc, para_id)
+        if para is None:
+            raise ValueError(f"Paragraph '{para_id}' not found")
+
+        run = self._get_run(para, run_idx)
+        rpr = self._upsert_rpr(run)
+
+        spacing_el = rpr.find(f"{W}spacing")
+        if spacing_el is None:
+            spacing_el = etree.SubElement(rpr, f"{W}spacing")
+        spacing_el.set(f"{W}val", str(round(spacing_pt * 20)))
+
+        self._mark("word/document.xml")
+        return {"para_id": para_id, "run_idx": run_idx, "spacing_pt": spacing_pt}
+
+    def set_character_position(self, para_id: str, run_idx: int, position_pt: float) -> dict:
+        doc = self._require("word/document.xml")
+        para = self._find_para(doc, para_id)
+        if para is None:
+            raise ValueError(f"Paragraph '{para_id}' not found")
+
+        run = self._get_run(para, run_idx)
+        rpr = self._upsert_rpr(run)
+
+        pos_el = rpr.find(f"{W}position")
+        if pos_el is None:
+            pos_el = etree.SubElement(rpr, f"{W}position")
+        pos_el.set(f"{W}val", str(round(position_pt * 2)))
+
+        self._mark("word/document.xml")
+        return {"para_id": para_id, "run_idx": run_idx, "position_pt": position_pt}
