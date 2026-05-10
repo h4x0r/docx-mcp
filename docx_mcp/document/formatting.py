@@ -275,10 +275,10 @@ class FormattingMixin:
 
             if rpr is not None:
                 b_el = rpr.find(f"{W}b")
-                bold = b_el is not None and b_el.get(f"{W}val") != "0"
+                bold = b_el is not None and b_el.get(f"{W}val") not in ("0", "false", "off")
 
                 i_el = rpr.find(f"{W}i")
-                italic = i_el is not None and i_el.get(f"{W}val") != "0"
+                italic = i_el is not None and i_el.get(f"{W}val") not in ("0", "false", "off")
 
                 rfonts = rpr.find(f"{W}rFonts")
                 if rfonts is not None:

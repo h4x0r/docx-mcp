@@ -44,7 +44,9 @@ def _run_text(run) -> str:
         return ""
     bold = rpr is not None and rpr.find(f"{W}b") is not None
     italic = rpr is not None and rpr.find(f"{W}i") is not None
-    if bold:
+    if bold and italic:
+        text = f"***{text}***"
+    elif bold:
         text = f"**{text}**"
     elif italic:
         text = f"*{text}*"
@@ -55,7 +57,8 @@ def _para_to_md(para) -> str:
     ppr = para.find(f"{W}pPr")
     level = _heading_level(ppr)
     if level is not None:
-        text = "".join(t.text or "" for t in para.iter(f"{W}t"))
+        runs = para.findall(f"{W}r")
+        text = "".join(_run_text(r) for r in runs) if runs else "".join(t.text or "" for t in para.iter(f"{W}t"))
         return "#" * level + " " + text
 
     runs = para.findall(f"{W}r")
