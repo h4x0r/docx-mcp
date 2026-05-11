@@ -1106,8 +1106,12 @@ class TestCoverageEdgeCases:
         ext = doc._trees["word/commentsExtended.xml"]
 
         exts = ext.findall(f"{W15}commentEx")
-        assert len(exts) == 1
-        assert exts[0].get(f"{W15}done") == "0"
+        # reply_to_comment creates a commentEx for parent (no paraIdParent) and reply
+        assert len(exts) == 2
+        # reply entry has paraIdParent set
+        reply_exts = [e for e in exts if e.get(f"{W15}paraIdParent")]
+        assert len(reply_exts) == 1
+        assert reply_exts[0].get(f"{W15}done") == "0"
 
     def test_audit_heading_level_skip(self, test_docx: Path):
         """Audit detects heading level jumps (line 688)."""

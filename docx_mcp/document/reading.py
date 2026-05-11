@@ -102,6 +102,55 @@ class ReadingMixin:
                 )
         return results
 
+    def get_document_outline(self, max_level: int = 6) -> list[dict]:
+        """Return a flat list of headings as an outline.
+
+        Args:
+            max_level: Maximum heading level to include (1–6, default 6).
+
+        Returns:
+            List of dicts with keys: level (int), text (str), para_id (str).
+        """
+        doc = self._require("word/document.xml")
+        outline = []
+        for para in doc.iter(f"{W}p"):
+            ppr = para.find(f"{W}pPr")
+            if ppr is None:
+                continue
+            pstyle = ppr.find(f"{W}pStyle")
+            if pstyle is None:
+                continue
+            style_val = pstyle.get(f"{W}val", "")
+            m = re.match(r"^Heading(\d+)$", style_val)
+            if not m:
+                continue
+            level = int(m.group(1))
+            if level > max_level:
+                continue
+            outline.append({
+                "level": level,
+                "text": self._text(para),
+                "para_id": para.get(f"{W14}paraId", ""),
+            })
+        return outline
+
+    def copy_document(self, output_path: str) -> dict:
+        """Save a complete snapshot of the current document to output_path.
+
+        The active session source path is unchanged; only _modified is cleared
+        (same behaviour as save()).
+
+        Args:
+            output_path: Destination path for the copy (must end in .docx).
+
+        Returns:
+            {"copied_to": output_path}
+        """
+        if self.workdir is None:
+            raise RuntimeError("No document is open")
+        self.save(output_path, backup=False)
+        return {"copied_to": output_path}
+
     def get_paragraph(self, para_id: str) -> dict:
         """Get full text and metadata for a paragraph by paraId."""
         doc = self._require("word/document.xml")

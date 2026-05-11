@@ -238,6 +238,88 @@ class ListsMixin:
         self._mark("word/numbering.xml")
         return {"para_id": para_id, "level": level, "start": start}
 
+    def get_lists(self) -> list[dict]:
+        """Return all list definitions from word/numbering.xml.
+
+        Each abstractNum element becomes a dict with:
+          - abstract_num_id: int
+          - num_format: str  (w:numFmt w:val of level 0, or "" if absent)
+          - levels: int      (count of w:lvl children)
+
+        Returns [] if numbering.xml doesn't exist.
+        """
+        num_tree = self._tree("word/numbering.xml")
+        if num_tree is None:
+            return []
+
+        result = []
+        for abstract in num_tree.findall(f"{W}abstractNum"):
+            abs_id_str = abstract.get(f"{W}abstractNumId", "0")
+            try:
+                abs_id = int(abs_id_str)
+            except ValueError:
+                abs_id = 0
+
+            lvl_elements = abstract.findall(f"{W}lvl")
+            levels = len(lvl_elements)
+
+            # num_format from level 0
+            num_format = ""
+            if lvl_elements:
+                fmt_el = lvl_elements[0].find(f"{W}numFmt")
+                if fmt_el is not None:
+                    num_format = fmt_el.get(f"{W}val", "")
+
+            result.append({
+                "abstract_num_id": abs_id,
+                "num_format": num_format,
+                "levels": levels,
+            })
+
+        return result
+
+    def promote_list_item(self, para_id: str) -> dict:
+        """Decrease the list indentation level (ilvl) of a paragraph by 1, min 0.
+
+        Returns {"para_id": para_id, "ilvl": new_value}.
+        Raises ValueError if paragraph is not a list item.
+        """
+        doc = self._require("word/document.xml")
+        para = self._find_para(doc, para_id)
+        if para is None:
+            raise ValueError(f"Paragraph '{para_id}' not found")
+
+        ilvl_el = para.find(f"{W}pPr/{W}numPr/{W}ilvl")
+        if ilvl_el is None:
+            raise ValueError("Paragraph is not a list item")
+
+        current = int(ilvl_el.get(f"{W}val", "0"))
+        new_val = max(0, current - 1)
+        ilvl_el.set(f"{W}val", str(new_val))
+        self._mark("word/document.xml")
+        return {"para_id": para_id, "ilvl": new_val}
+
+    def demote_list_item(self, para_id: str) -> dict:
+        """Increase the list indentation level (ilvl) of a paragraph by 1, max 8.
+
+        Returns {"para_id": para_id, "ilvl": new_value}.
+        Raises ValueError if paragraph is not a list item.
+        """
+        doc = self._require("word/document.xml")
+        para = self._find_para(doc, para_id)
+        if para is None:
+            raise ValueError(f"Paragraph '{para_id}' not found")
+
+        ilvl_el = para.find(f"{W}pPr/{W}numPr/{W}ilvl")
+        if ilvl_el is None:
+            raise ValueError("Paragraph is not a list item")
+
+        current = int(ilvl_el.get(f"{W}val", "0"))
+        new_val = min(8, current + 1)
+        ilvl_el.set(f"{W}val", str(new_val))
+        self._mark("word/document.xml")
+        return {"para_id": para_id, "ilvl": new_val}
+
     def suppress_numbering(self, para_id: str) -> dict:
         """Remove list numbering from a paragraph by setting numId to 0.
 

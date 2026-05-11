@@ -119,3 +119,27 @@ class HeadersFootersMixin:
             return {"location": location, "changes": changes}
 
         raise ValueError(f"Text '{old_text}' not found in {location}")
+
+    def delete_header(self, location: str = "default") -> dict:
+        doc = self._require("word/document.xml")
+        sect = doc.find(f".//{W}sectPr")
+        if sect is None:
+            return {"deleted": None}
+        for ref in sect.findall(f"{W}headerReference"):
+            if ref.get(f"{W}type") == location:
+                sect.remove(ref)
+                self._mark("word/document.xml")
+                return {"deleted": location}
+        return {"deleted": None}
+
+    def delete_footer(self, location: str = "default") -> dict:
+        doc = self._require("word/document.xml")
+        sect = doc.find(f".//{W}sectPr")
+        if sect is None:
+            return {"deleted": None}
+        for ref in sect.findall(f"{W}footerReference"):
+            if ref.get(f"{W}type") == location:
+                sect.remove(ref)
+                self._mark("word/document.xml")
+                return {"deleted": location}
+        return {"deleted": None}

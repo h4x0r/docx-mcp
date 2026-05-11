@@ -308,6 +308,83 @@ def table_to_csv(table_index: int) -> str:
     return _js(doc.table_to_csv(table_index))
 
 
+@mcp.tool()
+def delete_table(table_idx: int) -> str:
+    """Delete a table by index (0-based). Raises IndexError if out of range."""
+    return _js(_require_doc().delete_table(table_idx))
+
+
+@mcp.tool()
+def add_column_to_table(table_idx: int, header_text: str = "") -> str:
+    """Add a new column to every row of a table. First row gets header_text."""
+    return _js(_require_doc().add_column_to_table(table_idx, header_text=header_text))
+
+
+@mcp.tool()
+def delete_column_from_table(table_idx: int, col_idx: int) -> str:
+    """Delete a column (0-based) from every row of a table."""
+    return _js(_require_doc().delete_column_from_table(table_idx, col_idx))
+
+
+@mcp.tool()
+def set_cell_width(table_idx: int, row_idx: int, col_idx: int, width_mm: float) -> str:
+    """Set the width of a table cell in millimetres (stored as DXA)."""
+    return _js(_require_doc().set_cell_width(table_idx, row_idx, col_idx, width_mm))
+
+
+@mcp.tool()
+def set_cell_vertical_alignment(
+    table_idx: int, row_idx: int, col_idx: int, alignment: str
+) -> str:
+    """Set vertical alignment of a table cell: top, center, or bottom."""
+    return _js(
+        _require_doc().set_cell_vertical_alignment(table_idx, row_idx, col_idx, alignment)
+    )
+
+
+@mcp.tool()
+def set_row_height(
+    table_idx: int, row_idx: int, height_mm: float, rule: str = "exact"
+) -> str:
+    """Set row height in millimetres. rule: exact, atLeast, or auto."""
+    return _js(_require_doc().set_row_height(table_idx, row_idx, height_mm, rule=rule))
+
+
+@mcp.tool()
+def set_table_alignment(table_idx: int, alignment: str) -> str:
+    """Set table alignment: left, center, or right."""
+    return _js(_require_doc().set_table_alignment(table_idx, alignment))
+
+
+@mcp.tool()
+def set_table_borders(
+    table_idx: int,
+    border_style: str = "single",
+    color: str = "000000",
+    size: int = 4,
+) -> str:
+    """Set borders on all six sides of a table (top, bottom, left, right, insideH, insideV)."""
+    return _js(_require_doc().set_table_borders(table_idx, border_style=border_style, color=color, size=size))
+
+
+@mcp.tool()
+def set_cell_shading(
+    table_idx: int,
+    row_idx: int,
+    col_idx: int,
+    fill_color: str,
+    pattern: str = "clear",
+) -> str:
+    """Set background shading fill color on a table cell."""
+    return _js(_require_doc().set_cell_shading(table_idx, row_idx, col_idx, fill_color, pattern=pattern))
+
+
+@mcp.tool()
+def set_table_style(table_idx: int, style_name: str) -> str:
+    """Apply a named table style (e.g. TableGrid, LightShading-Accent1) to a table."""
+    return _js(_require_doc().set_table_style(table_idx, style_name))
+
+
 # ── Lists ──────────────────────────────────────────────────────────────────
 
 
@@ -336,6 +413,91 @@ def get_styles() -> str:
     return _js(_require_doc().get_styles())
 
 
+@mcp.tool()
+def create_style(
+    name: str,
+    style_type: str,
+    based_on: str | None = None,
+    next_style: str | None = None,
+) -> str:
+    """Create a new style in the document.
+
+    Args:
+        name: Style name (used as styleId after removing spaces).
+        style_type: "paragraph", "character", "table", or "numbering".
+        based_on: Optional styleId this style inherits from.
+        next_style: Optional styleId applied to the next paragraph.
+    """
+    return _js(_require_doc().create_style(name, style_type, based_on=based_on, next_style=next_style))
+
+
+@mcp.tool()
+def update_style(
+    name: str,
+    based_on: str | None = None,
+    next_style: str | None = None,
+) -> str:
+    """Update an existing style's basedOn and/or next properties.
+
+    Args:
+        name: Style name or styleId (case-insensitive).
+        based_on: New basedOn styleId (replaces existing).
+        next_style: New next styleId (replaces existing).
+    """
+    return _js(_require_doc().update_style(name, based_on=based_on, next_style=next_style))
+
+
+@mcp.tool()
+def delete_style(name: str) -> str:
+    """Delete a style from the document.
+
+    Args:
+        name: Style name or styleId (case-insensitive).
+    """
+    return _js(_require_doc().delete_style(name))
+
+
+@mcp.tool()
+def get_style(name_or_id: str) -> str:
+    """Get details of a single style by name or styleId (case-insensitive).
+
+    Args:
+        name_or_id: Style name or styleId to look up.
+
+    Returns:
+        {"style_id": str, "name": str, "type": str, "base_style": str, "next_style": str}
+    """
+    return _js(_require_doc().get_style(name_or_id))
+
+
+@mcp.tool()
+def copy_style(source_name_or_id: str, new_name: str) -> str:
+    """Deep-copy an existing style under a new name.
+
+    Args:
+        source_name_or_id: Name or styleId of the style to copy.
+        new_name: Name for the new style (spaces stripped for styleId).
+
+    Returns:
+        {"style_id": str, "name": str, "type": str}
+    """
+    return _js(_require_doc().copy_style(source_name_or_id, new_name))
+
+
+@mcp.tool()
+def apply_style_to_range(para_ids: list[str], style_name_or_id: str) -> str:
+    """Apply a style to a list of paragraphs by their paraIds.
+
+    Args:
+        para_ids: List of paragraph paraIds to update.
+        style_name_or_id: Style name or styleId to apply.
+
+    Returns:
+        {"applied": int, "style_id": str, "para_ids": list[str]}
+    """
+    return _js(_require_doc().apply_style_to_range(para_ids, style_name_or_id))
+
+
 # ── Headers / Footers ──────────────────────────────────────────────────────
 
 
@@ -361,6 +523,18 @@ def edit_header_footer(
         author: Author name for the revision.
     """
     return _js(_require_doc().edit_header_footer(location, old_text, new_text, author=author))
+
+
+@mcp.tool()
+def delete_header(location: str = "default") -> str:
+    """Delete a header by location: default, first, or even."""
+    return _js(_require_doc().delete_header(location=location))
+
+
+@mcp.tool()
+def delete_footer(location: str = "default") -> str:
+    """Delete a footer by location: default, first, or even."""
+    return _js(_require_doc().delete_footer(location=location))
 
 
 # ── Properties ─────────────────────────────────────────────────────────────
@@ -395,6 +569,34 @@ def set_properties(
             description=description or None,
         )
     )
+
+
+@mcp.tool()
+def get_custom_properties() -> str:
+    """Get custom document properties from docProps/custom.xml."""
+    return _js(_require_doc().get_custom_properties())
+
+
+@mcp.tool()
+def set_custom_property(name: str, value: str, vt_type: str = "lpwstr") -> str:
+    """Set (upsert) a custom document property.
+
+    Args:
+        name: Property name.
+        value: Property value as a string.
+        vt_type: VT type element name (lpwstr, i4, bool, etc.).
+    """
+    return _js(_require_doc().set_custom_property(name, value, vt_type=vt_type))
+
+
+@mcp.tool()
+def delete_custom_property(name: str) -> str:
+    """Delete a custom document property by name.
+
+    Args:
+        name: Property name to delete.
+    """
+    return _js(_require_doc().delete_custom_property(name))
 
 
 # ── Images ─────────────────────────────────────────────────────────────────
@@ -439,6 +641,55 @@ def insert_floating_image(
     """Insert a floating (anchored) image. wrap: square|topbottom|none."""
     doc = _require_doc()
     return _js(doc.insert_floating_image(para_id, image_path, width_cm, height_cm, h_pos, v_pos, wrap))
+
+
+@mcp.tool()
+def delete_image(rId: str) -> str:
+    """Remove the drawing containing the image with the given rId from the document.
+
+    Also removes the relationship entry from word/_rels/document.xml.rels.
+
+    Args:
+        rId: The relationship ID of the image to delete (e.g. 'rId5').
+    """
+    return _js(_require_doc().delete_image(rId))
+
+
+@mcp.tool()
+def update_image(rId: str, new_image_path: str) -> str:
+    """Replace the binary for an existing image in-place.
+
+    The image dimensions and position in the document are preserved.
+
+    Args:
+        rId: The relationship ID of the image to replace.
+        new_image_path: Absolute path to the new image file on disk.
+    """
+    return _js(_require_doc().update_image(rId, new_image_path))
+
+
+@mcp.tool()
+def set_image_size(rId: str, width_cm: float, height_cm: float) -> str:
+    """Resize an embedded image by updating its EMU extent attributes.
+
+    Args:
+        rId: The relationship ID of the image to resize.
+        width_cm: New width in centimetres.
+        height_cm: New height in centimetres.
+    """
+    return _js(_require_doc().set_image_size(rId, width_cm, height_cm))
+
+
+@mcp.tool()
+def set_image_alt_text(rId: str, alt_text: str, title: str = "") -> str:
+    """Set accessibility alt text and title on an embedded image.
+
+    Args:
+        rId: The relationship ID of the image.
+        alt_text: Alt text (descr attribute on wp:docPr).
+        title: Optional title attribute on wp:docPr.
+    """
+    return _js(_require_doc().set_image_alt_text(rId, alt_text, title=title))
 
 
 # ── Endnotes ───────────────────────────────────────────────────────────────
@@ -505,6 +756,54 @@ def validate_footnotes() -> str:
     definition, and flags orphaned definitions with no reference.
     """
     return _js(_require_doc().validate_footnotes())
+
+
+@mcp.tool()
+def update_footnote(footnote_id: int, text: str) -> str:
+    """Update the text of an existing footnote.
+
+    Args:
+        footnote_id: The numeric ID of the footnote to update (must be >= 1).
+        text: The new text content for the footnote.
+    """
+    return _js(_require_doc().update_footnote(footnote_id, text))
+
+
+@mcp.tool()
+def delete_footnote(footnote_id: int) -> str:
+    """Delete a footnote and its in-body reference.
+
+    Removes the footnote definition from footnotes.xml and removes the
+    footnoteReference run from the document body.
+
+    Args:
+        footnote_id: The numeric ID of the footnote to delete.
+    """
+    return _js(_require_doc().delete_footnote(footnote_id))
+
+
+@mcp.tool()
+def update_endnote(endnote_id: int, text: str) -> str:
+    """Update the text of an existing endnote.
+
+    Args:
+        endnote_id: The numeric ID of the endnote to update (must be >= 1).
+        text: The new text content for the endnote.
+    """
+    return _js(_require_doc().update_endnote(endnote_id, text))
+
+
+@mcp.tool()
+def delete_endnote(endnote_id: int) -> str:
+    """Delete an endnote and its in-body reference.
+
+    Removes the endnote definition from endnotes.xml and removes the
+    endnoteReference run from the document body.
+
+    Args:
+        endnote_id: The numeric ID of the endnote to delete.
+    """
+    return _js(_require_doc().delete_endnote(endnote_id))
 
 
 # ── Sections / Page breaks ─────────────────────────────────────────────
@@ -576,6 +875,135 @@ def set_section_properties(
     )
 
 
+
+@mcp.tool()
+def set_page_size(width_mm: float, height_mm: float, para_id: str | None = None) -> str:
+    """Set page size from millimetre values.
+
+    Args:
+        width_mm: Page width in mm (e.g. 210 for A4, 215.9 for Letter).
+        height_mm: Page height in mm (e.g. 297 for A4, 279.4 for Letter).
+        para_id: paraId of paragraph with section break. None = body section.
+    """
+    return _js(_require_doc().set_page_size(width_mm, height_mm, para_id=para_id))
+
+
+@mcp.tool()
+def set_page_margins(
+    top_mm: float | None = None,
+    bottom_mm: float | None = None,
+    left_mm: float | None = None,
+    right_mm: float | None = None,
+    para_id: str | None = None,
+) -> str:
+    """Set page margins from millimetre values.
+
+    Args:
+        top_mm: Top margin in mm. None = unchanged.
+        bottom_mm: Bottom margin in mm. None = unchanged.
+        left_mm: Left margin in mm. None = unchanged.
+        right_mm: Right margin in mm. None = unchanged.
+        para_id: paraId of paragraph with section break. None = body section.
+    """
+    return _js(
+        _require_doc().set_page_margins(
+            top_mm=top_mm,
+            bottom_mm=bottom_mm,
+            left_mm=left_mm,
+            right_mm=right_mm,
+            para_id=para_id,
+        )
+    )
+
+
+@mcp.tool()
+def set_page_orientation(orientation: str, para_id: str | None = None) -> str:
+    """Set page orientation, swapping width/height dimensions if needed.
+
+    Args:
+        orientation: "portrait" or "landscape".
+        para_id: paraId of paragraph with section break. None = body section.
+    """
+    return _js(_require_doc().set_page_orientation(orientation, para_id=para_id))
+
+
+@mcp.tool()
+def get_sections() -> str:
+    """List all sections in the document with their properties.
+
+    Returns a JSON array of section objects, each containing:
+    index, break_type, page_width, page_height, orientation, columns,
+    margin_top, margin_bottom (all sizes in twips/DXA).
+    The final section always has break_type="".
+    """
+    return _js(_require_doc().get_sections())
+
+
+@mcp.tool()
+def set_section_columns(
+    section_index: int,
+    num_columns: int,
+    equal_width: bool = True,
+) -> str:
+    """Set the number of columns in a section.
+
+    Args:
+        section_index: Zero-based section index (use get_sections to find it).
+        num_columns: Number of text columns (1 = single column).
+        equal_width: If True, all columns are equal width. Default True.
+    """
+    return _js(_require_doc().set_section_columns(section_index, num_columns, equal_width))
+
+
+@mcp.tool()
+def delete_section_break(para_id: str) -> str:
+    """Remove a section break from a paragraph.
+
+    Removes the w:sectPr from the paragraph's w:pPr. After removal the
+    paragraph's content flows into the next section rather than ending one.
+
+    Args:
+        para_id: paraId of the paragraph that holds the section break.
+
+    Raises:
+        ValueError: If the paragraph has no section break.
+    """
+    return _js(_require_doc().delete_section_break(para_id))
+
+
+@mcp.tool()
+def set_different_first_page(section_index: int, enabled: bool) -> str:
+    """Enable or disable a different first-page header/footer for a section.
+
+    When enabled, the section can have a unique header/footer on its first page,
+    separate from the header/footer used on subsequent pages.
+
+    Args:
+        section_index: Zero-based section index (use get_sections to find it).
+        enabled: True to enable different first page, False to disable.
+
+    Returns:
+        {"section_index": int, "different_first_page": bool}
+    """
+    return _js(_require_doc().set_different_first_page(section_index, enabled))
+
+
+@mcp.tool()
+def set_odd_even_headers(enabled: bool) -> str:
+    """Enable or disable different odd/even page headers globally.
+
+    This is a document-level setting stored in word/settings.xml. When enabled,
+    even-numbered pages can use a different header/footer from odd-numbered pages.
+
+    Args:
+        enabled: True to enable different odd/even headers, False to disable.
+
+    Returns:
+        {"odd_even_headers": bool}
+    """
+    return _js(_require_doc().set_odd_even_headers(enabled))
+
+
 # ── Cross-references ──────────────────────────────────────────────────
 
 
@@ -643,6 +1071,20 @@ def validate_paraids() -> str:
     and comments. They must also be valid 8-digit hex values < 0x80000000.
     """
     return _js(_require_doc().validate_paraids())
+
+
+@mcp.tool()
+def insert_watermark(text: str, diagonal: bool = True) -> str:
+    """Insert a VML watermark into the document's default header.
+
+    Places a <v:shape> with a <v:textpath> inside the default header, which is
+    the standard Word watermark pattern.
+
+    Args:
+        text: Watermark text (e.g. "DRAFT", "CONFIDENTIAL").
+        diagonal: If True (default), diagonal orientation; if False, horizontal.
+    """
+    return _js(_require_doc().insert_watermark(text, diagonal=diagonal))
 
 
 @mcp.tool()
@@ -795,6 +1237,50 @@ def reject_changes(author: str = "") -> str:
 
 
 @mcp.tool()
+def accept_change(change_id: int) -> str:
+    """Accept a single tracked change by its change_id.
+
+    For insertions: keeps the inserted text (unwraps w:ins).
+    For deletions: discards the deleted text (removes w:del).
+
+    Args:
+        change_id: The integer id attribute of the w:ins or w:del element.
+    """
+    return _js(_require_doc().accept_change(change_id))
+
+
+@mcp.tool()
+def reject_change(change_id: int) -> str:
+    """Reject a single tracked change by its change_id.
+
+    For insertions: discards the inserted text (removes w:ins).
+    For deletions: keeps the deleted text (unwraps w:del, restoring text).
+
+    Args:
+        change_id: The integer id attribute of the w:ins or w:del element.
+    """
+    return _js(_require_doc().reject_change(change_id))
+
+
+@mcp.tool()
+def accept_all_changes() -> str:
+    """Accept all tracked changes in document order.
+
+    Returns a JSON object with the count of accepted changes: {"accepted": int}.
+    """
+    return _js(_require_doc().accept_all_changes())
+
+
+@mcp.tool()
+def reject_all_changes() -> str:
+    """Reject all tracked changes in document order.
+
+    Returns a JSON object with the count of rejected changes: {"rejected": int}.
+    """
+    return _js(_require_doc().reject_all_changes())
+
+
+@mcp.tool()
 def set_formatting(
     para_id: str,
     text: str,
@@ -873,6 +1359,46 @@ def reply_to_comment(
         author: Author name.
     """
     return _js(_require_doc().reply_to_comment(parent_id, text, author=author))
+
+
+@mcp.tool()
+def update_comment(comment_id: int, text: str) -> str:
+    """Replace the text of an existing comment.
+
+    Args:
+        comment_id: ID of the comment to update.
+        text: New comment text.
+    """
+    return _js(_require_doc().update_comment(comment_id, text))
+
+
+@mcp.tool()
+def delete_comment(comment_id: int) -> str:
+    """Delete a comment and remove its range markers from the document.
+
+    Args:
+        comment_id: ID of the comment to delete.
+    """
+    return _js(_require_doc().delete_comment(comment_id))
+
+
+@mcp.tool()
+def resolve_comment(comment_id: int) -> str:
+    """Mark a comment as resolved (sets w15:done='1' in commentsExtended.xml).
+
+    Args:
+        comment_id: ID of the comment to resolve.
+    """
+    return _js(_require_doc().resolve_comment(comment_id))
+
+
+@mcp.tool()
+def list_comment_threads() -> str:
+    """List all comment threads (root comments with their replies).
+
+    Returns a list of thread dicts: {root: {id, author, date, text}, replies: [...]}.
+    """
+    return _js(_require_doc().list_comment_threads())
 
 
 # ── Save ────────────────────────────────────────────────────────────────────
@@ -1138,6 +1664,49 @@ def list_fields() -> str:
     return _js(_require_doc().list_fields())
 
 
+@mcp.tool()
+def get_field(field_id: str) -> str:
+    """Return details of a single field by field_id.
+
+    Args:
+        field_id: Positional identifier returned by list_fields (e.g. "field_0").
+    """
+    return _js(_require_doc().get_field(field_id))
+
+
+@mcp.tool()
+def delete_field(field_id: str) -> str:
+    """Remove a complete complex field (begin through end runs) from the document.
+
+    Args:
+        field_id: Positional identifier returned by list_fields (e.g. "field_0").
+    """
+    return _js(_require_doc().delete_field(field_id))
+
+
+@mcp.tool()
+def insert_date_field(
+    para_id: str, date_format: str = r'\@ "MMMM d, yyyy"'
+) -> str:
+    """Insert a DATE field at the end of a paragraph.
+
+    Args:
+        para_id: w14:paraId of the target paragraph.
+        date_format: Date picture switch (default: \\@ "MMMM d, yyyy").
+    """
+    return _js(_require_doc().insert_date_field(para_id, date_format))
+
+
+@mcp.tool()
+def insert_page_number_field(para_id: str) -> str:
+    """Insert a PAGE field at the end of a paragraph.
+
+    Args:
+        para_id: w14:paraId of the target paragraph.
+    """
+    return _js(_require_doc().insert_page_number_field(para_id))
+
+
 # ── Table of Contents ────────────────────────────────────────────────────────
 
 
@@ -1167,6 +1736,26 @@ def generate_list_of_tables() -> str:
     """Insert a List of Tables field (requires SEQ Table captions)."""
     doc = _require_doc()
     return _js(doc.generate_list_of_tables())
+
+
+@mcp.tool()
+def generate_tof(para_id: str, title: str = "List of Figures") -> str:
+    """Insert a Table of Figures field block after the paragraph with para_id.
+
+    Collects caption-styled paragraphs starting with 'Figure' as entries.
+    """
+    doc = _require_doc()
+    return _js(doc.generate_tof(para_id, title))
+
+
+@mcp.tool()
+def generate_tot(para_id: str, title: str = "List of Tables") -> str:
+    """Insert a Table of Tables field block after the paragraph with para_id.
+
+    Collects caption-styled paragraphs starting with 'Table' as entries.
+    """
+    doc = _require_doc()
+    return _js(doc.generate_tot(para_id, title))
 
 
 # ── Content Controls ────────────────────────────────────────────────────────
@@ -1226,6 +1815,47 @@ def lock_content_control(tag: str, lock: str = "sdtLocked") -> str:
     return _js(doc.lock_content_control(tag, lock))
 
 
+@mcp.tool()
+def delete_content_control(control_id: str) -> str:
+    """Remove an SDT content control wrapper, keeping its content in place.
+
+    Args:
+        control_id: The w:id value of the content control to unwrap.
+    """
+    doc = _require_doc()
+    return _js(doc.delete_content_control(control_id))
+
+
+@mcp.tool()
+def get_content_control(control_id: str) -> str:
+    """Return details of a single content control by its w:id.
+
+    Args:
+        control_id: The w:id value of the content control to retrieve.
+    """
+    doc = _require_doc()
+    return _js(doc.get_content_control(control_id))
+
+
+@mcp.tool()
+def update_content_control(
+    control_id: str,
+    title: str | None = None,
+    tag: str | None = None,
+    placeholder_text: str | None = None,
+) -> str:
+    """Modify properties of an existing content control.
+
+    Args:
+        control_id: The w:id value of the content control to update.
+        title: New title (w:alias/@w:val). Omit to leave unchanged.
+        tag: New tag (w:tag/@w:val). Omit to leave unchanged.
+        placeholder_text: New placeholder text. Omit to leave unchanged.
+    """
+    doc = _require_doc()
+    return _js(doc.update_content_control(control_id, title=title, tag=tag, placeholder_text=placeholder_text))
+
+
 # ── Template Filling ─────────────────────────────────────────────────────────
 
 
@@ -1277,6 +1907,34 @@ def suppress_numbering(para_id: str) -> str:
     """Remove list numbering from a paragraph by setting numId to 0."""
     doc = _require_doc()
     return _js(doc.suppress_numbering(para_id))
+
+
+@mcp.tool()
+def get_lists() -> str:
+    """Return all list definitions from numbering.xml.
+
+    Each entry: {abstract_num_id, num_format, levels}.
+    Returns [] if no numbering.xml exists.
+    """
+    return _js(_require_doc().get_lists())
+
+
+@mcp.tool()
+def promote_list_item(para_id: str) -> str:
+    """Decrease the list indentation level (ilvl) of a paragraph by 1, minimum 0.
+
+    Returns {para_id, ilvl}. Raises ValueError if paragraph is not a list item.
+    """
+    return _js(_require_doc().promote_list_item(para_id))
+
+
+@mcp.tool()
+def demote_list_item(para_id: str) -> str:
+    """Increase the list indentation level (ilvl) of a paragraph by 1, maximum 8.
+
+    Returns {para_id, ilvl}. Raises ValueError if paragraph is not a list item.
+    """
+    return _js(_require_doc().demote_list_item(para_id))
 
 
 # ── Litigation Tools ────────────────────────────────────────────────────────
@@ -1431,6 +2089,727 @@ def merge_review_rounds(reviewer_paths: list[str], base_path: str | None = None)
 def compare_contracts(other_path: str, output_path: str = "", align_by: str = "heading") -> str:
     """Clause-aware diff between the open contract and another .docx file."""
     return _js(_require_doc().compare_contracts(other_path, output_path, align_by))
+
+
+# ── Session log ──────────────────────────────────────────────────────────────
+
+
+@mcp.tool()
+def get_session_log() -> str:
+    """Return all operations performed this session as replayable JSON."""
+    return _js(_require_doc().get_session_log())
+
+
+@mcp.tool()
+def export_session_script(output_path: str) -> str:
+    """Write session operations as a Python replay script.
+
+    Returns: {"output_path": str, "operations": int}
+    """
+    return _js(_require_doc().export_session_script(output_path))
+
+
+# ── Paragraph CRUD + border/shading ────────────────────────────────────────
+
+
+@mcp.tool()
+def insert_paragraph(
+    after_para_id: str,
+    text: str,
+    style: str = "",
+) -> str:
+    """Insert a new paragraph after the paragraph with the given paraId.
+
+    Args:
+        after_para_id: paraId of the paragraph to insert after.
+        text: Text content for the new paragraph.
+        style: Optional paragraph style name (e.g., "Heading1", "Normal").
+    """
+    return _js(_require_doc().insert_paragraph(after_para_id, text, style=style or None))
+
+
+@mcp.tool()
+def update_paragraph(
+    para_id: str,
+    text: str = "",
+    style: str = "",
+) -> str:
+    """Update the text and/or style of an existing paragraph.
+
+    Args:
+        para_id: paraId of the paragraph to update.
+        text: New text content. Empty string leaves text unchanged.
+        style: New paragraph style name. Empty string leaves style unchanged.
+    """
+    return _js(
+        _require_doc().update_paragraph(
+            para_id,
+            text=text or None,
+            style=style or None,
+        )
+    )
+
+
+@mcp.tool()
+def delete_paragraph(para_id: str) -> str:
+    """Delete the paragraph with the given paraId.
+
+    Args:
+        para_id: paraId of the paragraph to remove.
+    """
+    return _js(_require_doc().delete_paragraph(para_id))
+
+
+@mcp.tool()
+def set_paragraph_border(
+    para_id: str,
+    sides: list[str],
+    color: str = "000000",
+    size: int = 4,
+) -> str:
+    """Set borders on one or more sides of a paragraph.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        sides: List of sides: "top", "bottom", "left", "right", "between".
+        color: Border color as 6-digit hex (default "000000").
+        size: Border width in eighths of a point (default 4 = 0.5pt).
+    """
+    return _js(_require_doc().set_paragraph_border(para_id, sides, color=color, size=size))
+
+
+@mcp.tool()
+def set_paragraph_shading(
+    para_id: str,
+    fill_color: str,
+    pattern: str = "clear",
+) -> str:
+    """Set background shading on a paragraph.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        fill_color: Fill color as 6-digit hex (e.g., "FFFF00").
+        pattern: Shading pattern (default "clear").
+    """
+    return _js(_require_doc().set_paragraph_shading(para_id, fill_color, pattern=pattern))
+
+
+@mcp.tool()
+def set_paragraph_indentation(
+    para_id: str,
+    left_cm: float | None = None,
+    right_cm: float | None = None,
+    first_line_cm: float | None = None,
+    hanging_cm: float | None = None,
+) -> str:
+    """Set indentation on a paragraph.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        left_cm: Left indent in centimetres (None = unchanged).
+        right_cm: Right indent in centimetres (None = unchanged).
+        first_line_cm: First-line indent in cm (mutually exclusive with hanging_cm).
+        hanging_cm: Hanging indent in cm (mutually exclusive with first_line_cm).
+    """
+    return _js(
+        _require_doc().set_paragraph_indentation(
+            para_id,
+            left_cm=left_cm,
+            right_cm=right_cm,
+            first_line_cm=first_line_cm,
+            hanging_cm=hanging_cm,
+        )
+    )
+
+
+@mcp.tool()
+def set_keep_with_next(para_id: str, enabled: bool) -> str:
+    """Keep this paragraph on the same page as the next paragraph.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        enabled: True to enable keep-with-next, False to remove it.
+    """
+    return _js(_require_doc().set_keep_with_next(para_id, enabled))
+
+
+@mcp.tool()
+def set_keep_lines_together(para_id: str, enabled: bool) -> str:
+    """Keep all lines of this paragraph on the same page.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        enabled: True to enable keep-lines-together, False to remove it.
+    """
+    return _js(_require_doc().set_keep_lines_together(para_id, enabled))
+
+
+@mcp.tool()
+def set_page_break_before(para_id: str, enabled: bool) -> str:
+    """Force a page break before this paragraph.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        enabled: True to force page break before, False to remove it.
+    """
+    return _js(_require_doc().set_page_break_before(para_id, enabled))
+
+
+@mcp.tool()
+def set_widow_control(para_id: str, enabled: bool) -> str:
+    """Enable widow/orphan control for this paragraph.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        enabled: True to enable widow control, False to remove it.
+    """
+    return _js(_require_doc().set_widow_control(para_id, enabled))
+
+
+@mcp.tool()
+def set_line_spacing(
+    para_id: str,
+    line_rule: str | None = None,
+    line_value: int | None = None,
+    space_before_pt: float | None = None,
+    space_after_pt: float | None = None,
+) -> str:
+    """Set line spacing and paragraph spacing.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        line_rule: "auto" | "exact" | "atLeast". None leaves unchanged.
+        line_value: For "auto": 240=single, 360=1.5x, 480=double. For "exact"/"atLeast": twips.
+        space_before_pt: Space before paragraph in points (None = unchanged).
+        space_after_pt: Space after paragraph in points (None = unchanged).
+    """
+    return _js(
+        _require_doc().set_line_spacing(
+            para_id,
+            line_rule=line_rule,
+            line_value=line_value,
+            space_before_pt=space_before_pt,
+            space_after_pt=space_after_pt,
+        )
+    )
+
+
+@mcp.tool()
+def get_paragraph_format(para_id: str) -> str:
+    """Read all formatting attributes of a paragraph.
+
+    Returns style, alignment, indentation, line spacing, border, shading, and list info.
+
+    Args:
+        para_id: paraId of the target paragraph.
+    """
+    return _js(_require_doc().get_paragraph_format(para_id))
+
+
+# ── Run-level formatting ───────────────────────────────────────────────────
+
+
+@mcp.tool()
+def get_runs(para_id: str) -> str:
+    """Get all runs in a paragraph with their formatting properties.
+
+    Args:
+        para_id: paraId of the target paragraph.
+    """
+    return _js(_require_doc().get_runs(para_id))
+
+
+@mcp.tool()
+def set_run_font(para_id: str, run_idx: int, font_name: str) -> str:
+    """Set the font of a specific run (zero-based index) in a paragraph.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        run_idx: Zero-based index of the run.
+        font_name: Font name (e.g., "Arial", "Times New Roman").
+    """
+    return _js(_require_doc().set_run_font(para_id, run_idx, font_name))
+
+
+@mcp.tool()
+def set_run_color(para_id: str, run_idx: int, color: str) -> str:
+    """Set the font color of a specific run in a paragraph.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        run_idx: Zero-based index of the run.
+        color: Hex color without # (e.g., "FF0000").
+    """
+    return _js(_require_doc().set_run_color(para_id, run_idx, color))
+
+
+@mcp.tool()
+def set_run_size(para_id: str, run_idx: int, size_pt: float) -> str:
+    """Set the font size of a specific run in a paragraph.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        run_idx: Zero-based index of the run.
+        size_pt: Font size in points (e.g., 12.0).
+    """
+    return _js(_require_doc().set_run_size(para_id, run_idx, size_pt))
+
+
+@mcp.tool()
+def set_character_spacing(para_id: str, run_idx: int, spacing_pt: float) -> str:
+    """Set character spacing (tracking) for a specific run in a paragraph.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        run_idx: Zero-based index of the run.
+        spacing_pt: Spacing in points (positive = expanded, negative = condensed).
+    """
+    return _js(_require_doc().set_character_spacing(para_id, run_idx, spacing_pt))
+
+
+@mcp.tool()
+def set_character_position(para_id: str, run_idx: int, position_pt: float) -> str:
+    """Set vertical character position (raised/lowered) for a specific run.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        run_idx: Zero-based index of the run.
+        position_pt: Offset in points (positive = raised, negative = lowered).
+    """
+    return _js(_require_doc().set_character_position(para_id, run_idx, position_pt))
+
+
+@mcp.tool()
+def set_run_highlight(para_id: str, run_idx: int, color: str) -> str:
+    """Set highlight color of a specific run in a paragraph.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        run_idx: Zero-based index of the run.
+        color: Word highlight color name (e.g., "yellow", "green", "cyan", "none").
+    """
+    return _js(_require_doc().set_run_highlight(para_id, run_idx, color))
+
+
+@mcp.tool()
+def set_run_strikethrough(para_id: str, run_idx: int, double: bool = False) -> str:
+    """Set strikethrough on a specific run in a paragraph.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        run_idx: Zero-based index of the run.
+        double: False for single strikethrough, True for double strikethrough.
+    """
+    return _js(_require_doc().set_run_strikethrough(para_id, run_idx, double))
+
+
+@mcp.tool()
+def set_run_superscript(para_id: str, run_idx: int) -> str:
+    """Set superscript vertical alignment on a specific run in a paragraph.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        run_idx: Zero-based index of the run.
+    """
+    return _js(_require_doc().set_run_superscript(para_id, run_idx))
+
+
+@mcp.tool()
+def set_run_subscript(para_id: str, run_idx: int) -> str:
+    """Set subscript vertical alignment on a specific run in a paragraph.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        run_idx: Zero-based index of the run.
+    """
+    return _js(_require_doc().set_run_subscript(para_id, run_idx))
+
+
+@mcp.tool()
+def set_run_underline(para_id: str, run_idx: int, style: str = "single") -> str:
+    """Set underline style on a specific run in a paragraph.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        run_idx: Zero-based index of the run.
+        style: Underline style (e.g., "single", "double", "dotted", "none").
+    """
+    return _js(_require_doc().set_run_underline(para_id, run_idx, style))
+
+
+@mcp.tool()
+def clear_run_formatting(para_id: str, run_idx: int) -> str:
+    """Remove all character formatting from a run, causing it to inherit paragraph/style defaults.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        run_idx: Zero-based index of the run.
+    """
+    return _js(_require_doc().clear_run_formatting(para_id, run_idx))
+
+
+@mcp.tool()
+def set_run_language(para_id: str, run_idx: int, language_code: str) -> str:
+    """Set the language on a run for spell-checking purposes.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        run_idx: Zero-based index of the run.
+        language_code: BCP-47 language code (e.g., "en-US", "fr-FR", "de-DE").
+    """
+    return _js(_require_doc().set_run_language(para_id, run_idx, language_code))
+
+
+@mcp.tool()
+def set_text_case(para_id: str, run_idx: int, case: str) -> str:
+    """Set text case transformation on a run.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        run_idx: Zero-based index of the run.
+        case: "upper" (all caps), "small" (small caps), or "none" (remove case transform).
+    """
+    return _js(_require_doc().set_text_case(para_id, run_idx, case))
+
+
+@mcp.tool()
+def export_markdown(output_path: str = "") -> str:
+    """Export the open document as Markdown.
+
+    Converts the document body (headings, bold/italic runs, lists, tables,
+    plain paragraphs) to GitHub-Flavoured Markdown and writes it to a file.
+
+    Args:
+        output_path: Destination path for the .md file.
+            Defaults to <workdir>/export.md when empty.
+
+    Returns: {"output_path": str, "paragraphs": int, "tables": int}
+    """
+    return _js(_require_doc().export_markdown(output_path))
+
+
+
+
+@mcp.tool()
+def get_theme_colors() -> str:
+    """Return the named color slots from word/theme/theme1.xml.
+
+    Returns a dict mapping slot names (dk1, lt1, accent1, ...) to 6-digit hex strings.
+    Returns an empty dict if the document has no theme file.
+    """
+    return _js(_require_doc().get_theme_colors())
+
+
+@mcp.tool()
+def set_theme_color(slot: str, hex_color: str) -> str:
+    """Update a named color slot in the document theme.
+
+    Args:
+        slot: One of dk1, lt1, dk2, lt2, accent1-accent6, hlink, folHlink.
+        hex_color: 6-character hex string without # (e.g. "FF0000").
+    """
+    return _js(_require_doc().set_theme_color(slot, hex_color))
+
+
+@mcp.tool()
+def insert_caption(after_para_id: str, text: str, label: str = "Figure") -> str:
+    """Insert a caption paragraph after the specified paragraph.
+
+    Args:
+        after_para_id: paraId of the paragraph to insert after.
+        text: Caption description text (without label/number prefix).
+        label: Caption label, e.g. "Figure" or "Table" (default "Figure").
+    """
+    return _js(_require_doc().insert_caption(after_para_id, text, label=label))
+
+
+@mcp.tool()
+def find_replace_formatted(
+    find: str,
+    replace: str,
+    bold: bool | None = None,
+    italic: bool | None = None,
+    color: str | None = None,
+    size_pt: float | None = None,
+) -> str:
+    """Find all occurrences of a string and replace with formatted text.
+
+    Replaces every occurrence of `find` across all paragraphs in the document
+    with `replace`, applying the specified character formatting to the replacement
+    run only.
+
+    Args:
+        find: Text to search for (must be non-empty).
+        replace: Replacement text.
+        bold: True to bold, False to explicitly un-bold, None to leave unchanged.
+        italic: True to italicise, False to explicitly un-italicise, None to leave unchanged.
+        color: Font color as 6-digit hex (e.g. "FF0000"). None leaves color unchanged.
+        size_pt: Font size in points (e.g. 12.0). None leaves size unchanged.
+    """
+    return _js(_require_doc().find_replace_formatted(
+        find,
+        replace,
+        bold=bold,
+        italic=italic,
+        color=color,
+        size_pt=size_pt,
+    ))
+
+
+
+
+@mcp.tool()
+def split_document(output_dir: str = "", at_heading_level: int = 1) -> str:
+    """Split the open document into multiple DOCX files, one per heading section.
+
+    Args:
+        output_dir: Directory for output files. Defaults to <workdir>/split_output.
+        at_heading_level: Heading level to split on (default 1).
+
+    Returns: {"output_dir": str, "files": list[str], "parts": int}
+    """
+    return _js(_require_doc().split_document(output_dir=output_dir, at_heading_level=at_heading_level))
+
+
+@mcp.tool()
+def get_word_count() -> str:
+    """Return the word count of the open document body.
+
+    Returns: {"word_count": int}
+    """
+    return _js({"word_count": _require_doc().get_word_count()})
+
+
+@mcp.tool()
+def get_statistics() -> str:
+    """Return document statistics for the open document.
+
+    Returns a dict with keys: word_count, character_count, paragraph_count,
+    table_count, image_count, section_count.
+    """
+    return _js(_require_doc().get_statistics())
+
+
+@mcp.tool()
+def get_document_outline(max_level: int = 6) -> str:
+    """Return a flat list of headings as a document outline.
+
+    Walks the document body and returns every heading paragraph up to the
+    specified level.
+
+    Args:
+        max_level: Maximum heading level to include (1–6, default 6).
+
+    Returns:
+        JSON list of dicts with keys: level (int), text (str), para_id (str).
+    """
+    return _js(_require_doc().get_document_outline(max_level=max_level))
+
+
+@mcp.tool()
+def set_document_language(language_code: str) -> str:
+    """Set the default document language.
+
+    Writes the BCP-47 language tag into the default paragraph style's run
+    properties (``w:rPr/w:lang``) in ``word/styles.xml``.
+
+    Args:
+        language_code: BCP-47 language tag, e.g. "en-US", "fr-FR", "de-DE".
+
+    Returns:
+        {"language": language_code}
+    """
+    return _js(_require_doc().set_document_language(language_code))
+
+
+@mcp.tool()
+def set_track_changes(enabled: bool, author: str = "") -> str:
+    """Enable or disable revision tracking in the document.
+
+    When enabled, Word/LibreOffice will record future edits as tracked changes.
+
+    Args:
+        enabled: True to enable tracking, False to disable.
+        author: Optional author name (stored in response for reference only).
+
+    Returns:
+        {"track_changes": bool, "author": str}
+    """
+    return _js(_require_doc().set_track_changes(enabled=enabled, author=author))
+
+
+@mcp.tool()
+def split_table(table_idx: int, at_row_index: int) -> str:
+    """Split a table into two tables at the given row index.
+
+    Rows 0..at_row_index-1 remain in the original table; rows
+    at_row_index..end move to a new table inserted immediately after.
+
+    Args:
+        table_idx: 0-based table index.
+        at_row_index: 0-based row index to split at (must be > 0 and < row_count).
+
+    Returns:
+        {"table1_rows": int, "table2_rows": int}
+    """
+    return _js(_require_doc().split_table(table_idx, at_row_index))
+
+
+@mcp.tool()
+def duplicate_table_row(table_idx: int, row_index: int) -> str:
+    """Deep-copy a table row and insert the copy immediately after it.
+
+    Args:
+        table_idx: 0-based table index.
+        row_index: 0-based index of the row to duplicate.
+
+    Returns:
+        {"row_index": int, "new_row_index": int}
+    """
+    return _js(_require_doc().duplicate_table_row(table_idx, row_index))
+
+
+@mcp.tool()
+def sort_table(table_idx: int, column_index: int, ascending: bool = True) -> str:
+    """Sort the non-header rows of a table by the text content of a column.
+
+    Header rows (marked with w:tblHeader) remain at the top. Rows with a
+    missing cell at column_index sort as empty string.
+
+    Args:
+        table_idx: 0-based table index.
+        column_index: 0-based column to sort by.
+        ascending: True for A→Z (default), False for Z→A.
+
+    Returns:
+        {"sorted_rows": int, "column_index": int, "ascending": bool}
+    """
+    return _js(_require_doc().sort_table(table_idx, column_index, ascending))
+
+
+@mcp.tool()
+def get_table(table_idx: int) -> str:
+    """Get structured info for a single table by zero-based index.
+
+    Args:
+        table_idx: 0-based table index.
+
+    Returns:
+        {"index": int, "row_count": int, "col_count": int, "cells": list[list[str]]}
+    """
+    return _js(_require_doc().get_table(table_idx))
+
+
+@mcp.tool()
+def get_cell_text(table_idx: int, row_idx: int, col_idx: int) -> str:
+    """Return text content of a specific cell.
+
+    Args:
+        table_idx: 0-based table index.
+        row_idx: 0-based row index.
+        col_idx: 0-based column index.
+
+    Returns:
+        {"table_index": int, "row_index": int, "col_index": int, "text": str}
+    """
+    return _js(_require_doc().get_cell_text(table_idx, row_idx, col_idx))
+
+
+@mcp.tool()
+def copy_table(table_idx: int) -> str:
+    """Deep-copy a table and insert the copy immediately after the original.
+
+    Args:
+        table_idx: 0-based table index.
+
+    Returns:
+        {"source_index": int, "new_index": int}
+    """
+    return _js(_require_doc().copy_table(table_idx))
+
+
+@mcp.tool()
+def copy_document(output_path: str) -> str:
+    """Save a complete snapshot of the open document to a new path.
+
+    The active session and source path are unchanged.
+
+    Args:
+        output_path: Destination file path (must end in .docx).
+
+    Returns:
+        {"copied_to": output_path}
+    """
+    return _js(_require_doc().copy_document(output_path))
+
+
+@mcp.tool()
+def flatten_document() -> str:
+    """Accept all tracked changes and remove all revision markup.
+
+    Accepts every w:ins / w:del and strips all w:rPrChange and w:pPrChange
+    elements, leaving plain text with no tracked-change metadata.
+
+    Returns:
+        {"changes_accepted": int, "formatting_changes_removed": int}
+    """
+    return _js(_require_doc().flatten_document())
+
+
+@mcp.tool()
+def get_reading_time(words_per_minute: int = 200) -> str:
+    """Estimate reading time for the open document.
+
+    Args:
+        words_per_minute: Assumed reading speed (default 200 wpm).
+
+    Returns:
+        {"word_count": int, "words_per_minute": int, "minutes": float, "seconds": int}
+    """
+    return _js(_require_doc().get_reading_time(words_per_minute=words_per_minute))
+
+
+# ── Accessibility (P8.8) ─────────────────────────────────────────────────────
+
+
+@mcp.tool()
+def set_alt_text(image_index: int, alt_text: str, title: str = "") -> str:
+    """Set the alt text (and optionally title) on an image by 0-based index.
+
+    Args:
+        image_index: 0-based index across all wp:docPr elements in document.xml.
+        alt_text: Accessibility description to set on the image.
+        title: Optional title attribute; removed from XML if empty.
+
+    Returns:
+        {"image_index": int, "alt_text": str}
+    """
+    return _js(_require_doc().set_alt_text(image_index, alt_text, title=title))
+
+
+@mcp.tool()
+def get_alt_text(image_index: int) -> str:
+    """Get the alt text and title for an image by 0-based index.
+
+    Args:
+        image_index: 0-based index across all wp:docPr elements in document.xml.
+
+    Returns:
+        {"image_index": int, "alt_text": str, "title": str}
+    """
+    return _js(_require_doc().get_alt_text(image_index))
+
+
+@mcp.tool()
+def check_accessibility() -> str:
+    """Scan the document for accessibility issues.
+
+    Checks images for missing alt text and tables for missing header rows.
+
+    Returns:
+        {"issue_count": int, "issues": list[dict]}
+    """
+    return _js(_require_doc().check_accessibility())
 
 
 # ── Entry point ─────────────────────────────────────────────────────────────
