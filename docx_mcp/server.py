@@ -886,6 +886,50 @@ def set_page_orientation(orientation: str, para_id: str | None = None) -> str:
     return _js(_require_doc().set_page_orientation(orientation, para_id=para_id))
 
 
+@mcp.tool()
+def get_sections() -> str:
+    """List all sections in the document with their properties.
+
+    Returns a JSON array of section objects, each containing:
+    index, break_type, page_width, page_height, orientation, columns,
+    margin_top, margin_bottom (all sizes in twips/DXA).
+    The final section always has break_type="".
+    """
+    return _js(_require_doc().get_sections())
+
+
+@mcp.tool()
+def set_section_columns(
+    section_index: int,
+    num_columns: int,
+    equal_width: bool = True,
+) -> str:
+    """Set the number of columns in a section.
+
+    Args:
+        section_index: Zero-based section index (use get_sections to find it).
+        num_columns: Number of text columns (1 = single column).
+        equal_width: If True, all columns are equal width. Default True.
+    """
+    return _js(_require_doc().set_section_columns(section_index, num_columns, equal_width))
+
+
+@mcp.tool()
+def delete_section_break(para_id: str) -> str:
+    """Remove a section break from a paragraph.
+
+    Removes the w:sectPr from the paragraph's w:pPr. After removal the
+    paragraph's content flows into the next section rather than ending one.
+
+    Args:
+        para_id: paraId of the paragraph that holds the section break.
+
+    Raises:
+        ValueError: If the paragraph has no section break.
+    """
+    return _js(_require_doc().delete_section_break(para_id))
+
+
 # ── Cross-references ──────────────────────────────────────────────────
 
 

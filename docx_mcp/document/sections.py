@@ -205,6 +205,160 @@ class SectionsMixin:
         self._mark("word/styles.xml")
         return {"language": language_code}
 
+    # ── Section enumeration helpers ──────────────────────────────────────────
+
+    def _collect_sectprs(self, body):
+        """Return list of (sectPr, is_final) tuples in document order."""
+        result = []
+        for child in body:
+            if child.tag == f"{W}p":
+                ppr = child.find(f"{W}pPr")
+                if ppr is not None:
+                    spr = ppr.find(f"{W}sectPr")
+                    if spr is not None:
+                        result.append((spr, False))
+        final = body.find(f"{W}sectPr")
+        if final is not None:
+            result.append((final, True))
+        return result
+
+    @staticmethod
+    def _parse_sectpr(sectpr, index: int, is_final: bool) -> dict:
+        """Extract structured info from a sectPr element."""
+        W_NS = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+
+        # break_type
+        if is_final:
+            break_type = ""
+        else:
+            type_el = sectpr.find(f"{W_NS}type")
+            break_type = type_el.get(f"{W_NS}val", "continuous") if type_el is not None else "continuous"
+
+        # page size
+        pg_sz = sectpr.find(f"{W_NS}pgSz")
+        if pg_sz is not None:
+            page_width = int(pg_sz.get(f"{W_NS}w", "0") or "0")
+            page_height = int(pg_sz.get(f"{W_NS}h", "0") or "0")
+            orient_val = pg_sz.get(f"{W_NS}orient", "")
+            orientation = "landscape" if orient_val == "landscape" else "portrait"
+        else:
+            page_width = 0
+            page_height = 0
+            orientation = "portrait"
+
+        # columns
+        cols_el = sectpr.find(f"{W_NS}cols")
+        if cols_el is not None:
+            num_attr = cols_el.get(f"{W_NS}num")
+            if num_attr:
+                columns = int(num_attr)
+            else:
+                col_children = [c for c in cols_el if c.tag == f"{W_NS}col"]
+                columns = len(col_children) if col_children else 1
+        else:
+            columns = 1
+
+        # margins
+        pg_mar = sectpr.find(f"{W_NS}pgMar")
+        if pg_mar is not None:
+            margin_top = int(pg_mar.get(f"{W_NS}top", "0") or "0")
+            margin_bottom = int(pg_mar.get(f"{W_NS}bottom", "0") or "0")
+        else:
+            margin_top = 0
+            margin_bottom = 0
+
+        return {
+            "index": index,
+            "break_type": break_type,
+            "page_width": page_width,
+            "page_height": page_height,
+            "orientation": orientation,
+            "columns": columns,
+            "margin_top": margin_top,
+            "margin_bottom": margin_bottom,
+        }
+
+    def get_sections(self) -> list[dict]:
+        """Return structured info about each section in document order.
+
+        Each section dict contains index, break_type, page_width, page_height,
+        orientation, columns, margin_top, margin_bottom.
+        """
+        doc = self._require("word/document.xml")
+        body = doc.find(f"{W}body")
+        sectprs = self._collect_sectprs(body)
+        return [self._parse_sectpr(spr, i, is_final) for i, (spr, is_final) in enumerate(sectprs)]
+
+    def set_section_columns(
+        self,
+        section_index: int,
+        num_columns: int,
+        equal_width: bool = True,
+    ) -> dict:
+        """Set multi-column layout on a section.
+
+        Args:
+            section_index: Zero-based section index.
+            num_columns: Number of columns.
+            equal_width: If True, set equalWidth="1" and remove w:col children.
+        """
+        doc = self._require("word/document.xml")
+        body = doc.find(f"{W}body")
+        sectprs = self._collect_sectprs(body)
+        if section_index < 0 or section_index >= len(sectprs):
+            raise ValueError(
+                f"section_index {section_index} out of range (0..{len(sectprs) - 1})"
+            )
+        sect_pr, _ = sectprs[section_index]
+
+        # Remove existing w:cols
+        old_cols = sect_pr.find(f"{W}cols")
+        if old_cols is not None:
+            sect_pr.remove(old_cols)
+
+        cols_el = etree.SubElement(sect_pr, f"{W}cols")
+        cols_el.set(f"{W}num", str(num_columns))
+        if equal_width:
+            cols_el.set(f"{W}equalWidth", "1")
+            # Remove any w:col children (already fresh element, none exist)
+
+        self._mark("word/document.xml")
+        return {
+            "section_index": section_index,
+            "num_columns": num_columns,
+            "equal_width": equal_width,
+        }
+
+    def delete_section_break(self, para_id: str) -> dict:
+        """Remove the section break from a paragraph.
+
+        Args:
+            para_id: w14:paraId of the paragraph containing the section break.
+
+        Returns:
+            {"para_id": para_id, "deleted": True}
+
+        Raises:
+            ValueError: If no section break found in the paragraph.
+        """
+        doc = self._require("word/document.xml")
+        para = self._find_para(doc, para_id)
+        if para is None:
+            raise ValueError(f"Paragraph '{para_id}' not found")
+
+        ppr = para.find(f"{W}pPr")
+        sect_pr = ppr.find(f"{W}sectPr") if ppr is not None else None
+        if sect_pr is None:
+            raise ValueError("No section break found in paragraph")
+
+        ppr.remove(sect_pr)
+        # Clean up empty pPr
+        if ppr is not None and len(ppr) == 0:
+            para.remove(ppr)
+
+        self._mark("word/document.xml")
+        return {"para_id": para_id, "deleted": True}
+
     # ── Convenience wrappers ─────────────────────────────────────────────────
 
     @staticmethod
