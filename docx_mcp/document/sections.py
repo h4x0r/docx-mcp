@@ -258,6 +258,9 @@ class SectionsMixin:
         from .base import CT, RELS
 
         settings = self._tree("word/settings.xml")
+        if settings is None and not enabled:
+            # Nothing to remove — return early without creating settings.xml
+            return {"odd_even_headers": False}
         if settings is None:
             settings = etree.Element(
                 f"{W}settings",
@@ -311,11 +314,11 @@ class SectionsMixin:
         if enabled:
             if existing is None:
                 etree.SubElement(settings, tag)
+                self._mark("word/settings.xml")
         else:
             if existing is not None:
                 settings.remove(existing)
-
-        self._mark("word/settings.xml")
+                self._mark("word/settings.xml")
         return {"odd_even_headers": enabled}
 
     # ── Section enumeration helpers ──────────────────────────────────────────
