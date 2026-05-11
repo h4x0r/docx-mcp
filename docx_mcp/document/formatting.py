@@ -896,14 +896,18 @@ class FormattingMixin:
             para.insert(0, ppr)
 
         existing = ppr.find(tag)
+        changed = False
         if enabled:
             if existing is None:
                 etree.SubElement(ppr, tag)
+                changed = True
         else:
             if existing is not None:
                 ppr.remove(existing)
+                changed = True
 
-        self._mark("word/document.xml")
+        if changed:
+            self._mark("word/document.xml")
         return {"para_id": para_id, "enabled": enabled}
 
     def set_keep_with_next(self, para_id: str, enabled: bool) -> dict:
