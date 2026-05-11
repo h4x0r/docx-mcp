@@ -1698,6 +1698,47 @@ def lock_content_control(tag: str, lock: str = "sdtLocked") -> str:
     return _js(doc.lock_content_control(tag, lock))
 
 
+@mcp.tool()
+def delete_content_control(control_id: str) -> str:
+    """Remove an SDT content control wrapper, keeping its content in place.
+
+    Args:
+        control_id: The w:id value of the content control to unwrap.
+    """
+    doc = _require_doc()
+    return _js(doc.delete_content_control(control_id))
+
+
+@mcp.tool()
+def get_content_control(control_id: str) -> str:
+    """Return details of a single content control by its w:id.
+
+    Args:
+        control_id: The w:id value of the content control to retrieve.
+    """
+    doc = _require_doc()
+    return _js(doc.get_content_control(control_id))
+
+
+@mcp.tool()
+def update_content_control(
+    control_id: str,
+    title: str | None = None,
+    tag: str | None = None,
+    placeholder_text: str | None = None,
+) -> str:
+    """Modify properties of an existing content control.
+
+    Args:
+        control_id: The w:id value of the content control to update.
+        title: New title (w:alias/@w:val). Omit to leave unchanged.
+        tag: New tag (w:tag/@w:val). Omit to leave unchanged.
+        placeholder_text: New placeholder text. Omit to leave unchanged.
+    """
+    doc = _require_doc()
+    return _js(doc.update_content_control(control_id, title=title, tag=tag, placeholder_text=placeholder_text))
+
+
 # ── Template Filling ─────────────────────────────────────────────────────────
 
 
