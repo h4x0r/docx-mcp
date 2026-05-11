@@ -2872,6 +2872,27 @@ def check_accessibility() -> str:
     return _js(_require_doc().check_accessibility())
 
 
+@mcp.tool()
+def insert_text_box(
+    para_id: str,
+    text: str,
+    width_cm: float = 5.0,
+    height_cm: float = 2.0,
+) -> str:
+    """Insert an inline text box after the paragraph with para_id.
+
+    Args:
+        para_id: paraId of the reference paragraph (insert after this).
+        text: Text content for the text box.
+        width_cm: Width in centimetres (default 5.0).
+        height_cm: Height in centimetres (default 2.0).
+
+    Returns:
+        JSON with para_id (new paragraph), text, width_cm, height_cm.
+    """
+    return _js(_require_doc().insert_text_box(para_id, text, width_cm=width_cm, height_cm=height_cm))
+
+
 # ── Entry point ─────────────────────────────────────────────────────────────
 
 
