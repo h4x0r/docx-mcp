@@ -865,3 +865,81 @@ class TablesMixin:
 
         self._mark("word/document.xml")
         return {"sorted_rows": len(data_rows), "column_index": column_index, "ascending": ascending}
+
+    def get_table(self, table_idx: int) -> dict:
+        """Get structured info for a single table by zero-based index.
+
+        Args:
+            table_idx: 0-based table index.
+
+        Returns:
+            {"index": int, "row_count": int, "col_count": int, "cells": list[list[str]]}
+
+        Raises:
+            IndexError: If table_idx is out of range.
+        """
+        tbl = self._get_table(table_idx)
+        rows = []
+        for tr in tbl.findall(f"{W}tr"):
+            cells = []
+            for tc in tr.findall(f"{W}tc"):
+                cells.append(self._text(tc))
+            rows.append(cells)
+        col_count = len(rows[0]) if rows else 0
+        return {
+            "index": table_idx,
+            "row_count": len(rows),
+            "col_count": col_count,
+            "cells": rows,
+        }
+
+    def get_cell_text(self, table_idx: int, row_idx: int, col_idx: int) -> dict:
+        """Return text content of a specific cell.
+
+        Args:
+            table_idx: 0-based table index.
+            row_idx: 0-based row index.
+            col_idx: 0-based column index.
+
+        Returns:
+            {"table_index": int, "row_index": int, "col_index": int, "text": str}
+
+        Raises:
+            IndexError: If any index is out of range.
+        """
+        tbl = self._get_table(table_idx)
+        rows = tbl.findall(f"{W}tr")
+        if row_idx < 0 or row_idx >= len(rows):
+            raise IndexError(f"Row index {row_idx} out of range")
+        cols = rows[row_idx].findall(f"{W}tc")
+        if col_idx < 0 or col_idx >= len(cols):
+            raise IndexError(f"Column index {col_idx} out of range")
+        return {
+            "table_index": table_idx,
+            "row_index": row_idx,
+            "col_index": col_idx,
+            "text": self._text(cols[col_idx]),
+        }
+
+    def copy_table(self, table_idx: int) -> dict:
+        """Deep-copy a table and insert it immediately after the original.
+
+        Args:
+            table_idx: 0-based table index.
+
+        Returns:
+            {"source_index": int, "new_index": int}
+
+        Raises:
+            IndexError: If table_idx is out of range.
+        """
+        tbl = self._get_table(table_idx)
+        new_tbl = copy.deepcopy(tbl)
+        # Regenerate paraIds on all paragraphs in the copy
+        for p in new_tbl.iter(f"{W}p"):
+            if p.get(f"{W14}paraId") is not None:
+                p.set(f"{W14}paraId", self._new_para_id())
+        # Insert copy right after the original in the body
+        tbl.addnext(new_tbl)
+        self._mark("word/document.xml")
+        return {"source_index": table_idx, "new_index": table_idx + 1}

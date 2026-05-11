@@ -2688,6 +2688,47 @@ def sort_table(table_idx: int, column_index: int, ascending: bool = True) -> str
 
 
 @mcp.tool()
+def get_table(table_idx: int) -> str:
+    """Get structured info for a single table by zero-based index.
+
+    Args:
+        table_idx: 0-based table index.
+
+    Returns:
+        {"index": int, "row_count": int, "col_count": int, "cells": list[list[str]]}
+    """
+    return _js(_require_doc().get_table(table_idx))
+
+
+@mcp.tool()
+def get_cell_text(table_idx: int, row_idx: int, col_idx: int) -> str:
+    """Return text content of a specific cell.
+
+    Args:
+        table_idx: 0-based table index.
+        row_idx: 0-based row index.
+        col_idx: 0-based column index.
+
+    Returns:
+        {"table_index": int, "row_index": int, "col_index": int, "text": str}
+    """
+    return _js(_require_doc().get_cell_text(table_idx, row_idx, col_idx))
+
+
+@mcp.tool()
+def copy_table(table_idx: int) -> str:
+    """Deep-copy a table and insert the copy immediately after the original.
+
+    Args:
+        table_idx: 0-based table index.
+
+    Returns:
+        {"source_index": int, "new_index": int}
+    """
+    return _js(_require_doc().copy_table(table_idx))
+
+
+@mcp.tool()
 def copy_document(output_path: str) -> str:
     """Save a complete snapshot of the open document to a new path.
 
