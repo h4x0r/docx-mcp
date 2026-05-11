@@ -728,7 +728,10 @@ class FormattingMixin:
         if para is None:
             raise ValueError(f"Paragraph '{para_id}' not found")
 
-        run = self._get_run(para, run_idx)
+        try:
+            run = self._get_run(para, run_idx)
+        except IndexError as exc:
+            raise ValueError(str(exc)) from exc
         rpr = self._upsert_rpr(run)
 
         lang = rpr.find(f"{W}lang")
@@ -756,7 +759,10 @@ class FormattingMixin:
         if para is None:
             raise ValueError(f"Paragraph '{para_id}' not found")
 
-        run = self._get_run(para, run_idx)
+        try:
+            run = self._get_run(para, run_idx)
+        except IndexError as exc:
+            raise ValueError(str(exc)) from exc
         rpr = self._upsert_rpr(run)
 
         if case == "upper":

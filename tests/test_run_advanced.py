@@ -50,7 +50,7 @@ class TestRunAdvanced:
 
     def test_clear_run_formatting_out_of_range_raises(self, test_docx: Path) -> None:
         self._open(test_docx)
-        with pytest.raises((ValueError, IndexError)):
+        with pytest.raises(ValueError):
             server._doc.clear_run_formatting("00000001", 99)
 
     # ── set_run_language ──────────────────────────────────────────────────
