@@ -2769,6 +2769,49 @@ def get_reading_time(words_per_minute: int = 200) -> str:
     return _js(_require_doc().get_reading_time(words_per_minute=words_per_minute))
 
 
+# ── Accessibility (P8.8) ─────────────────────────────────────────────────────
+
+
+@mcp.tool()
+def set_alt_text(image_index: int, alt_text: str, title: str = "") -> str:
+    """Set the alt text (and optionally title) on an image by 0-based index.
+
+    Args:
+        image_index: 0-based index across all wp:docPr elements in document.xml.
+        alt_text: Accessibility description to set on the image.
+        title: Optional title attribute; removed from XML if empty.
+
+    Returns:
+        {"image_index": int, "alt_text": str}
+    """
+    return _js(_require_doc().set_alt_text(image_index, alt_text, title=title))
+
+
+@mcp.tool()
+def get_alt_text(image_index: int) -> str:
+    """Get the alt text and title for an image by 0-based index.
+
+    Args:
+        image_index: 0-based index across all wp:docPr elements in document.xml.
+
+    Returns:
+        {"image_index": int, "alt_text": str, "title": str}
+    """
+    return _js(_require_doc().get_alt_text(image_index))
+
+
+@mcp.tool()
+def check_accessibility() -> str:
+    """Scan the document for accessibility issues.
+
+    Checks images for missing alt text and tables for missing header rows.
+
+    Returns:
+        {"issue_count": int, "issues": list[dict]}
+    """
+    return _js(_require_doc().check_accessibility())
+
+
 # ── Entry point ─────────────────────────────────────────────────────────────
 
 
