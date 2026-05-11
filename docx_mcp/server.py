@@ -1707,6 +1707,51 @@ def insert_page_number_field(para_id: str) -> str:
     return _js(_require_doc().insert_page_number_field(para_id))
 
 
+@mcp.tool()
+def insert_if_field(
+    para_id: str,
+    condition: str,
+    true_text: str,
+    false_text: str,
+) -> str:
+    """Insert a Word IF conditional field at the end of a paragraph.
+
+    Args:
+        para_id: w14:paraId of the target paragraph.
+        condition: The condition expression (e.g. "x > 0").
+        true_text: Text to display when condition is true.
+        false_text: Text to display when condition is false.
+    """
+    return _js(_require_doc().insert_if_field(para_id, condition, true_text, false_text))
+
+
+@mcp.tool()
+def insert_sequence_field(
+    para_id: str,
+    seq_name: str,
+    reset: bool = False,
+) -> str:
+    """Insert a SEQ (sequence) field for figure/table numbering.
+
+    Args:
+        para_id: w14:paraId of the target paragraph.
+        seq_name: The sequence identifier (e.g. "Figure", "Table").
+        reset: If True, restarts the sequence counter at 1.
+    """
+    return _js(_require_doc().insert_sequence_field(para_id, seq_name, reset))
+
+
+@mcp.tool()
+def insert_merge_field(para_id: str, field_name: str) -> str:
+    """Insert a MERGEFIELD (mail merge) field at the end of a paragraph.
+
+    Args:
+        para_id: w14:paraId of the target paragraph.
+        field_name: The merge field name (e.g. "FirstName").
+    """
+    return _js(_require_doc().insert_merge_field(para_id, field_name))
+
+
 # ── Table of Contents ────────────────────────────────────────────────────────
 
 
