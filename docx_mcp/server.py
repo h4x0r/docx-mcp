@@ -1590,6 +1590,49 @@ def list_fields() -> str:
     return _js(_require_doc().list_fields())
 
 
+@mcp.tool()
+def get_field(field_id: str) -> str:
+    """Return details of a single field by field_id.
+
+    Args:
+        field_id: Positional identifier returned by list_fields (e.g. "field_0").
+    """
+    return _js(_require_doc().get_field(field_id))
+
+
+@mcp.tool()
+def delete_field(field_id: str) -> str:
+    """Remove a complete complex field (begin through end runs) from the document.
+
+    Args:
+        field_id: Positional identifier returned by list_fields (e.g. "field_0").
+    """
+    return _js(_require_doc().delete_field(field_id))
+
+
+@mcp.tool()
+def insert_date_field(
+    para_id: str, date_format: str = r'\@ "MMMM d, yyyy"'
+) -> str:
+    """Insert a DATE field at the end of a paragraph.
+
+    Args:
+        para_id: w14:paraId of the target paragraph.
+        date_format: Date picture switch (default: \\@ "MMMM d, yyyy").
+    """
+    return _js(_require_doc().insert_date_field(para_id, date_format))
+
+
+@mcp.tool()
+def insert_page_number_field(para_id: str) -> str:
+    """Insert a PAGE field at the end of a paragraph.
+
+    Args:
+        para_id: w14:paraId of the target paragraph.
+    """
+    return _js(_require_doc().insert_page_number_field(para_id))
+
+
 # ── Table of Contents ────────────────────────────────────────────────────────
 
 
