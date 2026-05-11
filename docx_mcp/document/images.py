@@ -314,6 +314,61 @@ class ImagesMixin:
         self._mark("word/document.xml")
         return {"rId": rId, "alt_text": alt_text}
 
+    def set_image_border(self, rId: str, border_pt: float, color: str = "000000") -> dict:
+        """Set or remove a border on an embedded image.
+
+        Args:
+            rId: The r:embed relationship ID of the image.
+            border_pt: Border width in points (0 removes the border).
+            color: RGB hex color string (default "000000").
+
+        Returns:
+            {"rId": str, "border_pt": float, "color": str}
+        Raises:
+            ValueError: if rId is not found in the document.
+        """
+        doc = self._require("word/document.xml")
+
+        blip = None
+        for b in doc.iter(f"{A}blip"):
+            if b.get(f"{R}embed") == rId:
+                blip = b
+                break
+        if blip is None:
+            raise ValueError(f"Image rId '{rId}' not found in document")
+
+        # Walk up to pic:pic
+        pic_el = blip.getparent()
+        while pic_el is not None and pic_el.tag != f"{_PIC}pic":
+            pic_el = pic_el.getparent()
+        if pic_el is None:
+            raise ValueError(f"Image rId '{rId}' not found in document")
+
+        # Get or create pic:spPr
+        sp_pr = pic_el.find(f"{_PIC}spPr")
+        if sp_pr is None:
+            sp_pr = etree.SubElement(pic_el, f"{_PIC}spPr")
+
+        # Remove existing a:ln
+        existing_ln = sp_pr.find(f"{A}ln")
+        if existing_ln is not None:
+            sp_pr.remove(existing_ln)
+
+        if border_pt == 0:
+            self._mark("word/document.xml")
+            return {"rId": rId, "border_pt": 0, "color": ""}
+
+        # Create a:ln with width in EMU (1pt = 12700)
+        ln = etree.SubElement(sp_pr, f"{A}ln")
+        ln.set("w", str(round(border_pt * 12700)))
+
+        solid_fill = etree.SubElement(ln, f"{A}solidFill")
+        srgb_clr = etree.SubElement(solid_fill, f"{A}srgbClr")
+        srgb_clr.set("val", color)
+
+        self._mark("word/document.xml")
+        return {"rId": rId, "border_pt": border_pt, "color": color}
+
     # ── Floating image helpers ───────────────────────────────────────────────
 
     def _next_drawing_id(self, doc_tree: etree._Element) -> int:

@@ -692,6 +692,21 @@ def set_image_alt_text(rId: str, alt_text: str, title: str = "") -> str:
     return _js(_require_doc().set_image_alt_text(rId, alt_text, title=title))
 
 
+@mcp.tool()
+def set_image_border(rId: str, border_pt: float, color: str = "000000") -> str:
+    """Set or remove a border on an embedded image.
+
+    Args:
+        rId: The relationship ID of the image (e.g. 'rId6').
+        border_pt: Border width in points. Use 0 to remove the border.
+        color: RGB hex color string without '#' (default '000000' = black).
+
+    Returns:
+        JSON with rId, border_pt, and color fields.
+    """
+    return _js(_require_doc().set_image_border(rId, border_pt, color))
+
+
 # ── Endnotes ───────────────────────────────────────────────────────────────
 
 
