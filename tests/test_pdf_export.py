@@ -21,12 +21,11 @@ class TestConvertToPdf:
         """convert_to_pdf returns dict with 'pdf_path' key."""
         doc = _make_doc(tmp_path)
         pdf_out = str(tmp_path / "out.pdf")
-        fake_pdf = tmp_path / "test.pdf"
-        fake_pdf.write_bytes(b"%PDF-1.4")
 
         with patch("shutil.which", return_value="/usr/bin/libreoffice"), \
              patch("subprocess.run") as mock_run, \
-             patch("pathlib.Path.exists", return_value=True):
+             patch("pathlib.Path.exists", return_value=True), \
+             patch("pathlib.Path.rename"):
             mock_run.return_value = MagicMock(returncode=0)
             result = doc.convert_to_pdf(pdf_out)
 
@@ -46,7 +45,8 @@ class TestConvertToPdf:
 
         with patch("shutil.which", return_value="/usr/bin/libreoffice"), \
              patch("subprocess.run") as mock_run, \
-             patch("pathlib.Path.exists", return_value=True):
+             patch("pathlib.Path.exists", return_value=True), \
+             patch("pathlib.Path.rename"):
             mock_run.return_value = MagicMock(returncode=0)
             doc.convert_to_pdf(pdf_out)
 

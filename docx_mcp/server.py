@@ -2831,6 +2831,21 @@ def copy_document(output_path: str) -> str:
 
 
 @mcp.tool()
+def convert_to_pdf(output_path: str) -> str:
+    """Convert the open document to PDF using LibreOffice headless.
+
+    Requires LibreOffice to be installed ('libreoffice' or 'soffice' on PATH).
+
+    Args:
+        output_path: Destination path for the output PDF file.
+
+    Returns:
+        {"pdf_path": str}
+    """
+    return _js(_require_doc().convert_to_pdf(output_path))
+
+
+@mcp.tool()
 def flatten_document() -> str:
     """Accept all tracked changes and remove all revision markup.
 
