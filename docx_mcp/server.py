@@ -2182,6 +2182,50 @@ def set_paragraph_indentation(
 
 
 @mcp.tool()
+def set_keep_with_next(para_id: str, enabled: bool) -> str:
+    """Keep this paragraph on the same page as the next paragraph.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        enabled: True to enable keep-with-next, False to remove it.
+    """
+    return _js(_require_doc().set_keep_with_next(para_id, enabled))
+
+
+@mcp.tool()
+def set_keep_lines_together(para_id: str, enabled: bool) -> str:
+    """Keep all lines of this paragraph on the same page.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        enabled: True to enable keep-lines-together, False to remove it.
+    """
+    return _js(_require_doc().set_keep_lines_together(para_id, enabled))
+
+
+@mcp.tool()
+def set_page_break_before(para_id: str, enabled: bool) -> str:
+    """Force a page break before this paragraph.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        enabled: True to force page break before, False to remove it.
+    """
+    return _js(_require_doc().set_page_break_before(para_id, enabled))
+
+
+@mcp.tool()
+def set_widow_control(para_id: str, enabled: bool) -> str:
+    """Enable widow/orphan control for this paragraph.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        enabled: True to enable widow control, False to remove it.
+    """
+    return _js(_require_doc().set_widow_control(para_id, enabled))
+
+
+@mcp.tool()
 def set_line_spacing(
     para_id: str,
     line_rule: str | None = None,

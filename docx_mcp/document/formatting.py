@@ -880,3 +880,44 @@ class FormattingMixin:
             self._mark("word/document.xml")
 
         return {"find": find, "replace": replace, "count": count}
+
+    # ── Paragraph pagination controls ─────────────────────────────────────────
+
+    def _set_ppr_bool_flag(self, para_id: str, tag: str, enabled: bool) -> dict:
+        """Toggle a presence-only boolean element in w:pPr."""
+        doc = self._require("word/document.xml")
+        para = self._find_para(doc, para_id)
+        if para is None:
+            raise ValueError(f"Paragraph '{para_id}' not found")
+
+        ppr = para.find(f"{W}pPr")
+        if ppr is None:
+            ppr = etree.Element(f"{W}pPr")
+            para.insert(0, ppr)
+
+        existing = ppr.find(tag)
+        if enabled:
+            if existing is None:
+                etree.SubElement(ppr, tag)
+        else:
+            if existing is not None:
+                ppr.remove(existing)
+
+        self._mark("word/document.xml")
+        return {"para_id": para_id, "enabled": enabled}
+
+    def set_keep_with_next(self, para_id: str, enabled: bool) -> dict:
+        """Keep this paragraph on the same page as the next paragraph."""
+        return self._set_ppr_bool_flag(para_id, f"{W}keepNext", enabled)
+
+    def set_keep_lines_together(self, para_id: str, enabled: bool) -> dict:
+        """Keep all lines of this paragraph on the same page."""
+        return self._set_ppr_bool_flag(para_id, f"{W}keepLines", enabled)
+
+    def set_page_break_before(self, para_id: str, enabled: bool) -> dict:
+        """Force a page break before this paragraph."""
+        return self._set_ppr_bool_flag(para_id, f"{W}pageBreakBefore", enabled)
+
+    def set_widow_control(self, para_id: str, enabled: bool) -> dict:
+        """Enable widow/orphan control for this paragraph."""
+        return self._set_ppr_bool_flag(para_id, f"{W}widowControl", enabled)
