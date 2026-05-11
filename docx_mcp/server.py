@@ -930,6 +930,39 @@ def delete_section_break(para_id: str) -> str:
     return _js(_require_doc().delete_section_break(para_id))
 
 
+@mcp.tool()
+def set_different_first_page(section_index: int, enabled: bool) -> str:
+    """Enable or disable a different first-page header/footer for a section.
+
+    When enabled, the section can have a unique header/footer on its first page,
+    separate from the header/footer used on subsequent pages.
+
+    Args:
+        section_index: Zero-based section index (use get_sections to find it).
+        enabled: True to enable different first page, False to disable.
+
+    Returns:
+        {"section_index": int, "different_first_page": bool}
+    """
+    return _js(_require_doc().set_different_first_page(section_index, enabled))
+
+
+@mcp.tool()
+def set_odd_even_headers(enabled: bool) -> str:
+    """Enable or disable different odd/even page headers globally.
+
+    This is a document-level setting stored in word/settings.xml. When enabled,
+    even-numbered pages can use a different header/footer from odd-numbered pages.
+
+    Args:
+        enabled: True to enable different odd/even headers, False to disable.
+
+    Returns:
+        {"odd_even_headers": bool}
+    """
+    return _js(_require_doc().set_odd_even_headers(enabled))
+
+
 # ── Cross-references ──────────────────────────────────────────────────
 
 

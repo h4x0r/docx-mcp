@@ -205,6 +205,119 @@ class SectionsMixin:
         self._mark("word/styles.xml")
         return {"language": language_code}
 
+    def set_different_first_page(self, section_index: int, enabled: bool) -> dict:
+        """Enable or disable a different first-page header/footer for a section.
+
+        Args:
+            section_index: Zero-based section index.
+            enabled: True to add w:titlePg (enable), False to remove it.
+
+        Returns:
+            {"section_index": section_index, "different_first_page": enabled}
+
+        Raises:
+            ValueError: If section_index is out of range.
+        """
+        doc = self._require("word/document.xml")
+        body = doc.find(f"{W}body")
+        sectprs = self._collect_sectprs(body)
+
+        # Auto-create body-level sectPr if document has none yet
+        if len(sectprs) == 0:
+            sect_pr_el = etree.SubElement(body, f"{W}sectPr")
+            sectprs = [(sect_pr_el, True)]
+
+        if section_index < 0 or section_index >= len(sectprs):
+            raise ValueError(
+                f"section_index {section_index} out of range (0..{len(sectprs) - 1})"
+            )
+        sect_pr, _ = sectprs[section_index]
+
+        existing = sect_pr.find(f"{W}titlePg")
+        if enabled:
+            if existing is None:
+                etree.SubElement(sect_pr, f"{W}titlePg")
+        else:
+            if existing is not None:
+                sect_pr.remove(existing)
+
+        self._mark("word/document.xml")
+        return {"section_index": section_index, "different_first_page": enabled}
+
+    def set_odd_even_headers(self, enabled: bool) -> dict:
+        """Enable or disable different odd/even page headers (document-level setting).
+
+        Args:
+            enabled: True to add w:evenAndOddHeaders to settings.xml, False to remove it.
+
+        Returns:
+            {"odd_even_headers": enabled}
+        """
+        import contextlib
+
+        from .base import CT, RELS
+
+        settings = self._tree("word/settings.xml")
+        if settings is None:
+            settings = etree.Element(
+                f"{W}settings",
+                nsmap={"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"},
+            )
+            self._trees["word/settings.xml"] = settings
+
+            fp = self.workdir / "word" / "settings.xml"
+            fp.parent.mkdir(parents=True, exist_ok=True)
+            etree.ElementTree(settings).write(
+                str(fp), xml_declaration=True, encoding="UTF-8"
+            )
+
+            ct = self._tree("[Content_Types].xml")
+            if ct is not None:
+                existing_parts = {e.get("PartName") for e in ct.findall(f"{CT}Override")}
+                if "/word/settings.xml" not in existing_parts:
+                    ov = etree.SubElement(ct, f"{CT}Override")
+                    ov.set("PartName", "/word/settings.xml")
+                    ov.set(
+                        "ContentType",
+                        "application/vnd.openxmlformats-officedocument"
+                        ".wordprocessingml.settings+xml",
+                    )
+                    self._mark("[Content_Types].xml")
+
+            rels = self._tree("word/_rels/document.xml.rels")
+            if rels is not None:
+                existing_targets = {
+                    r.get("Target") for r in rels.findall(f"{RELS}Relationship")
+                }
+                if "settings.xml" not in existing_targets:
+                    max_rid = 0
+                    for r in rels.findall(f"{RELS}Relationship"):
+                        rid = r.get("Id", "")
+                        if rid.startswith("rId"):
+                            with contextlib.suppress(ValueError):
+                                max_rid = max(max_rid, int(rid[3:]))
+                    rel = etree.SubElement(rels, f"{RELS}Relationship")
+                    rel.set("Id", f"rId{max_rid + 1}")
+                    rel.set(
+                        "Type",
+                        "http://schemas.openxmlformats.org/officeDocument"
+                        "/2006/relationships/settings",
+                    )
+                    rel.set("Target", "settings.xml")
+                    self._mark("word/_rels/document.xml.rels")
+
+        tag = f"{W}evenAndOddHeaders"
+        existing = settings.find(tag)
+        if enabled:
+            if existing is None:
+                etree.SubElement(settings, tag)
+        else:
+            if existing is not None:
+                settings.remove(existing)
+
+        self._mark("word/settings.xml")
+        return {"odd_even_headers": enabled}
+
     # ── Section enumeration helpers ──────────────────────────────────────────
 
     def _collect_sectprs(self, body):
