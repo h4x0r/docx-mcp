@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from docx_mcp.document import DocxDocument, W, W14
-from docx_mcp.document.errors import DocxMcpError
+from docx_mcp.document.errors import DocxMcpError, ErrCode
 
 
 def _make_doc(tmp_path: Path) -> tuple[DocxDocument, str]:
@@ -72,11 +72,36 @@ class TestInsertIfField:
         assert result["true_text"] == "Yes"
         assert result["false_text"] == "No"
 
+    def test_cached_value_is_true_text(self, tmp_path: Path):
+        """Cached result run for IF field contains true_text."""
+        doc, para_id = _make_doc(tmp_path)
+        doc.insert_if_field(para_id, "x > 0", "Yes", "No")
+        tree = doc._tree("word/document.xml")
+        para = next(p for p in tree.iter(f"{W}p") if p.get(f"{W14}paraId") == para_id)
+        W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+        state = "before"
+        cached_texts = []
+        for child in para:
+            fc = child.find(f"{{{W_NS}}}fldChar")
+            if fc is not None:
+                ftype = fc.get(f"{{{W_NS}}}fldCharType")
+                if ftype == "separate":
+                    state = "cached"
+                    continue
+                elif ftype == "end":
+                    break
+            if state == "cached":
+                for t in child.iter(f"{{{W_NS}}}t"):
+                    if t.text:
+                        cached_texts.append(t.text)
+        assert "Yes" in "".join(cached_texts)
+
     def test_para_not_found_raises(self, tmp_path: Path):
-        """insert_if_field raises DocxMcpError for unknown para_id."""
+        """insert_if_field raises DocxMcpError(PARA_NOT_FOUND) for unknown para_id."""
         doc, _ = _make_doc(tmp_path)
-        with pytest.raises((DocxMcpError, ValueError)):
+        with pytest.raises(DocxMcpError) as exc_info:
             doc.insert_if_field("DEADBEEF", "x > 0", "Yes", "No")
+        assert exc_info.value.code == ErrCode.PARA_NOT_FOUND
 
 
 class TestInsertSequenceField:
@@ -138,11 +163,36 @@ class TestInsertSequenceField:
         result = doc.insert_sequence_field(para_id, "Figure", reset=True)
         assert result["reset"] is True
 
+    def test_cached_value_is_1(self, tmp_path: Path):
+        """Cached result run for SEQ field contains '1'."""
+        doc, para_id = _make_doc(tmp_path)
+        doc.insert_sequence_field(para_id, "Figure")
+        tree = doc._tree("word/document.xml")
+        para = next(p for p in tree.iter(f"{W}p") if p.get(f"{W14}paraId") == para_id)
+        W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+        state = "before"
+        cached_texts = []
+        for child in para:
+            fc = child.find(f"{{{W_NS}}}fldChar")
+            if fc is not None:
+                ftype = fc.get(f"{{{W_NS}}}fldCharType")
+                if ftype == "separate":
+                    state = "cached"
+                    continue
+                elif ftype == "end":
+                    break
+            if state == "cached":
+                for t in child.iter(f"{{{W_NS}}}t"):
+                    if t.text:
+                        cached_texts.append(t.text)
+        assert "1" in "".join(cached_texts)
+
     def test_para_not_found_raises(self, tmp_path: Path):
-        """insert_sequence_field raises DocxMcpError for unknown para_id."""
+        """insert_sequence_field raises DocxMcpError(PARA_NOT_FOUND) for unknown para_id."""
         doc, _ = _make_doc(tmp_path)
-        with pytest.raises((DocxMcpError, ValueError)):
+        with pytest.raises(DocxMcpError) as exc_info:
             doc.insert_sequence_field("DEADBEEF", "Figure")
+        assert exc_info.value.code == ErrCode.PARA_NOT_FOUND
 
 
 class TestInsertMergeField:
@@ -203,7 +253,8 @@ class TestInsertMergeField:
         assert result["field_name"] == "FirstName"
 
     def test_para_not_found_raises(self, tmp_path: Path):
-        """insert_merge_field raises DocxMcpError for unknown para_id."""
+        """insert_merge_field raises DocxMcpError(PARA_NOT_FOUND) for unknown para_id."""
         doc, _ = _make_doc(tmp_path)
-        with pytest.raises((DocxMcpError, ValueError)):
+        with pytest.raises(DocxMcpError) as exc_info:
             doc.insert_merge_field("DEADBEEF", "FirstName")
+        assert exc_info.value.code == ErrCode.PARA_NOT_FOUND
