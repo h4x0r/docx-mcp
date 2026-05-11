@@ -108,8 +108,9 @@ class TestGetField:
 
         result = doc.get_field(field_id)
         assert result["field_id"] == field_id
-        assert "type" in result or "code" in result
-        assert "instruction" in result or "code" in result
+        assert "type" in result
+        assert "instruction" in result
+        assert "result" in result
 
     def test_get_field_not_found_raises(self, tmp_path: Path):
         """get_field raises ValueError for unknown field_id."""

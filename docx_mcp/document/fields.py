@@ -249,26 +249,31 @@ class FieldsMixin:
 
         raise ValueError(f"Field '{field_id}' not found.")
 
-    def _build_field_runs(self, instr: str) -> list:
-        """Return [begin_run, instr_run, separate_run, end_run] elements."""
+    def _build_field_runs(self, instr: str, cached_value: str = "0") -> list:
+        """Return [begin, instr, separate, cached_result, end] runs."""
         runs = []
-        for fchar_type, text in [
-            ("begin", None),
-            ("instrText", instr),
-            ("separate", None),
-            ("end", None),
-        ]:
+        for fchar_type in ("begin", "instrText", "separate"):
             r = etree.Element(f"{W}r")
             if fchar_type == "instrText":
                 it = etree.SubElement(r, f"{W}instrText")
                 it.set(XML_SPACE, "preserve")
-                it.text = text
+                it.text = instr
             else:
                 fc = etree.SubElement(r, f"{W}fldChar")
                 fc.set(f"{W}fldCharType", fchar_type)
                 if fchar_type == "begin":
                     fc.set(f"{W}dirty", "true")
             runs.append(r)
+        # cached result placeholder
+        r_val = etree.Element(f"{W}r")
+        t = etree.SubElement(r_val, f"{W}t")
+        t.text = cached_value
+        runs.append(r_val)
+        # end
+        r_end = etree.Element(f"{W}r")
+        fc_end = etree.SubElement(r_end, f"{W}fldChar")
+        fc_end.set(f"{W}fldCharType", "end")
+        runs.append(r_end)
         return runs
 
     def insert_date_field(
