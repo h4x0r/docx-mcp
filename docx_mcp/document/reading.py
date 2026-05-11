@@ -147,7 +147,7 @@ class ReadingMixin:
             {"copied_to": output_path}
         """
         if self.workdir is None:
-            raise RuntimeError("No document open")
+            raise RuntimeError("No document is open")
         self.save(output_path, backup=False)
         return {"copied_to": output_path}
 

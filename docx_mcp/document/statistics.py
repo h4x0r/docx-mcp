@@ -27,6 +27,8 @@ class StatisticsMixin:
         Returns:
             {"word_count": int, "words_per_minute": int, "minutes": float, "seconds": int}
         """
+        if words_per_minute <= 0:
+            raise ValueError("words_per_minute must be a positive integer")
         word_count = self.get_word_count()
         minutes = word_count / words_per_minute
         return {

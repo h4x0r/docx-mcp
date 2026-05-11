@@ -172,6 +172,8 @@ class RevisionsMixin:
             else:
                 el.getparent().remove(el)
             count += 1
+        if count:
+            self._mark("word/document.xml")
         return {"accepted": count}
 
     def flatten_document(self) -> dict:
@@ -196,6 +198,7 @@ class RevisionsMixin:
 
         if fmt_count:
             self._mark("word/document.xml")
+        # accept_all_changes already marks dirty when count > 0
 
         return {
             "changes_accepted": changes_accepted,
