@@ -2327,6 +2327,33 @@ def set_widow_control(para_id: str, enabled: bool) -> str:
 
 
 @mcp.tool()
+def insert_blockquote(para_id: str, text: str) -> str:
+    """Insert a blockquote paragraph after the given paragraph.
+
+    The new paragraph has 720-twip left indent and italic formatting.
+
+    Args:
+        para_id: paraId of the reference paragraph (new para inserted after it).
+        text: Text content of the blockquote.
+    """
+    return _js(_require_doc().insert_blockquote(para_id, text))
+
+
+@mcp.tool()
+def insert_code_block(para_id: str, text: str, language: str = "") -> str:
+    """Insert a code-block paragraph after the given paragraph.
+
+    The new paragraph uses Courier New 10pt with light-gray background shading.
+
+    Args:
+        para_id: paraId of the reference paragraph (new para inserted after it).
+        text: Code text content.
+        language: Optional language hint (stored in return value only).
+    """
+    return _js(_require_doc().insert_code_block(para_id, text, language=language))
+
+
+@mcp.tool()
 def set_line_spacing(
     para_id: str,
     line_rule: str | None = None,

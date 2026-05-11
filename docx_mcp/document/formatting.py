@@ -5,6 +5,7 @@ from __future__ import annotations
 from lxml import etree
 
 from .base import W, W14, _now_iso, _preserve
+from .errors import DocxMcpError, ErrCode
 
 
 class FormattingMixin:
@@ -925,3 +926,74 @@ class FormattingMixin:
     def set_widow_control(self, para_id: str, enabled: bool) -> dict:
         """Enable widow/orphan control for this paragraph."""
         return self._set_ppr_bool_flag(para_id, f"{W}widowControl", enabled)
+
+    def insert_blockquote(self, para_id: str, text: str) -> dict:
+        """Insert a blockquote paragraph after para_id: 720-twip left indent + italic.
+
+        Returns:
+            {"para_id": str (new paragraph), "text": str}
+        """
+        doc = self._require("word/document.xml")
+        body = doc.find(f"{W}body")
+        ref = self._find_para(body, para_id)
+        if ref is None:
+            raise DocxMcpError(ErrCode.PARA_NOT_FOUND, f"Paragraph '{para_id}' not found.")
+
+        new_id = self._new_para_id()
+        new_para = etree.Element(f"{W}p")
+        new_para.set(f"{W14}paraId", new_id)
+        new_para.set(f"{W14}textId", "77777777")
+
+        ppr = etree.SubElement(new_para, f"{W}pPr")
+        ind = etree.SubElement(ppr, f"{W}ind")
+        ind.set(f"{W}left", "720")
+
+        r = etree.SubElement(new_para, f"{W}r")
+        rpr = etree.SubElement(r, f"{W}rPr")
+        etree.SubElement(rpr, f"{W}i")
+        etree.SubElement(rpr, f"{W}iCs")
+        t = etree.SubElement(r, f"{W}t")
+        _preserve(t, text)
+
+        ref.addnext(new_para)
+        self._mark("word/document.xml")
+        return {"para_id": new_id, "text": text}
+
+    def insert_code_block(self, para_id: str, text: str, language: str = "") -> dict:
+        """Insert a code-block paragraph after para_id: Courier New 10pt + gray shading.
+
+        Returns:
+            {"para_id": str (new paragraph), "text": str, "language": str}
+        """
+        doc = self._require("word/document.xml")
+        body = doc.find(f"{W}body")
+        ref = self._find_para(body, para_id)
+        if ref is None:
+            raise DocxMcpError(ErrCode.PARA_NOT_FOUND, f"Paragraph '{para_id}' not found.")
+
+        new_id = self._new_para_id()
+        new_para = etree.Element(f"{W}p")
+        new_para.set(f"{W14}paraId", new_id)
+        new_para.set(f"{W14}textId", "77777777")
+
+        ppr = etree.SubElement(new_para, f"{W}pPr")
+        shd = etree.SubElement(ppr, f"{W}shd")
+        shd.set(f"{W}val", "clear")
+        shd.set(f"{W}color", "auto")
+        shd.set(f"{W}fill", "F2F2F2")
+
+        r = etree.SubElement(new_para, f"{W}r")
+        rpr = etree.SubElement(r, f"{W}rPr")
+        fonts = etree.SubElement(rpr, f"{W}rFonts")
+        fonts.set(f"{W}ascii", "Courier New")
+        fonts.set(f"{W}hAnsi", "Courier New")
+        sz = etree.SubElement(rpr, f"{W}sz")
+        sz.set(f"{W}val", "20")
+        szcs = etree.SubElement(rpr, f"{W}szCs")
+        szcs.set(f"{W}val", "20")
+        t = etree.SubElement(r, f"{W}t")
+        _preserve(t, text)
+
+        ref.addnext(new_para)
+        self._mark("word/document.xml")
+        return {"para_id": new_id, "text": text, "language": language}
