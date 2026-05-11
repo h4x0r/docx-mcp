@@ -354,22 +354,31 @@ class ContentControlsMixin:
             tag_el.set(f"{W}val", tag)
 
         if placeholder_text is not None:
-            ph_el = sdtPr.find(f"{W}placeholder")
-            if ph_el is None:
-                ph_el = etree.SubElement(sdtPr, f"{W}placeholder")
-            r_el = ph_el.find(f"{W}r")
-            if r_el is None:
-                r_el = etree.SubElement(ph_el, f"{W}r")
-            t_el = r_el.find(f"{W}t")
-            if t_el is None:
-                t_el = etree.SubElement(r_el, f"{W}t")
-            _preserve(t_el, placeholder_text)
+            # Set showingPlcHdr flag
+            if sdtPr.find(f"{W}showingPlcHdr") is None:
+                etree.SubElement(sdtPr, f"{W}showingPlcHdr")
+            # Replace sdtContent with placeholder text paragraph
+            old_content = sdt.find(f"{W}sdtContent")
+            if old_content is not None:
+                sdt.remove(old_content)
+            new_content = etree.SubElement(sdt, f"{W}sdtContent")
+            p = etree.SubElement(new_content, f"{W}p")
+            r = etree.SubElement(p, f"{W}r")
+            rPr = etree.SubElement(r, f"{W}rPr")
+            rStyle = etree.SubElement(rPr, f"{W}rStyle")
+            rStyle.set(f"{W}val", "PlaceholderText")
+            t = etree.SubElement(r, f"{W}t")
+            t.text = placeholder_text
 
         self._mark("word/document.xml")  # type: ignore[attr-defined]
+
+        # Read back actual post-mutation values
+        result_title = sdtPr.find(f"{W}alias")
+        result_tag = sdtPr.find(f"{W}tag")
         return {
             "control_id": control_id,
-            "title": title,
-            "tag": tag,
+            "title": result_title.get(f"{W}val", "") if result_title is not None else None,
+            "tag": result_tag.get(f"{W}val", "") if result_tag is not None else None,
             "placeholder_text": placeholder_text,
         }
 
