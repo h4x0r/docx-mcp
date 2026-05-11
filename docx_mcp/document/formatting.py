@@ -689,6 +689,97 @@ class FormattingMixin:
         self._mark("word/document.xml")
         return {"para_id": para_id, "run_idx": run_idx, "style": style}
 
+    def clear_run_formatting(self, para_id: str, run_idx: int) -> dict:
+        """Remove all children from a run's rPr, causing it to inherit style formatting.
+
+        Args:
+            para_id: Target paragraph paraId.
+            run_idx: Zero-based index of the run.
+        """
+        doc = self._require("word/document.xml")
+        para = self._find_para(doc, para_id)
+        if para is None:
+            raise ValueError(f"Paragraph '{para_id}' not found")
+
+        try:
+            run = self._get_run(para, run_idx)
+        except IndexError as exc:
+            raise ValueError(str(exc)) from exc
+
+        rpr = run.find(f"{W}rPr")
+        if rpr is not None:
+            for child in list(rpr):
+                rpr.remove(child)
+            run.remove(rpr)
+
+        self._mark("word/document.xml")
+        return {"para_id": para_id, "run_idx": run_idx, "cleared": True}
+
+    def set_run_language(self, para_id: str, run_idx: int, language_code: str) -> dict:
+        """Set the language tag on a run for spell-checking.
+
+        Args:
+            para_id: Target paragraph paraId.
+            run_idx: Zero-based index of the run.
+            language_code: BCP-47 language code (e.g., "en-US", "fr-FR").
+        """
+        doc = self._require("word/document.xml")
+        para = self._find_para(doc, para_id)
+        if para is None:
+            raise ValueError(f"Paragraph '{para_id}' not found")
+
+        run = self._get_run(para, run_idx)
+        rpr = self._upsert_rpr(run)
+
+        lang = rpr.find(f"{W}lang")
+        if lang is None:
+            lang = etree.SubElement(rpr, f"{W}lang")
+        lang.set(f"{W}val", language_code)
+
+        self._mark("word/document.xml")
+        return {"para_id": para_id, "run_idx": run_idx, "language": language_code}
+
+    def set_text_case(self, para_id: str, run_idx: int, case: str) -> dict:
+        """Set text case transformation on a run.
+
+        Args:
+            para_id: Target paragraph paraId.
+            run_idx: Zero-based index of the run.
+            case: One of "upper" (all caps), "small" (small caps), "none" (remove case).
+        """
+        _valid = ("upper", "small", "none")
+        if case not in _valid:
+            raise ValueError(f"case must be one of {_valid!r}, got {case!r}")
+
+        doc = self._require("word/document.xml")
+        para = self._find_para(doc, para_id)
+        if para is None:
+            raise ValueError(f"Paragraph '{para_id}' not found")
+
+        run = self._get_run(para, run_idx)
+        rpr = self._upsert_rpr(run)
+
+        if case == "upper":
+            sc = rpr.find(f"{W}smallCaps")
+            if sc is not None:
+                rpr.remove(sc)
+            if rpr.find(f"{W}caps") is None:
+                etree.SubElement(rpr, f"{W}caps")
+        elif case == "small":
+            caps = rpr.find(f"{W}caps")
+            if caps is not None:
+                rpr.remove(caps)
+            if rpr.find(f"{W}smallCaps") is None:
+                etree.SubElement(rpr, f"{W}smallCaps")
+        else:  # "none"
+            for tag in (f"{W}caps", f"{W}smallCaps"):
+                el = rpr.find(tag)
+                if el is not None:
+                    rpr.remove(el)
+
+        self._mark("word/document.xml")
+        return {"para_id": para_id, "run_idx": run_idx, "case": case}
+
     def find_replace_formatted(
         self,
         find: str,

@@ -2236,6 +2236,41 @@ def set_run_underline(para_id: str, run_idx: int, style: str = "single") -> str:
 
 
 @mcp.tool()
+def clear_run_formatting(para_id: str, run_idx: int) -> str:
+    """Remove all character formatting from a run, causing it to inherit paragraph/style defaults.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        run_idx: Zero-based index of the run.
+    """
+    return _js(_require_doc().clear_run_formatting(para_id, run_idx))
+
+
+@mcp.tool()
+def set_run_language(para_id: str, run_idx: int, language_code: str) -> str:
+    """Set the language on a run for spell-checking purposes.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        run_idx: Zero-based index of the run.
+        language_code: BCP-47 language code (e.g., "en-US", "fr-FR", "de-DE").
+    """
+    return _js(_require_doc().set_run_language(para_id, run_idx, language_code))
+
+
+@mcp.tool()
+def set_text_case(para_id: str, run_idx: int, case: str) -> str:
+    """Set text case transformation on a run.
+
+    Args:
+        para_id: paraId of the target paragraph.
+        run_idx: Zero-based index of the run.
+        case: "upper" (all caps), "small" (small caps), or "none" (remove case transform).
+    """
+    return _js(_require_doc().set_text_case(para_id, run_idx, case))
+
+
+@mcp.tool()
 def export_markdown(output_path: str = "") -> str:
     """Export the open document as Markdown.
 
