@@ -64,6 +64,8 @@ from .watermark import WatermarkMixin
 from .splitting import SplittingMixin
 from .statistics import StatisticsMixin
 from .accessibility import AccessibilityMixin
+from .textboxes import TextBoxesMixin
+from .pdfexport import PdfExportMixin
 
 
 class DocxDocument(
@@ -111,6 +113,8 @@ class DocxDocument(
     SplittingMixin,
     StatisticsMixin,
     AccessibilityMixin,
+    TextBoxesMixin,
+    PdfExportMixin,
 ):
     """Word document editor with OOXML-level control."""
 

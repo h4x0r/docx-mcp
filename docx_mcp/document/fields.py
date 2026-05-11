@@ -336,3 +336,123 @@ class FieldsMixin:
 
         self._mark("word/document.xml")
         return {"para_id": para_id, "field_type": "PAGE"}
+
+    def insert_if_field(
+        self,
+        para_id: str,
+        condition: str,
+        true_text: str,
+        false_text: str,
+    ) -> dict:
+        """Insert a Word IF conditional field at the end of a paragraph.
+
+        Args:
+            para_id: w14:paraId of the target paragraph.
+            condition: The condition expression (e.g. "x > 0").
+            true_text: Text to display when condition is true.
+            false_text: Text to display when condition is false.
+
+        Returns:
+            {"para_id": str, "field_type": "IF", "condition": str,
+             "true_text": str, "false_text": str}
+
+        Raises:
+            DocxMcpError(PARA_NOT_FOUND) if para_id not found.
+        """
+        doc = self._require("word/document.xml")
+        body = doc.find(f"{W}body")
+        para = self._find_para(body, para_id)
+        if para is None:
+            raise DocxMcpError(
+                ErrCode.PARA_NOT_FOUND,
+                f"Paragraph with paraId '{para_id}' not found.",
+            )
+
+        instr = f' IF {condition} "{true_text}" "{false_text}" '
+        for run in self._build_field_runs(instr, cached_value=true_text):
+            para.append(run)
+
+        self._mark("word/document.xml")
+        return {
+            "para_id": para_id,
+            "field_type": "IF",
+            "condition": condition,
+            "true_text": true_text,
+            "false_text": false_text,
+        }
+
+    def insert_sequence_field(
+        self,
+        para_id: str,
+        seq_name: str,
+        reset: bool = False,
+    ) -> dict:
+        """Insert a SEQ (sequence) field for figure/table numbering.
+
+        Args:
+            para_id: w14:paraId of the target paragraph.
+            seq_name: The sequence identifier (e.g. "Figure", "Table").
+            reset: If True, adds \\r 1 switch to restart numbering at 1.
+
+        Returns:
+            {"para_id": str, "field_type": "SEQ", "seq_name": str, "reset": bool}
+
+        Raises:
+            DocxMcpError(PARA_NOT_FOUND) if para_id not found.
+        """
+        doc = self._require("word/document.xml")
+        body = doc.find(f"{W}body")
+        para = self._find_para(body, para_id)
+        if para is None:
+            raise DocxMcpError(
+                ErrCode.PARA_NOT_FOUND,
+                f"Paragraph with paraId '{para_id}' not found.",
+            )
+
+        if reset:
+            instr = f" SEQ {seq_name} \\r 1 "
+        else:
+            instr = f" SEQ {seq_name} "
+        for run in self._build_field_runs(instr, cached_value="1"):
+            para.append(run)
+
+        self._mark("word/document.xml")
+        return {
+            "para_id": para_id,
+            "field_type": "SEQ",
+            "seq_name": seq_name,
+            "reset": reset,
+        }
+
+    def insert_merge_field(self, para_id: str, field_name: str) -> dict:
+        """Insert a MERGEFIELD (mail merge) field at the end of a paragraph.
+
+        Args:
+            para_id: w14:paraId of the target paragraph.
+            field_name: The merge field name (e.g. "FirstName").
+
+        Returns:
+            {"para_id": str, "field_type": "MERGEFIELD", "field_name": str}
+
+        Raises:
+            DocxMcpError(PARA_NOT_FOUND) if para_id not found.
+        """
+        doc = self._require("word/document.xml")
+        body = doc.find(f"{W}body")
+        para = self._find_para(body, para_id)
+        if para is None:
+            raise DocxMcpError(
+                ErrCode.PARA_NOT_FOUND,
+                f"Paragraph with paraId '{para_id}' not found.",
+            )
+
+        instr = f" MERGEFIELD {field_name} "
+        for run in self._build_field_runs(instr, cached_value=f"«{field_name}»"):
+            para.append(run)
+
+        self._mark("word/document.xml")
+        return {
+            "para_id": para_id,
+            "field_type": "MERGEFIELD",
+            "field_name": field_name,
+        }

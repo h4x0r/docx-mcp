@@ -692,6 +692,21 @@ def set_image_alt_text(rId: str, alt_text: str, title: str = "") -> str:
     return _js(_require_doc().set_image_alt_text(rId, alt_text, title=title))
 
 
+@mcp.tool()
+def set_image_border(rId: str, border_pt: float, color: str = "000000") -> str:
+    """Set or remove a border on an embedded image.
+
+    Args:
+        rId: The relationship ID of the image (e.g. 'rId6').
+        border_pt: Border width in points. Use 0 to remove the border.
+        color: RGB hex color string without '#' (default '000000' = black).
+
+    Returns:
+        JSON with rId, border_pt, and color fields.
+    """
+    return _js(_require_doc().set_image_border(rId, border_pt, color))
+
+
 # ── Endnotes ───────────────────────────────────────────────────────────────
 
 
@@ -1707,6 +1722,51 @@ def insert_page_number_field(para_id: str) -> str:
     return _js(_require_doc().insert_page_number_field(para_id))
 
 
+@mcp.tool()
+def insert_if_field(
+    para_id: str,
+    condition: str,
+    true_text: str,
+    false_text: str,
+) -> str:
+    """Insert a Word IF conditional field at the end of a paragraph.
+
+    Args:
+        para_id: w14:paraId of the target paragraph.
+        condition: The condition expression (e.g. "x > 0").
+        true_text: Text to display when condition is true.
+        false_text: Text to display when condition is false.
+    """
+    return _js(_require_doc().insert_if_field(para_id, condition, true_text, false_text))
+
+
+@mcp.tool()
+def insert_sequence_field(
+    para_id: str,
+    seq_name: str,
+    reset: bool = False,
+) -> str:
+    """Insert a SEQ (sequence) field for figure/table numbering.
+
+    Args:
+        para_id: w14:paraId of the target paragraph.
+        seq_name: The sequence identifier (e.g. "Figure", "Table").
+        reset: If True, restarts the sequence counter at 1.
+    """
+    return _js(_require_doc().insert_sequence_field(para_id, seq_name, reset))
+
+
+@mcp.tool()
+def insert_merge_field(para_id: str, field_name: str) -> str:
+    """Insert a MERGEFIELD (mail merge) field at the end of a paragraph.
+
+    Args:
+        para_id: w14:paraId of the target paragraph.
+        field_name: The merge field name (e.g. "FirstName").
+    """
+    return _js(_require_doc().insert_merge_field(para_id, field_name))
+
+
 # ── Table of Contents ────────────────────────────────────────────────────────
 
 
@@ -2267,6 +2327,33 @@ def set_widow_control(para_id: str, enabled: bool) -> str:
 
 
 @mcp.tool()
+def insert_blockquote(para_id: str, text: str) -> str:
+    """Insert a blockquote paragraph after the given paragraph.
+
+    The new paragraph has 720-twip left indent and italic formatting.
+
+    Args:
+        para_id: paraId of the reference paragraph (new para inserted after it).
+        text: Text content of the blockquote.
+    """
+    return _js(_require_doc().insert_blockquote(para_id, text))
+
+
+@mcp.tool()
+def insert_code_block(para_id: str, text: str, language: str = "") -> str:
+    """Insert a code-block paragraph after the given paragraph.
+
+    The new paragraph uses Courier New 10pt with light-gray background shading.
+
+    Args:
+        para_id: paraId of the reference paragraph (new para inserted after it).
+        text: Code text content.
+        language: Optional language hint (stored in return value only).
+    """
+    return _js(_require_doc().insert_code_block(para_id, text, language=language))
+
+
+@mcp.tool()
 def set_line_spacing(
     para_id: str,
     line_rule: str | None = None,
@@ -2744,6 +2831,21 @@ def copy_document(output_path: str) -> str:
 
 
 @mcp.tool()
+def convert_to_pdf(output_path: str) -> str:
+    """Convert the open document to PDF using LibreOffice headless.
+
+    Requires LibreOffice to be installed ('libreoffice' or 'soffice' on PATH).
+
+    Args:
+        output_path: Destination path for the output PDF file.
+
+    Returns:
+        {"pdf_path": str}
+    """
+    return _js(_require_doc().convert_to_pdf(output_path))
+
+
+@mcp.tool()
 def flatten_document() -> str:
     """Accept all tracked changes and remove all revision markup.
 
@@ -2810,6 +2912,27 @@ def check_accessibility() -> str:
         {"issue_count": int, "issues": list[dict]}
     """
     return _js(_require_doc().check_accessibility())
+
+
+@mcp.tool()
+def insert_text_box(
+    para_id: str,
+    text: str,
+    width_cm: float = 5.0,
+    height_cm: float = 2.0,
+) -> str:
+    """Insert an inline text box after the paragraph with para_id.
+
+    Args:
+        para_id: paraId of the reference paragraph (insert after this).
+        text: Text content for the text box.
+        width_cm: Width in centimetres (default 5.0).
+        height_cm: Height in centimetres (default 2.0).
+
+    Returns:
+        JSON with para_id (new paragraph), text, width_cm, height_cm.
+    """
+    return _js(_require_doc().insert_text_box(para_id, text, width_cm=width_cm, height_cm=height_cm))
 
 
 # ── Entry point ─────────────────────────────────────────────────────────────
