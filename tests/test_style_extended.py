@@ -143,7 +143,7 @@ class TestApplyStyleToRange:
                 break
         if len(para_ids) < 2:
             # Insert a second paragraph
-            doc.insert_paragraph(para_ids[0], "Second para", position="after")
+            doc.insert_paragraph(para_ids[0], "Second para")
             tree = doc._require("word/document.xml")
             body = tree.find(f"{W}body")
             para_ids = []

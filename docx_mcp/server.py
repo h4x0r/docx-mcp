@@ -457,6 +457,47 @@ def delete_style(name: str) -> str:
     return _js(_require_doc().delete_style(name))
 
 
+@mcp.tool()
+def get_style(name_or_id: str) -> str:
+    """Get details of a single style by name or styleId (case-insensitive).
+
+    Args:
+        name_or_id: Style name or styleId to look up.
+
+    Returns:
+        {"style_id": str, "name": str, "type": str, "base_style": str, "next_style": str}
+    """
+    return _js(_require_doc().get_style(name_or_id))
+
+
+@mcp.tool()
+def copy_style(source_name_or_id: str, new_name: str) -> str:
+    """Deep-copy an existing style under a new name.
+
+    Args:
+        source_name_or_id: Name or styleId of the style to copy.
+        new_name: Name for the new style (spaces stripped for styleId).
+
+    Returns:
+        {"style_id": str, "name": str, "type": str}
+    """
+    return _js(_require_doc().copy_style(source_name_or_id, new_name))
+
+
+@mcp.tool()
+def apply_style_to_range(para_ids: list[str], style_name_or_id: str) -> str:
+    """Apply a style to a list of paragraphs by their paraIds.
+
+    Args:
+        para_ids: List of paragraph paraIds to update.
+        style_name_or_id: Style name or styleId to apply.
+
+    Returns:
+        {"applied": int, "style_id": str, "para_ids": list[str]}
+    """
+    return _js(_require_doc().apply_style_to_range(para_ids, style_name_or_id))
+
+
 # ── Headers / Footers ──────────────────────────────────────────────────────
 
 

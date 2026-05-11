@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import copy
 import re
 
 from lxml import etree
 
 from .base import W
+from .errors import DocxMcpError, ErrCode
 
 
 class StylesMixin:
@@ -115,3 +117,118 @@ class StylesMixin:
         tree.remove(target)
         self._mark("word/styles.xml")
         return {"deleted": style_id}
+
+    # ── helpers ──────────────────────────────────────────────────────────────
+
+    def _find_style(self, tree, name_or_id: str):
+        """Find style element by name or styleId (case-insensitive). Returns element or None."""
+        lo = name_or_id.lower()
+        for s in tree.findall(f"{W}style"):
+            if s.get(f"{W}styleId", "").lower() == lo:
+                return s
+            name_el = s.find(f"{W}name")
+            if name_el is not None and name_el.get(f"{W}val", "").lower() == lo:
+                return s
+        return None
+
+    # ── extended style API ────────────────────────────────────────────────────
+
+    def get_style(self, name_or_id: str) -> dict:
+        """Find a style by name or styleId (case-insensitive).
+
+        Returns:
+            {"style_id": str, "name": str, "type": str, "base_style": str, "next_style": str}
+
+        Raises:
+            ValueError: if style not found.
+        """
+        tree = self._require("word/styles.xml")
+        s = self._find_style(tree, name_or_id)
+        if s is None:
+            raise ValueError(f"Style '{name_or_id}' not found")
+        name_el = s.find(f"{W}name")
+        based_el = s.find(f"{W}basedOn")
+        next_el = s.find(f"{W}next")
+        return {
+            "style_id": s.get(f"{W}styleId", ""),
+            "name": name_el.get(f"{W}val", "") if name_el is not None else "",
+            "type": s.get(f"{W}type", ""),
+            "base_style": based_el.get(f"{W}val", "") if based_el is not None else "",
+            "next_style": next_el.get(f"{W}val", "") if next_el is not None else "",
+        }
+
+    def copy_style(self, source_name_or_id: str, new_name: str) -> dict:
+        """Deep-copy an existing style under a new name.
+
+        Returns:
+            {"style_id": str, "name": str, "type": str}
+
+        Raises:
+            ValueError: if source not found or new_name already exists.
+        """
+        tree = self._require("word/styles.xml")
+        source = self._find_style(tree, source_name_or_id)
+        if source is None:
+            raise ValueError(f"Style '{source_name_or_id}' not found")
+        if self._find_style(tree, new_name) is not None:
+            raise ValueError(f"Style '{new_name}' already exists")
+
+        new_el = copy.deepcopy(source)
+        new_id = re.sub(r"\s+", "", new_name)
+        new_el.set(f"{W}styleId", new_id)
+
+        name_el = new_el.find(f"{W}name")
+        if name_el is None:
+            name_el = etree.SubElement(new_el, f"{W}name")
+        name_el.set(f"{W}val", new_name)
+
+        tree.append(new_el)
+        self._mark("word/styles.xml")
+        return {
+            "style_id": new_id,
+            "name": new_name,
+            "type": new_el.get(f"{W}type", ""),
+        }
+
+    def apply_style_to_range(self, para_ids: list[str], style_name_or_id: str) -> dict:
+        """Apply a style to a list of paragraphs identified by their paraIds.
+
+        Returns:
+            {"applied": int, "style_id": str, "para_ids": list[str]}
+
+        Raises:
+            ValueError: if style not found.
+            DocxMcpError: if a para_id is not found.
+        """
+        styles_tree = self._require("word/styles.xml")
+        style_el = self._find_style(styles_tree, style_name_or_id)
+        if style_el is None:
+            raise ValueError(f"Style '{style_name_or_id}' not found")
+        canonical_id = style_el.get(f"{W}styleId", "")
+
+        doc = self._require("word/document.xml")
+        body = doc.find(f"{W}body")
+
+        for para_id in para_ids:
+            para = self._find_para(body, para_id)
+            if para is None:
+                raise DocxMcpError(
+                    ErrCode.PARA_NOT_FOUND,
+                    f"Paragraph with paraId '{para_id}' not found.",
+                )
+            ppr = para.find(f"{W}pPr")
+            if ppr is None:
+                ppr = etree.SubElement(para, f"{W}pPr")
+                para.insert(0, ppr)
+            pstyle = ppr.find(f"{W}pStyle")
+            if pstyle is None:
+                pstyle = etree.SubElement(ppr, f"{W}pStyle")
+                ppr.insert(0, pstyle)
+            pstyle.set(f"{W}val", canonical_id)
+
+        self._mark("word/document.xml")
+        return {
+            "applied": len(para_ids),
+            "style_id": canonical_id,
+            "para_ids": list(para_ids),
+        }
