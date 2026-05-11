@@ -225,7 +225,7 @@ class SectionsMixin:
     @staticmethod
     def _parse_sectpr(sectpr, index: int, is_final: bool) -> dict:
         """Extract structured info from a sectPr element."""
-        W_NS = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+        W_NS = W  # alias for use inside staticmethod (module-level constant)
 
         # break_type
         if is_final:
