@@ -176,6 +176,7 @@ class StylesMixin:
             raise ValueError(f"Style '{new_name}' already exists")
 
         new_el = copy.deepcopy(source)
+        new_el.attrib.pop(f"{W}default", None)  # prevent duplicate default style
         new_el.set(f"{W}styleId", new_id)
 
         name_el = new_el.find(f"{W}name")
@@ -227,7 +228,8 @@ class StylesMixin:
                 ppr.insert(0, pstyle)
             pstyle.set(f"{W}val", canonical_id)
 
-        self._mark("word/document.xml")
+        if para_ids:
+            self._mark("word/document.xml")
         return {
             "applied": len(para_ids),
             "style_id": canonical_id,
