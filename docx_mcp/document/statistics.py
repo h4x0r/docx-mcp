@@ -18,6 +18,24 @@ class StatisticsMixin:
             len(t.text.split()) for t in body.iter(f"{W}t") if t.text
         )
 
+    def get_reading_time(self, words_per_minute: int = 200) -> dict:
+        """Estimate reading time based on word count.
+
+        Args:
+            words_per_minute: Reading speed (default 200 wpm).
+
+        Returns:
+            {"word_count": int, "words_per_minute": int, "minutes": float, "seconds": int}
+        """
+        word_count = self.get_word_count()
+        minutes = word_count / words_per_minute
+        return {
+            "word_count": word_count,
+            "words_per_minute": words_per_minute,
+            "minutes": round(minutes, 1),
+            "seconds": round(minutes * 60),
+        }
+
     def get_statistics(self) -> dict:
         root = self._tree("word/document.xml")
         if root is None:

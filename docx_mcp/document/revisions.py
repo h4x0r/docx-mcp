@@ -174,6 +174,34 @@ class RevisionsMixin:
             count += 1
         return {"accepted": count}
 
+    def flatten_document(self) -> dict:
+        """Accept all tracked changes and strip all revision markup.
+
+        Accepts every w:ins / w:del element (via accept_all_changes) and then
+        removes all w:rPrChange and w:pPrChange elements so no revision markup
+        remains in the document.
+
+        Returns:
+            {"changes_accepted": int, "formatting_changes_removed": int}
+        """
+        accepted_result = self.accept_all_changes()
+        changes_accepted: int = accepted_result["accepted"]
+
+        doc = self._require("word/document.xml")
+        fmt_count = 0
+        for tag in (f"{W}rPrChange", f"{W}pPrChange"):
+            for el in list(doc.iter(tag)):
+                el.getparent().remove(el)
+                fmt_count += 1
+
+        if fmt_count:
+            self._mark("word/document.xml")
+
+        return {
+            "changes_accepted": changes_accepted,
+            "formatting_changes_removed": fmt_count,
+        }
+
     def reject_all_changes(self) -> dict:
         doc = self._require("word/document.xml")
         elements = list(doc.iter(f"{W}ins")) + list(doc.iter(f"{W}del"))

@@ -2646,6 +2646,47 @@ def sort_table(table_idx: int, column_index: int, ascending: bool = True) -> str
     return _js(_require_doc().sort_table(table_idx, column_index, ascending))
 
 
+@mcp.tool()
+def copy_document(output_path: str) -> str:
+    """Save a complete snapshot of the open document to a new path.
+
+    The active session and source path are unchanged.
+
+    Args:
+        output_path: Destination file path (must end in .docx).
+
+    Returns:
+        {"copied_to": output_path}
+    """
+    return _js(_require_doc().copy_document(output_path))
+
+
+@mcp.tool()
+def flatten_document() -> str:
+    """Accept all tracked changes and remove all revision markup.
+
+    Accepts every w:ins / w:del and strips all w:rPrChange and w:pPrChange
+    elements, leaving plain text with no tracked-change metadata.
+
+    Returns:
+        {"changes_accepted": int, "formatting_changes_removed": int}
+    """
+    return _js(_require_doc().flatten_document())
+
+
+@mcp.tool()
+def get_reading_time(words_per_minute: int = 200) -> str:
+    """Estimate reading time for the open document.
+
+    Args:
+        words_per_minute: Assumed reading speed (default 200 wpm).
+
+    Returns:
+        {"word_count": int, "words_per_minute": int, "minutes": float, "seconds": int}
+    """
+    return _js(_require_doc().get_reading_time(words_per_minute=words_per_minute))
+
+
 # ── Entry point ─────────────────────────────────────────────────────────────
 
 
