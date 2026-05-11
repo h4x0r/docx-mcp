@@ -170,11 +170,12 @@ class StylesMixin:
         source = self._find_style(tree, source_name_or_id)
         if source is None:
             raise ValueError(f"Style '{source_name_or_id}' not found")
-        if self._find_style(tree, new_name) is not None:
+        new_id = re.sub(r"\s+", "", new_name)
+        # Check both display name and computed styleId to avoid duplicate IDs
+        if self._find_style(tree, new_name) is not None or self._find_style(tree, new_id) is not None:
             raise ValueError(f"Style '{new_name}' already exists")
 
         new_el = copy.deepcopy(source)
-        new_id = re.sub(r"\s+", "", new_name)
         new_el.set(f"{W}styleId", new_id)
 
         name_el = new_el.find(f"{W}name")
