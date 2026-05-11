@@ -935,11 +935,12 @@ class TablesMixin:
         """
         tbl = self._get_table(table_idx)
         new_tbl = copy.deepcopy(tbl)
-        # Regenerate paraIds on all paragraphs in the copy
+        # Insert first so _new_para_id() can see already-assigned IDs in the copy
+        tbl.addnext(new_tbl)
+        # Regenerate paraIds — new_tbl is now in the document tree, so each
+        # call to _new_para_id() sees the IDs set by previous iterations
         for p in new_tbl.iter(f"{W}p"):
             if p.get(f"{W14}paraId") is not None:
                 p.set(f"{W14}paraId", self._new_para_id())
-        # Insert copy right after the original in the body
-        tbl.addnext(new_tbl)
         self._mark("word/document.xml")
         return {"source_index": table_idx, "new_index": table_idx + 1}
