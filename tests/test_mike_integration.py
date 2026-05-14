@@ -168,10 +168,11 @@ def test_accepted_view_shows_ins_hides_del(mike_corpus_docx):
     assert "one hundred" not in body
 
 
-def test_replace_targets_accepted_view_text(mike_corpus_docx):
-    """replace_text on text inside a pre-existing w:ins raises ValueError.
-    Paragraph 00000107 has pre-existing w:del('one hundred') and w:ins('two hundred').
-    The implementation blocks deletion of text inside an existing w:ins (must accept/reject first).
+def test_replace_inside_existing_ins_raises_known_limitation(mike_corpus_docx):
+    """KNOWN LIMITATION: replace_text on text inside a pre-existing w:ins raises ValueError.
+    Paragraph 00000107 has w:del('one hundred') and w:ins('two hundred').
+    The implementation blocks editing text inside an unresolved tracked insertion —
+    accept/reject the existing change before issuing a new replacement.
     """
     server.open_document(str(mike_corpus_docx))
     with pytest.raises(ValueError, match="existing w:ins"):
@@ -196,11 +197,16 @@ def test_batch_three_replacements_in_one_session(mike_corpus_docx, tmp_path):
     server.open_document(str(out))
     # get_tracked_changes returns a list of dicts with keys: type, change_id, author, date, para_id, text
     changes = json.loads(server.get_tracked_changes())
-    texts = [c["text"] for c in changes]
-    # Either the deleted or inserted text should appear in tracked changes
-    assert any("initial deposit" in t or "upfront payment" in t for t in texts)
-    assert any("maintenance fee" in t or "service charge" in t for t in texts)
-    assert any("termination penalty" in t or "exit fee" in t for t in texts)
+    by_para: dict[str, list[str]] = {}
+    for c in changes:
+        by_para.setdefault(c["para_id"], []).append(c["text"])
+    # Each paragraph must have its own tracked change (catch silent per-replacement failure)
+    para_108_texts = " ".join(by_para.get("00000108", []))
+    para_109_texts = " ".join(by_para.get("00000109", []))
+    para_10a_texts = " ".join(by_para.get("0000010A", []))
+    assert "initial deposit" in para_108_texts or "upfront payment" in para_108_texts
+    assert "maintenance fee" in para_109_texts or "service charge" in para_109_texts
+    assert "termination penalty" in para_10a_texts or "exit fee" in para_10a_texts
 
 
 # ── Accept/Reject roundtrip ───────────────────────────────────────────────────
@@ -237,3 +243,9 @@ def test_get_body_text_real_fixtures(fixture_name, tmp_path):
     server.open_document(fixture)
     result = json.loads(server.get_body_text())
     assert len(result["body"]) > 50, "real doc must have substantial body text"
+    audit = json.loads(server.audit_document())
+    # Check critical structural categories; ignore table column counts (merged cells
+    # in real docs legitimately produce inconsistent counts but are valid OOXML).
+    assert audit["footnotes"]["valid"], f"{fixture_name}: footnote audit failed"
+    assert audit["paraids"]["valid"], f"{fixture_name}: paraId audit failed"
+    assert not audit["relationships"]["missing_targets"], f"{fixture_name}: broken relationships"
