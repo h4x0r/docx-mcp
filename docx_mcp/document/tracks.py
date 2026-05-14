@@ -640,10 +640,11 @@ class TracksMixin:
         real_slot_e = real_slot_s + len(del_text)
 
         if not del_text and not ins_text:
-            return {"change_id": None, "type": "replacement", "author": author, "changed": 0}
+            return {"del_id": None, "ins_id": None, "type": "replacement", "author": author, "changed": 0}
 
         cid = self._next_markup_id(doc)
         now = _now_iso()
+        ins_cid: int | None = None
 
         if del_text:
             _apply_deletion(para, real_slot_s, real_slot_e, slots, cid, author, now)
@@ -673,7 +674,13 @@ class TracksMixin:
                 para.append(ins_el)
 
         self._mark("word/document.xml")
-        return {"change_id": cid, "type": "replacement", "author": author, "date": now}
+        return {
+            "del_id": cid if del_text else None,
+            "ins_id": ins_cid if ins_text else None,
+            "type": "replacement",
+            "author": author,
+            "date": now,
+        }
 
     # ── Accept / Reject ──────────────────────────────────────────────────────
 
