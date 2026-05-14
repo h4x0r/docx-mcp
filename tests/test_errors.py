@@ -27,8 +27,8 @@ class TestErrCode:
         assert ErrCode.NO_OPEN_DOCUMENT.value == "NO_OPEN_DOCUMENT"
         assert ErrCode.XPATH_ERROR.value == "XPATH_ERROR"
 
-    def test_eleven_members(self):
-        assert len(ErrCode) == 11
+    def test_thirteen_members(self):
+        assert len(ErrCode) == 13
 
 
 class TestDocxMcpError:
