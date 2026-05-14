@@ -27,3 +27,46 @@ def test_flatten_para_includes_hyperlink_text(mike_corpus_docx):
     assert "thirty calendar days" in text, (
         f"hyperlink text not found in _flatten_para output; got: {text!r}"
     )
+
+
+def test_get_body_text_returns_body_string(mike_corpus_docx):
+    server.open_document(str(mike_corpus_docx))
+    result = json.loads(server.get_body_text())
+    assert "body" in result
+    assert isinstance(result["body"], str)
+    assert len(result["body"]) > 0
+
+
+def test_get_body_text_includes_hyperlink_text(mike_corpus_docx):
+    server.open_document(str(mike_corpus_docx))
+    result = json.loads(server.get_body_text())
+    # Hyperlink text must appear in body (not invisible)
+    assert "thirty calendar days" in result["body"]
+
+
+def test_get_body_text_accepted_view_excludes_deleted(mike_corpus_docx):
+    """Accepted view: w:del text must NOT appear, w:ins text MUST appear."""
+    server.open_document(str(mike_corpus_docx))
+    result = json.loads(server.get_body_text())
+    assert "one hundred" not in result["body"]   # inside w:del → excluded
+    assert "two hundred" in result["body"]         # inside w:ins → included
+
+
+def test_get_body_text_returns_footnotes(mike_corpus_docx):
+    server.open_document(str(mike_corpus_docx))
+    result = json.loads(server.get_body_text())
+    assert "footnotes" in result
+    # mike_corpus uses the same _FOOTNOTES_XML as test_docx
+    # Check the footnotes XML to see what text it contains
+    assert isinstance(result["footnotes"], str)
+
+
+def test_get_body_text_real_contract(tmp_path):
+    """Smoke test against real externally-sourced document."""
+    import os
+    fixture = os.path.join(os.path.dirname(__file__), "fixtures", "real_contract.docx")
+    if not os.path.exists(fixture):
+        pytest.skip("real fixture not present")
+    server.open_document(fixture)
+    result = json.loads(server.get_body_text())
+    assert len(result["body"]) > 100
