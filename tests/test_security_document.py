@@ -12,16 +12,6 @@ from docx_mcp.document import DocxDocument
 from docx_mcp.document.errors import DocxMcpError, ErrCode
 
 
-def _make_doc(tmp_path: Path) -> DocxDocument:
-    """Return an open DocxDocument for a minimal valid DOCX."""
-    from tests.conftest import _build_fixture
-    path = tmp_path / "test.docx"
-    _build_fixture(path)
-    doc = DocxDocument(str(path))
-    doc.open()
-    return doc
-
-
 # ── V4: BadZipFile ────────────────────────────────────────────────────────────
 
 def test_corrupt_zip_raises_docxmcperror(tmp_path: Path):

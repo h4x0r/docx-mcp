@@ -66,6 +66,9 @@ def _preserve(t_el: etree._Element, text: str) -> None:
 class BaseMixin:
     """Lifecycle, XML cache, and shared helpers."""
 
+    _MAX_ZIP_ENTRIES = 10_000
+    _MAX_UNCOMPRESSED_BYTES = 500 * 1024 * 1024  # 500 MB
+
     def __init__(self, path: str):
         self.source_path = Path(path).resolve()
         self.workdir: Path | None = None
@@ -93,35 +96,32 @@ class BaseMixin:
                 f"Corrupt or invalid DOCX (bad ZIP): {exc}",
                 hint="The file may be truncated or not a valid .docx file.",
             ) from exc
-        _MAX_ENTRIES = 10_000
-        _MAX_UNCOMPRESSED = 500 * 1024 * 1024  # 500 MB
-
         with zf_handle:
             infos = zf_handle.infolist()
             # V3: entry count bomb
-            if len(infos) > _MAX_ENTRIES:
+            if len(infos) > self._MAX_ZIP_ENTRIES:
                 shutil.rmtree(self.workdir, ignore_errors=True)
                 self.workdir = None
                 raise DocxMcpError(
                     ErrCode.OOXML_INVALID,
-                    f"DOCX has {len(infos)} ZIP entries (limit {_MAX_ENTRIES})",
+                    f"DOCX has {len(infos)} ZIP entries (limit {self._MAX_ZIP_ENTRIES})",
                     hint="This may be a ZIP bomb or a corrupted file.",
                 )
             # V3: uncompressed size bomb
             total_uncompressed = sum(i.file_size for i in infos)
-            if total_uncompressed > _MAX_UNCOMPRESSED:
+            if total_uncompressed > self._MAX_UNCOMPRESSED_BYTES:
                 shutil.rmtree(self.workdir, ignore_errors=True)
                 self.workdir = None
                 raise DocxMcpError(
                     ErrCode.OOXML_INVALID,
                     f"DOCX uncompressed size {total_uncompressed} bytes exceeds "
-                    f"limit of {_MAX_UNCOMPRESSED} bytes",
+                    f"limit of {self._MAX_UNCOMPRESSED_BYTES} bytes",
                     hint="This may be a ZIP bomb.",
                 )
             # V1: ZipSlip — validate every entry before extraction
             for member in zf_handle.namelist():
                 dest = (self.workdir / member).resolve()
-                if not str(dest).startswith(str(self.workdir.resolve())):
+                if not dest.is_relative_to(self.workdir.resolve()):
                     shutil.rmtree(self.workdir, ignore_errors=True)
                     self.workdir = None
                     raise DocxMcpError(
