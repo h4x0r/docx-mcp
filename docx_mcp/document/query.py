@@ -1,6 +1,8 @@
 """XPath query escape hatch — run raw XPath against any DOCX part."""
 from __future__ import annotations
 
+import signal
+
 from lxml import etree
 
 from .errors import DocxMcpError, ErrCode
@@ -16,6 +18,29 @@ _NS: dict[str, str] = {
 }
 
 _MAX_RESULTS = 50
+
+
+def _xpath_with_timeout(tree, xpath: str, namespaces: dict, timeout: int = 2):
+    """Run tree.xpath() with a SIGALRM timeout. Unix only; falls through on Windows."""
+    if not hasattr(signal, "SIGALRM"):
+        return tree.xpath(xpath, namespaces=namespaces)
+
+    def _handler(signum, frame):
+        raise TimeoutError("XPath evaluation timed out")
+
+    old_handler = signal.signal(signal.SIGALRM, _handler)
+    signal.alarm(timeout)
+    try:
+        return tree.xpath(xpath, namespaces=namespaces)
+    except TimeoutError:
+        raise DocxMcpError(
+            ErrCode.XPATH_ERROR,
+            "XPath evaluation timed out (possible DoS pattern)",
+            hint="Simplify the XPath expression.",
+        )
+    finally:
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, old_handler)
 
 
 class XPathMixin:
@@ -59,7 +84,7 @@ class XPathMixin:
             )
 
         try:
-            matches = tree.xpath(xpath, namespaces=_NS)
+            matches = _xpath_with_timeout(tree, xpath, _NS)
         except etree.XPathError as exc:
             raise DocxMcpError(
                 ErrCode.XPATH_ERROR,
