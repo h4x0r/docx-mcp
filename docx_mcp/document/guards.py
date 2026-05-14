@@ -39,6 +39,8 @@ class InputGuard:
             raise ValueError(
                 f"Invalid output path {value!r}: path traversal not allowed"
             )
+        # NOTE: absolute path confinement (allowlisting) is enforced at call
+        # sites (save(), copy_document()) rather than here.
         return resolved
 
     @staticmethod
@@ -68,7 +70,7 @@ class InputGuard:
     @staticmethod
     def bounded_int(value: int, lo: int, hi: int, name: str) -> int:
         """Validate that value is an integer in [lo, hi]."""
-        if not isinstance(value, int):
+        if not isinstance(value, int) or isinstance(value, bool):
             raise ValueError(f"{name} must be an integer, got {type(value).__name__}")
         if not (lo <= value <= hi):
             raise ValueError(f"{name} must be between {lo} and {hi}, got {value}")

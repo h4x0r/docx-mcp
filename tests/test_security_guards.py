@@ -1,9 +1,15 @@
 """Security guard tests — input validation."""
 from __future__ import annotations
 
+import re
+from pathlib import Path
+
 import pytest
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from docx_mcp.document.errors import ErrCode
+from docx_mcp.document.guards import InputGuard
 
 
 def test_malformed_input_code_exists():
@@ -12,16 +18,6 @@ def test_malformed_input_code_exists():
 
 def test_unsafe_path_code_exists():
     assert ErrCode.UNSAFE_PATH == "UNSAFE_PATH"
-
-
-import re
-import sys
-from pathlib import Path
-
-from hypothesis import given, settings
-from hypothesis import strategies as st
-
-from docx_mcp.document.guards import InputGuard
 
 
 # ── para_id ──────────────────────────────────────────────────────────────────
@@ -135,6 +131,11 @@ def test_bounded_int_below_raises():
 def test_bounded_int_above_raises():
     with pytest.raises(ValueError, match="width"):
         InputGuard.bounded_int(11, 1, 10, "width")
+
+
+def test_bounded_int_rejects_bool():
+    with pytest.raises(ValueError, match="integer"):
+        InputGuard.bounded_int(True, 0, 10, "flag")
 
 
 @given(st.integers(min_value=-(2**62), max_value=2**62))
