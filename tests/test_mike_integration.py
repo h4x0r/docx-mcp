@@ -70,3 +70,31 @@ def test_get_body_text_real_contract(tmp_path):
     server.open_document(fixture)
     result = json.loads(server.get_body_text())
     assert len(result["body"]) > 100
+
+
+def test_replace_text_returns_del_id_and_ins_id(mike_corpus_docx):
+    """replace_text must return both del_id and ins_id for Accept/Reject card UI."""
+    server.open_document(str(mike_corpus_docx))
+    result = json.loads(server.replace_text(
+        para_id="00000108",
+        find="initial deposit",
+        replace="upfront payment",
+    ))
+    assert "del_id" in result, "must include del_id"
+    assert "ins_id" in result, "must include ins_id"
+    assert result["del_id"] is not None
+    assert result["ins_id"] is not None
+    assert result["del_id"] != result["ins_id"]
+    assert result["type"] == "replacement"
+
+
+def test_replace_text_pure_deletion_has_no_ins_id(mike_corpus_docx):
+    """Pure deletion (empty replace) must have ins_id=None."""
+    server.open_document(str(mike_corpus_docx))
+    result = json.loads(server.replace_text(
+        para_id="00000109",
+        find="ongoing ",
+        replace="",
+    ))
+    assert result["del_id"] is not None
+    assert result["ins_id"] is None
