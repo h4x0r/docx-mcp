@@ -15,6 +15,8 @@ class ErrCode(str, Enum):
     PII_DEPS_MISSING     = "PII_DEPS_MISSING"
     NO_OPEN_DOCUMENT     = "NO_OPEN_DOCUMENT"
     XPATH_ERROR          = "XPATH_ERROR"
+    MALFORMED_INPUT      = "MALFORMED_INPUT"
+    UNSAFE_PATH          = "UNSAFE_PATH"
 
 
 class DocxMcpError(Exception):
