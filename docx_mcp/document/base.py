@@ -93,7 +93,31 @@ class BaseMixin:
                 f"Corrupt or invalid DOCX (bad ZIP): {exc}",
                 hint="The file may be truncated or not a valid .docx file.",
             ) from exc
+        _MAX_ENTRIES = 10_000
+        _MAX_UNCOMPRESSED = 500 * 1024 * 1024  # 500 MB
+
         with zf_handle:
+            infos = zf_handle.infolist()
+            # V3: entry count bomb
+            if len(infos) > _MAX_ENTRIES:
+                shutil.rmtree(self.workdir, ignore_errors=True)
+                self.workdir = None
+                raise DocxMcpError(
+                    ErrCode.OOXML_INVALID,
+                    f"DOCX has {len(infos)} ZIP entries (limit {_MAX_ENTRIES})",
+                    hint="This may be a ZIP bomb or a corrupted file.",
+                )
+            # V3: uncompressed size bomb
+            total_uncompressed = sum(i.file_size for i in infos)
+            if total_uncompressed > _MAX_UNCOMPRESSED:
+                shutil.rmtree(self.workdir, ignore_errors=True)
+                self.workdir = None
+                raise DocxMcpError(
+                    ErrCode.OOXML_INVALID,
+                    f"DOCX uncompressed size {total_uncompressed} bytes exceeds "
+                    f"limit of {_MAX_UNCOMPRESSED} bytes",
+                    hint="This may be a ZIP bomb.",
+                )
             # V1: ZipSlip — validate every entry before extraction
             for member in zf_handle.namelist():
                 dest = (self.workdir / member).resolve()

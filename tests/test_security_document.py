@@ -144,7 +144,7 @@ def test_too_many_zip_entries_raises(tmp_path: Path):
 
 
 def _make_declared_size_bomb_docx(tmp_path: Path) -> Path:
-    """DOCX ZIP that claims huge uncompressed size via a crafted local header."""
+    """DOCX ZIP that claims huge uncompressed size via crafted central directory."""
     path = tmp_path / "bomb_size.docx"
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", compression=zipfile.ZIP_DEFLATED) as zf:
@@ -152,8 +152,18 @@ def _make_declared_size_bomb_docx(tmp_path: Path) -> Path:
         zf.writestr("_rels/.rels", "<Relationships/>")
         zf.writestr("word/document.xml", "<document/>")
     raw = bytearray(buf.getvalue())
-    # Patch uncompressed size at offset 22 in local file header to 600 MB
-    struct.pack_into("<I", raw, 22, 629_145_600)
+    # Patch uncompressed size in each central directory entry (PK\x01\x02)
+    # Central directory layout: sig(4) ver_by(2) ver_need(2) flags(2) comp(2)
+    #   mod_time(2) mod_date(2) crc32(4) comp_size(4) uncomp_size(4@offset+24)
+    cd_sig = b"PK\x01\x02"
+    off = 0
+    while True:
+        idx = raw.find(cd_sig, off)
+        if idx == -1:
+            break
+        # Patch uncompressed size to 200 MB per entry (3 entries = 600 MB total)
+        struct.pack_into("<I", raw, idx + 24, 200 * 1024 * 1024)
+        off = idx + 1
     path.write_bytes(bytes(raw))
     return path
 
