@@ -94,6 +94,17 @@ class BaseMixin:
                 hint="The file may be truncated or not a valid .docx file.",
             ) from exc
         with zf_handle:
+            # V1: ZipSlip — validate every entry before extraction
+            for member in zf_handle.namelist():
+                dest = (self.workdir / member).resolve()
+                if not str(dest).startswith(str(self.workdir.resolve())):
+                    shutil.rmtree(self.workdir, ignore_errors=True)
+                    self.workdir = None
+                    raise DocxMcpError(
+                        ErrCode.UNSAFE_PATH,
+                        f"ZipSlip: entry escapes workdir: {member!r}",
+                        hint="The DOCX contains a malicious ZIP entry name.",
+                    )
             zf_handle.extractall(self.workdir)
 
         # Discover and parse XML files
