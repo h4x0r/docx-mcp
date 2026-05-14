@@ -14,6 +14,7 @@ from pathlib import Path
 from lxml import etree
 
 from .errors import DocxMcpError, ErrCode
+from .guards import InputGuard
 
 # ── OOXML namespace constants ───────────────────────────────────────────────
 W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
@@ -195,6 +196,9 @@ class BaseMixin:
         """Write modified XML back to files and repack into a .docx."""
         if self.workdir is None:
             raise RuntimeError("No document is open")
+
+        if output_path is not None:
+            output_path = str(InputGuard.output_path(output_path))
 
         output = Path(output_path) if output_path else self.source_path
 

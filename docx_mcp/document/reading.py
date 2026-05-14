@@ -151,12 +151,14 @@ class ReadingMixin:
             output_path: Destination path for the copy (must end in .docx).
 
         Returns:
-            {"copied_to": output_path}
+            {"copied_to": validated_output_path}
         """
         if self.workdir is None:
             raise RuntimeError("No document is open")
-        self.save(output_path, backup=False)
-        return {"copied_to": output_path}
+        from .guards import InputGuard
+        validated = str(InputGuard.output_path(output_path))
+        self.save(validated, backup=False)
+        return {"copied_to": validated}
 
     def get_paragraph(self, para_id: str) -> dict:
         """Get full text and metadata for a paragraph by paraId."""
