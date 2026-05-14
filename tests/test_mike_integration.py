@@ -56,9 +56,9 @@ def test_get_body_text_returns_footnotes(mike_corpus_docx):
     server.open_document(str(mike_corpus_docx))
     result = json.loads(server.get_body_text())
     assert "footnotes" in result
-    # mike_corpus uses the same _FOOTNOTES_XML as test_docx
-    # Check the footnotes XML to see what text it contains
-    assert isinstance(result["footnotes"], str)
+    # Footnote id=1 in _FOOTNOTES_XML contains "See appendix A for supporting evidence."
+    # Reserved ids -1 (separator) and 0 (continuation) must be excluded.
+    assert "See appendix A" in result["footnotes"]
 
 
 def test_get_body_text_real_contract(tmp_path):
