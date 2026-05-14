@@ -755,10 +755,10 @@ class TracksMixin:
                 for para in fn.iter(f"{W}p"):
                     slots = _flatten_para(para)
                     footnote_lines.append("".join(s.char for s in slots))
-        except Exception:
+        except RuntimeError:
             pass
 
         return {
-            "body": "\n".join(body_lines),
-            "footnotes": "\n".join(footnote_lines),
+            "body": "\n".join(line for line in body_lines if line),
+            "footnotes": "\n".join(line for line in footnote_lines if line),
         }
