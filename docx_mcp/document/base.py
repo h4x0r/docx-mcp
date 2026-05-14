@@ -143,7 +143,12 @@ class BaseMixin:
             full_path = self.workdir / rel_path
             if full_path.exists():
                 try:
-                    parser = etree.XMLParser(remove_blank_text=False)
+                    parser = etree.XMLParser(
+                        remove_blank_text=False,
+                        resolve_entities=False,
+                        no_network=True,
+                        huge_tree=False,
+                    )
                     tree = etree.parse(str(full_path), parser)
                     self._trees[rel_path] = tree.getroot()
                 except etree.XMLSyntaxError:
