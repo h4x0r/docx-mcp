@@ -141,7 +141,7 @@ class _Slot:
 def _flatten_para(para: etree._Element) -> list[_Slot]:
     """Build the accepted-view character list for *para*.
 
-    Includes text from ``w:r`` and ``w:ins > w:r``.
+    Includes text from ``w:r``, ``w:ins > w:r``, and ``w:hyperlink > w:r``.
     Excludes text from ``w:del`` (invisible in accepted view).
     """
     slots: list[_Slot] = []
@@ -154,6 +154,9 @@ def _flatten_para(para: etree._Element) -> list[_Slot]:
         elif child.tag == f"{W}ins":
             for r in child.findall(f"{W}r"):
                 idx = _slots_from_run(r, slots, idx, in_ins=child)
+        elif child.tag == f"{W}hyperlink":
+            for r in child.findall(f"{W}r"):
+                idx = _slots_from_run(r, slots, idx, in_ins=None)
         # w:del, w:pPr, w:bookmarkStart, etc. → skip
     return slots
 
