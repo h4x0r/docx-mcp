@@ -145,10 +145,12 @@ class RevisionsMixin:
             raise ValueError(f"No tracked change with id={change_id}")
         if el.tag == f"{W}ins":
             _unwrap(el)
-            return {"change_id": change_id, "action": "accepted", "type": "insertion"}
+            kind = "insertion"
         else:
             el.getparent().remove(el)
-            return {"change_id": change_id, "action": "accepted", "type": "deletion"}
+            kind = "deletion"
+        self._mark("word/document.xml")
+        return {"change_id": change_id, "action": "accepted", "type": kind}
 
     def reject_change(self, change_id: int) -> dict:
         doc = self._require("word/document.xml")
@@ -157,10 +159,12 @@ class RevisionsMixin:
             raise ValueError(f"No tracked change with id={change_id}")
         if el.tag == f"{W}ins":
             el.getparent().remove(el)
-            return {"change_id": change_id, "action": "rejected", "type": "insertion"}
+            kind = "insertion"
         else:
             _unwrap_del(el)
-            return {"change_id": change_id, "action": "rejected", "type": "deletion"}
+            kind = "deletion"
+        self._mark("word/document.xml")
+        return {"change_id": change_id, "action": "rejected", "type": kind}
 
     def accept_all_changes(self) -> dict:
         doc = self._require("word/document.xml")

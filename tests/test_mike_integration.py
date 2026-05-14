@@ -226,6 +226,11 @@ def test_accept_change_from_replace_text(mike_corpus_docx, tmp_path):
     body = json.loads(server.get_body_text())["body"]
     assert "upfront" in body
     assert "initial" not in body
+    # Verify changes are PERSISTED (not just applied to in-memory accepted view)
+    changes = json.loads(server.get_tracked_changes())
+    remaining_ids = {c["change_id"] for c in changes}
+    assert del_id not in remaining_ids, f"del change {del_id} must be gone after accept; remaining: {remaining_ids}"
+    assert ins_id not in remaining_ids, f"ins change {ins_id} must be gone after accept; remaining: {remaining_ids}"
 
 
 # ── Real fixture smoke tests ──────────────────────────────────────────────────
