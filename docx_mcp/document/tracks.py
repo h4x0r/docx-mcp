@@ -155,6 +155,8 @@ def _flatten_para(para: etree._Element) -> list[_Slot]:
             for r in child.findall(f"{W}r"):
                 idx = _slots_from_run(r, slots, idx, in_ins=child)
         elif child.tag == f"{W}hyperlink":
+            # TODO: w:ins > w:r nested inside w:hyperlink (tracked insertion of hyperlink
+            # text) is not yet handled — findall only reaches direct w:r children.
             for r in child.findall(f"{W}r"):
                 idx = _slots_from_run(r, slots, idx, in_ins=None)
         # w:del, w:pPr, w:bookmarkStart, etc. → skip
