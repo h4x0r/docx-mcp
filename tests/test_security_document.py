@@ -165,3 +165,48 @@ def test_zip_bomb_declared_size_raises(tmp_path: Path):
     with pytest.raises(DocxMcpError) as exc_info:
         doc.open()
     assert exc_info.value.code == ErrCode.OOXML_INVALID
+
+
+# ── V6: output_path traversal ────────────────────────────────────────────────
+
+def _make_open_doc(tmp_path: Path) -> DocxDocument:
+    """Return an open DocxDocument."""
+    from tests.conftest import _build_fixture
+    path = tmp_path / "src.docx"
+    _build_fixture(path)
+    doc = DocxDocument(str(path))
+    doc.open()
+    return doc
+
+
+def test_save_traversal_path_raises(tmp_path: Path):
+    """save() with a traversal output_path raises ValueError."""
+    doc = _make_open_doc(tmp_path)
+    with pytest.raises(ValueError):
+        doc.save("../../etc/passwd.docx")
+    doc.close()
+
+
+def test_save_non_docx_suffix_raises(tmp_path: Path):
+    """save() with a non-.docx output_path raises ValueError."""
+    doc = _make_open_doc(tmp_path)
+    with pytest.raises(ValueError):
+        doc.save(str(tmp_path / "out.pdf"))
+    doc.close()
+
+
+def test_copy_document_traversal_raises(tmp_path: Path):
+    """copy_document() with a traversal output_path raises ValueError."""
+    doc = _make_open_doc(tmp_path)
+    with pytest.raises(ValueError):
+        doc.copy_document("../../etc/evil.docx")
+    doc.close()
+
+
+def test_save_valid_path_works(tmp_path: Path):
+    """save() with a valid .docx path succeeds."""
+    doc = _make_open_doc(tmp_path)
+    out = str(tmp_path / "out.docx")
+    result = doc.save(out, backup=False)
+    assert "path" in result
+    doc.close()
