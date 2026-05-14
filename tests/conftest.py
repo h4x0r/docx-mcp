@@ -50,6 +50,7 @@ def _build_mike_corpus(path: Path) -> None:
         "word/endnotes.xml": _ENDNOTES_XML,
         "word/styles.xml": _STYLES_XML,
         "word/settings.xml": _SETTINGS_XML,
+        "word/header1.xml": _HEADER_XML,
         "docProps/core.xml": _CORE_XML,
     }
     with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as zf:
