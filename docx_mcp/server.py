@@ -1222,6 +1222,20 @@ def replace_text(
 
 
 @mcp.tool()
+def get_body_text() -> str:
+    """Return the full accepted-view text of the document.
+
+    Accepted view: w:ins text included, w:del text excluded.
+    Includes text inside w:hyperlink runs.
+    Paragraphs are joined by newline.
+    Footnote text is returned separately.
+
+    Returns JSON: {"body": str, "footnotes": str}
+    """
+    return _js(_require_doc().get_body_text())
+
+
+@mcp.tool()
 def get_tracked_changes() -> str:
     """Return all pending tracked changes (insertions and deletions) as a JSON list.
 

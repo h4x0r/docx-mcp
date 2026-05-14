@@ -737,3 +737,28 @@ class TracksMixin:
         if count > 0:
             self._mark("word/document.xml")
         return {"rejected": count, "scope": "by_author" if author else "all"}
+
+    def get_body_text(self) -> dict:
+        """Return accepted-view full text as {body, footnotes}."""
+        doc = self._require("word/document.xml")
+        body_lines: list[str] = []
+        for para in doc.iter(f"{W}p"):
+            slots = _flatten_para(para)
+            body_lines.append("".join(s.char for s in slots))
+
+        footnote_lines: list[str] = []
+        try:
+            fn_doc = self._require("word/footnotes.xml")
+            for fn in fn_doc.findall(f"{W}footnote"):
+                if fn.get(f"{W}id") in ("-1", "0"):
+                    continue
+                for para in fn.iter(f"{W}p"):
+                    slots = _flatten_para(para)
+                    footnote_lines.append("".join(s.char for s in slots))
+        except Exception:
+            pass
+
+        return {
+            "body": "\n".join(body_lines),
+            "footnotes": "\n".join(footnote_lines),
+        }
