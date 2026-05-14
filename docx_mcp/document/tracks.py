@@ -640,7 +640,7 @@ class TracksMixin:
         real_slot_e = real_slot_s + len(del_text)
 
         if not del_text and not ins_text:
-            return {"del_id": None, "ins_id": None, "type": "replacement", "author": author, "changed": 0}
+            return {"del_id": None, "ins_id": None, "type": "replacement", "author": author, "date": _now_iso()}
 
         cid = self._next_markup_id(doc)
         now = _now_iso()
