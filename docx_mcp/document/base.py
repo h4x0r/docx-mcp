@@ -13,6 +13,8 @@ from pathlib import Path
 
 from lxml import etree
 
+from .errors import DocxMcpError, ErrCode
+
 # ── OOXML namespace constants ───────────────────────────────────────────────
 W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 W14 = "{http://schemas.microsoft.com/office/word/2010/wordml}"
@@ -81,8 +83,18 @@ class BaseMixin:
             raise ValueError(f"Not a .docx file: {self.source_path}")
 
         self.workdir = Path(tempfile.mkdtemp(prefix="docx_mcp_"))
-        with zipfile.ZipFile(self.source_path, "r") as zf:
-            zf.extractall(self.workdir)
+        try:
+            zf_handle = zipfile.ZipFile(self.source_path, "r")
+        except zipfile.BadZipFile as exc:
+            shutil.rmtree(self.workdir, ignore_errors=True)
+            self.workdir = None
+            raise DocxMcpError(
+                ErrCode.OOXML_INVALID,
+                f"Corrupt or invalid DOCX (bad ZIP): {exc}",
+                hint="The file may be truncated or not a valid .docx file.",
+            ) from exc
+        with zf_handle:
+            zf_handle.extractall(self.workdir)
 
         # Discover and parse XML files
         xml_files = ["[Content_Types].xml"]
