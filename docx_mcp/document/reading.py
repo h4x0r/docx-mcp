@@ -67,6 +67,13 @@ class ReadingMixin:
 
     def search_text(self, query: str, *, regex: bool = False) -> list[dict]:
         """Search for text across document body, footnotes, and comments."""
+        compiled: re.Pattern | None = None
+        if regex:
+            try:
+                compiled = re.compile(query)
+            except re.error as exc:
+                raise ValueError(f"Invalid regex {query!r}: {exc}") from exc
+
         results = []
         targets = [
             ("document", "word/document.xml"),
@@ -81,8 +88,8 @@ class ReadingMixin:
                 text = self._text(para)
                 if not text:
                     continue
-                if regex:
-                    matches = list(re.finditer(query, text))
+                if compiled is not None:
+                    matches = list(compiled.finditer(text))
                     if not matches:
                         continue
                     match_info = [
