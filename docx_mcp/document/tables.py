@@ -354,7 +354,7 @@ class TablesMixin:
                 grid_span.set(f"{W}val", str(merged_cols))
 
                 # Remove intermediate cells
-                for c in range(start_col + 1, end_col + 1):
+                for _c in range(start_col + 1, end_col + 1):
                     # Re-fetch cells after removals since list changed
                     current_cells = row_el.findall(f"{W}tc")
                     # The cell at start_col+1 becomes the next one to remove
@@ -635,7 +635,7 @@ class TablesMixin:
             v_align = etree.SubElement(tc_pr, f"{W}vAlign")
         v_align.set(f"{W}val", alignment)
         self._mark("word/document.xml")
-        return {"table_idx": table_idx, "row_idx": row_idx, "col_idx": col_idx, "alignment": alignment}
+        return {"table_idx": table_idx, "row_idx": row_idx, "col_idx": col_idx, "alignment": alignment}  # noqa: E501
 
     def set_row_height(
         self, table_idx: int, row_idx: int, height_mm: float, rule: str = "exact"
@@ -723,7 +723,7 @@ class TablesMixin:
         shd.set(f"{W}color", "auto")
         shd.set(f"{W}fill", fill_color)
         self._mark("word/document.xml")
-        return {"table_idx": table_idx, "row_idx": row_idx, "col_idx": col_idx, "fill_color": fill_color}
+        return {"table_idx": table_idx, "row_idx": row_idx, "col_idx": col_idx, "fill_color": fill_color}  # noqa: E501
 
     def set_table_style(self, table_idx: int, style_name: str) -> dict:
         tbl = self._get_table(table_idx)

@@ -6,7 +6,7 @@ import contextlib
 
 from lxml import etree
 
-from .base import CT, RELS, W, W14
+from .base import CT, RELS, W14, W
 
 
 class RevisionsMixin:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from lxml import etree
 
-from .base import A, W, W14, WP
+from .base import W14, WP, A, W
 from .errors import DocxMcpError, ErrCode
 
 # WordprocessingShape namespace constants

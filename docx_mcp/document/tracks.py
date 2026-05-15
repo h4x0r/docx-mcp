@@ -18,8 +18,7 @@ import re
 
 from lxml import etree
 
-from .base import W, W14, _now_iso, _preserve
-
+from .base import W, _now_iso, _preserve
 
 # ── Normalisation ─────────────────────────────────────────────────────────────
 
@@ -431,7 +430,7 @@ def _apply_deletion(
     del_el.set(f"{W}id", str(cid))
     del_el.set(f"{W}author", author)
     del_el.set(f"{W}date", now)
-    for run_el, rpr_bytes, del_text in run_groups:
+    for _run_el, rpr_bytes, del_text in run_groups:
         del_el.append(_build_run(del_text, rpr_bytes, del_text=True))
     parent.insert(pos, del_el)
     pos += 1
@@ -640,7 +639,7 @@ class TracksMixin:
         real_slot_e = real_slot_s + len(del_text)
 
         if not del_text and not ins_text:
-            return {"del_id": None, "ins_id": None, "type": "replacement", "author": author, "date": _now_iso()}
+            return {"del_id": None, "ins_id": None, "type": "replacement", "author": author, "date": _now_iso()}  # noqa: E501
 
         cid = self._next_markup_id(doc)
         now = _now_iso()

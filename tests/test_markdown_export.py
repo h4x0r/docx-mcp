@@ -5,10 +5,7 @@ from __future__ import annotations
 import zipfile
 from pathlib import Path
 
-import pytest
-from lxml import etree
-
-from docx_mcp.document import DocxDocument, W
+from docx_mcp.document import DocxDocument
 
 
 def _make_doc(tmp_path: Path) -> DocxDocument:
@@ -60,15 +57,15 @@ def _make_doc(tmp_path: Path) -> DocxDocument:
     top_rels = (
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
         f'<Relationships xmlns="{rels_ns}">'
-        f'<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>'
+        f'<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>'  # noqa: E501
         "</Relationships>"
     )
     ct_xml = (
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
         f'<Types xmlns="{ct_ns}">'
-        '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+        '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'  # noqa: E501
         '<Default Extension="xml" ContentType="application/xml"/>'
-        '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'
+        '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'  # noqa: E501
         "</Types>"
     )
     core_xml = (
@@ -188,15 +185,15 @@ class TestMarkdownExport:
         top_rels = (
             '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
             f'<Relationships xmlns="{rels_ns}">'
-            f'<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>'
+            f'<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>'  # noqa: E501
             "</Relationships>"
         )
         ct_xml = (
             '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
             f'<Types xmlns="{ct_ns}">'
-            '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+            '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'  # noqa: E501
             '<Default Extension="xml" ContentType="application/xml"/>'
-            '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'
+            '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'  # noqa: E501
             "</Types>"
         )
         core_xml = (

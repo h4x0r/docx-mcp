@@ -5,12 +5,11 @@ from __future__ import annotations
 import re
 import tempfile
 from datetime import datetime, timezone
-from pathlib import Path
 
 from lxml import etree
 
-from .base import W, W14
-from .pii import _make_redaction_drawing, _next_drawing_id
+from .base import W14, W
+from .pii import _make_redaction_drawing
 
 
 class LitigationMixin:
@@ -58,12 +57,11 @@ class LitigationMixin:
 
         r = etree.SubElement(p, f"{W}r")
         rPr = etree.SubElement(r, f"{W}rPr")
-        b = etree.SubElement(rPr, f"{W}b")  # bold stamp
+        etree.SubElement(rPr, f"{W}b")  # bold stamp
         t = etree.SubElement(r, f"{W}t")
         t.text = stamp_text
 
         # Insert before the last sectPr (or at end if no sectPr)
-        children = list(body)
         sect_pr = body.find(f"{W}sectPr")
         if sect_pr is not None:
             idx = list(body).index(sect_pr)
@@ -132,11 +130,7 @@ class LitigationMixin:
                 run_text = t_el.text
 
                 matched = False
-                if exact_text is not None and run_text == exact_text:
-                    matched = True
-                elif exact_text is not None and exact_text in run_text:
-                    matched = True
-                elif pattern is not None and re.search(pattern, run_text):
+                if exact_text is not None and run_text == exact_text or exact_text is not None and exact_text in run_text or pattern is not None and re.search(pattern, run_text):  # noqa: E501
                     matched = True
 
                 if matched:
@@ -191,9 +185,8 @@ class LitigationMixin:
             self._redaction_log = []
 
         if not output_path:
-            tmp = tempfile.NamedTemporaryFile(suffix=".docx", delete=False)
-            output_path = tmp.name
-            tmp.close()
+            with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as tmp:
+                output_path = tmp.name
 
         log = self._redaction_log
         headers = ["#", "Para ID", "Chars Removed", "Reason", "Reviewer", "Date"]
@@ -250,9 +243,8 @@ class LitigationMixin:
             dict with path and entry_count.
         """
         if not output_path:
-            tmp = tempfile.NamedTemporaryFile(suffix=".docx", delete=False)
-            output_path = tmp.name
-            tmp.close()
+            with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as tmp:
+                output_path = tmp.name
 
         props = self.get_properties()
         author = props.get("creator", "")

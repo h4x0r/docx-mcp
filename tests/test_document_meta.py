@@ -1,4 +1,4 @@
-"""RED tests — document meta tools: get_document_outline, set_document_language, set_track_changes."""
+"""RED tests — document meta tools: get_document_outline, set_document_language, set_track_changes."""  # noqa: E501
 
 from __future__ import annotations
 
@@ -105,20 +105,20 @@ def _write_minimal_docx(
     content_types = (
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
         '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">\n'
-        '  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>\n'
+        '  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>\n'  # noqa: E501
         '  <Default Extension="xml" ContentType="application/xml"/>\n'
         '  <Override PartName="/word/document.xml"\n'
-        '    ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>\n'
+        '    ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>\n'  # noqa: E501
     )
     if styles_xml:
         content_types += (
             '  <Override PartName="/word/styles.xml"\n'
-            '    ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>\n'
+            '    ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>\n'  # noqa: E501
         )
     if settings_xml:
         content_types += (
             '  <Override PartName="/word/settings.xml"\n'
-            '    ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/>\n'
+            '    ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/>\n'  # noqa: E501
         )
     content_types += '</Types>\n'
 

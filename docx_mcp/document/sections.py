@@ -348,7 +348,7 @@ class SectionsMixin:
             break_type = ""
         else:
             type_el = sectpr.find(f"{W_NS}type")
-            break_type = type_el.get(f"{W_NS}val", "continuous") if type_el is not None else "continuous"
+            break_type = type_el.get(f"{W_NS}val", "continuous") if type_el is not None else "continuous"  # noqa: E501
 
         # page size
         pg_sz = sectpr.find(f"{W_NS}pgSz")

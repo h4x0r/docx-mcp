@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from docx_mcp.document import DocxDocument, W, W14, WP
+from docx_mcp.document import W14, WP, DocxDocument, W
 
 _TINY_PNG = (
     b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR"

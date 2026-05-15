@@ -364,7 +364,7 @@ def set_table_borders(
     size: int = 4,
 ) -> str:
     """Set borders on all six sides of a table (top, bottom, left, right, insideH, insideV)."""
-    return _js(_require_doc().set_table_borders(table_idx, border_style=border_style, color=color, size=size))
+    return _js(_require_doc().set_table_borders(table_idx, border_style=border_style, color=color, size=size))  # noqa: E501
 
 
 @mcp.tool()
@@ -376,7 +376,7 @@ def set_cell_shading(
     pattern: str = "clear",
 ) -> str:
     """Set background shading fill color on a table cell."""
-    return _js(_require_doc().set_cell_shading(table_idx, row_idx, col_idx, fill_color, pattern=pattern))
+    return _js(_require_doc().set_cell_shading(table_idx, row_idx, col_idx, fill_color, pattern=pattern))  # noqa: E501
 
 
 @mcp.tool()
@@ -428,7 +428,7 @@ def create_style(
         based_on: Optional styleId this style inherits from.
         next_style: Optional styleId applied to the next paragraph.
     """
-    return _js(_require_doc().create_style(name, style_type, based_on=based_on, next_style=next_style))
+    return _js(_require_doc().create_style(name, style_type, based_on=based_on, next_style=next_style))  # noqa: E501
 
 
 @mcp.tool()
@@ -640,7 +640,7 @@ def insert_floating_image(
 ) -> str:
     """Insert a floating (anchored) image. wrap: square|topbottom|none."""
     doc = _require_doc()
-    return _js(doc.insert_floating_image(para_id, image_path, width_cm, height_cm, h_pos, v_pos, wrap))
+    return _js(doc.insert_floating_image(para_id, image_path, width_cm, height_cm, h_pos, v_pos, wrap))  # noqa: E501
 
 
 @mcp.tool()
@@ -1182,7 +1182,7 @@ def delete_text(
         author: Author name for the revision.
         context_before: Text immediately before the target (for precise anchoring).
         context_after: Text immediately after the target (for precise anchoring).
-        ignore_case: If True, match text and context case-insensitively (output preserves original casing).
+        ignore_case: If True, match text and context case-insensitively (output preserves original casing).  # noqa: E501
     """
     return _js(_require_doc().delete_text(
         para_id, text, author=author,
@@ -1927,7 +1927,7 @@ def update_content_control(
         placeholder_text: New placeholder text. Omit to leave unchanged.
     """
     doc = _require_doc()
-    return _js(doc.update_content_control(control_id, title=title, tag=tag, placeholder_text=placeholder_text))
+    return _js(doc.update_content_control(control_id, title=title, tag=tag, placeholder_text=placeholder_text))  # noqa: E501
 
 
 # ── Template Filling ─────────────────────────────────────────────────────────
@@ -1964,7 +1964,7 @@ def validate_template_data(data: dict) -> str:
 
 @mcp.tool()
 def create_multilevel_list(name: str, levels: list[dict]) -> str:
-    """Create a multilevel list in numbering.xml. Each level dict: {num_fmt, lvl_text, indent, hanging, style?}."""
+    """Create a multilevel list in numbering.xml. Each level dict: {num_fmt, lvl_text, indent, hanging, style?}."""  # noqa: E501
     doc = _require_doc()
     return _js(doc.create_multilevel_list(name, levels))
 
@@ -2015,7 +2015,7 @@ def demote_list_item(para_id: str) -> str:
 
 
 @mcp.tool()
-def bates_number(prefix: str, start: int = 1, digits: int = 6, position: str = "footer-right") -> str:
+def bates_number(prefix: str, start: int = 1, digits: int = 6, position: str = "footer-right") -> str:  # noqa: E501
     """Add Bates numbering stamp to document footer.
 
     Args:
@@ -2669,7 +2669,7 @@ def split_document(output_dir: str = "", at_heading_level: int = 1) -> str:
 
     Returns: {"output_dir": str, "files": list[str], "parts": int}
     """
-    return _js(_require_doc().split_document(output_dir=output_dir, at_heading_level=at_heading_level))
+    return _js(_require_doc().split_document(output_dir=output_dir, at_heading_level=at_heading_level))  # noqa: E501
 
 
 @mcp.tool()
@@ -2946,7 +2946,7 @@ def insert_text_box(
     Returns:
         JSON with para_id (new paragraph), text, width_cm, height_cm.
     """
-    return _js(_require_doc().insert_text_box(para_id, text, width_cm=width_cm, height_cm=height_cm))
+    return _js(_require_doc().insert_text_box(para_id, text, width_cm=width_cm, height_cm=height_cm))  # noqa: E501
 
 
 # ── Entry point ─────────────────────────────────────────────────────────────

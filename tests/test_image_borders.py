@@ -24,7 +24,8 @@ def _get_rId(doc):
 
 def _sp_pr(doc, rId):
     """Return the pic:spPr element for the given rId."""
-    from docx_mcp.document.base import A as BA, R
+    from docx_mcp.document.base import A as BA
+    from docx_mcp.document.base import R
     tree = doc._tree("word/document.xml")
     for blip in tree.iter(f"{BA}blip"):
         if blip.get(f"{R}embed") == rId:

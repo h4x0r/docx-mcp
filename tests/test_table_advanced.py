@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import pytest
-from docx_mcp.document import DocxDocument, W, W14
+
+from docx_mcp.document import W14, DocxDocument, W
 
 
 def _make_doc_with_table(tmp_path, rows=4, cols=2, cells: list[list[str]] | None = None):
@@ -20,8 +21,6 @@ def _make_doc_with_table(tmp_path, rows=4, cols=2, cells: list[list[str]] | None
                 if text:
                     doc.modify_cell(table_idx, r, c, text)
     # Return (doc, table_id string from w14:tblId, or None if not present)
-    tbl_els = list(tree.iter(f"{W}tbl"))
-    tbl = tbl_els[table_idx]
     # The new methods use table_idx (int) — return that for simplicity
     return doc, table_idx
 
@@ -71,13 +70,6 @@ class TestDuplicateTableRow:
         """Copied row's w:p paraIds differ from all others."""
         doc, table_idx = _make_doc_with_table(tmp_path, rows=2, cols=2)
         tree = doc._tree("word/document.xml")
-        # Collect all para IDs before duplication
-        tables = list(tree.iter(f"{W}tbl"))
-        orig_ids_before = {
-            p.get(f"{W14}paraId")
-            for p in tables[table_idx].iter(f"{W}p")
-            if p.get(f"{W14}paraId")
-        }
         doc.duplicate_table_row(table_idx, row_index=0)
         # After duplication get all ids
         tables = list(tree.iter(f"{W}tbl"))

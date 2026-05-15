@@ -10,6 +10,7 @@ exceptions. An unhandled exception = crash = fuzzer finds a bug.
 """
 from __future__ import annotations
 
+import contextlib
 import os
 import sys
 import tempfile
@@ -48,14 +49,10 @@ def TestOneInput(data: bytes) -> None:
         raise
     finally:
         if doc is not None:
-            try:
+            with contextlib.suppress(Exception):
                 doc.close()
-            except Exception:
-                pass
-        try:
+        with contextlib.suppress(OSError):
             os.unlink(tmp_path)
-        except OSError:
-            pass
 
 
 if __name__ == "__main__":

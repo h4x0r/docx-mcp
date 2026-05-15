@@ -4,14 +4,13 @@ from __future__ import annotations
 
 from lxml import etree
 
-from .base import W, W14, XML_SPACE
+from .base import W14, XML_SPACE, W
 
 
 class CaptionMixin:
 
     def insert_caption(self, after_para_id: str, text: str, label: str = "Figure") -> dict:
         doc = self._tree("word/document.xml")
-        body = doc.find(f"{W}body")
 
         target = self._find_para(doc, after_para_id)
         if target is None:

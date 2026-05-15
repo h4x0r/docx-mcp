@@ -5,8 +5,6 @@ from __future__ import annotations
 import zipfile
 from pathlib import Path
 
-import pytest
-
 from docx_mcp.document import DocxDocument
 
 W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"

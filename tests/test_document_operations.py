@@ -5,10 +5,7 @@ from __future__ import annotations
 import zipfile
 from pathlib import Path
 
-import pytest
-
 from docx_mcp import server
-
 
 # ── copy_document ────────────────────────────────────────────────────────────
 
@@ -146,7 +143,6 @@ def _docx_with_rpr_change(tmp_path: Path) -> Path:
 
 def test_flatten_document_removes_ins_del(tmp_path):
     """After flatten_document, no w:ins or w:del elements remain."""
-    from lxml import etree
 
     W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
     path = _docx_with_tracked_changes(tmp_path)
@@ -161,7 +157,6 @@ def test_flatten_document_removes_ins_del(tmp_path):
 
 def test_flatten_document_removes_rPrChange(tmp_path):
     """After flatten_document, no w:rPrChange or w:pPrChange elements remain."""
-    from lxml import etree
 
     W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
     path = _docx_with_rpr_change(tmp_path)

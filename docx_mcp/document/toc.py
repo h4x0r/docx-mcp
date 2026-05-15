@@ -2,9 +2,10 @@
 from __future__ import annotations
 
 import re
+
 from lxml import etree
 
-from .base import W, W14, XML_SPACE, _preserve
+from .base import XML_SPACE, W, _preserve
 from .errors import DocxMcpError, ErrCode
 
 _TOC_FIELD = ' TOC \\o "1-3" \\h \\z \\u '
@@ -103,7 +104,7 @@ class TocMixin:
                     return child, idx
         return None, -1
 
-    def _find_caption_field_para(self, body, caption_type: str) -> tuple[etree._Element | None, int]:
+    def _find_caption_field_para(self, body, caption_type: str) -> tuple[etree._Element | None, int]:  # noqa: E501
         """Find existing LoF/LoT field paragraph by caption type (Figure|Table)."""
         children = list(body)
         for idx, child in enumerate(children):
@@ -191,10 +192,7 @@ class TocMixin:
             return {"inserted_at": existing_idx, "entry_count": len(headings), "title": title}
 
         # Build field instruction using the max_level range
-        if max_level == 3:
-            instr = _TOC_FIELD
-        else:
-            instr = f' TOC \\o "1-{max_level}" \\h \\z \\u '
+        instr = _TOC_FIELD if max_level == 3 else f' TOC \\o "1-{max_level}" \\h \\z \\u '
 
         inserted_at = self._insert_toc_block(instr, headings, title, 0)
         return {"inserted_at": inserted_at, "entry_count": len(headings), "title": title}
@@ -275,7 +273,7 @@ class TocMixin:
         try:
             idx = body_children.index(para)
         except ValueError:
-            raise ValueError(f"Paragraph with paraId '{para_id}' not found")
+            raise ValueError(f"Paragraph with paraId '{para_id}' not found") from None
         entries = self._collect_captions(doc, "Figure")
         self._insert_toc_block(_LOF_FIELD, entries, title, idx + 1)
         return {"para_id": para_id, "title": title, "entry_count": len(entries)}
@@ -295,7 +293,7 @@ class TocMixin:
         try:
             idx = body_children.index(para)
         except ValueError:
-            raise ValueError(f"Paragraph with paraId '{para_id}' not found")
+            raise ValueError(f"Paragraph with paraId '{para_id}' not found") from None
         entries = self._collect_captions(doc, "Table")
         self._insert_toc_block(_LOT_FIELD, entries, title, idx + 1)
         return {"para_id": para_id, "title": title, "entry_count": len(entries)}

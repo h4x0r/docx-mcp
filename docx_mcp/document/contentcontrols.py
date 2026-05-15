@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from lxml import etree
 
-from .base import W, W14, NSMAP, _preserve
+from .base import NSMAP, W14, W, _preserve
 from .errors import DocxMcpError, ErrCode
 
 _TRUTHY = {"true", "1", "yes", "on"}

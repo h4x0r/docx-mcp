@@ -5,7 +5,6 @@ import json
 from pathlib import Path
 
 import pytest
-from lxml import etree
 
 from docx_mcp import server
 from docx_mcp.document.errors import DocxMcpError, ErrCode

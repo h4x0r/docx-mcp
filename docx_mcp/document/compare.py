@@ -249,8 +249,7 @@ class CompareMixin:
         )
 
         # Copy base DOCX, replace word/document.xml with merged content
-        with zipfile.ZipFile(base_path) as src_zip:
-            with zipfile.ZipFile(output_path, "w", zipfile.ZIP_DEFLATED) as out_zip:
+        with zipfile.ZipFile(base_path) as src_zip, zipfile.ZipFile(output_path, "w", zipfile.ZIP_DEFLATED) as out_zip:  # noqa: E501
                 for name in src_zip.namelist():
                     out_zip.writestr(
                         name,

@@ -6,7 +6,6 @@ import zipfile
 from pathlib import Path
 
 import pytest
-from lxml import etree
 
 from docx_mcp import server
 from docx_mcp.document import DocxDocument
@@ -103,7 +102,7 @@ class TestFindReplaceFormatted:
         doc = _open_doc(p)
         doc.find_replace_formatted("world", "earth", bold=True)
         runs = _get_runs(doc, "00000001")
-        fmt_run = next(r for r in runs if r.find(f"{W}t") is not None and r.find(f"{W}t").text == "earth")
+        fmt_run = next(r for r in runs if r.find(f"{W}t") is not None and r.find(f"{W}t").text == "earth")  # noqa: E501
         rpr = fmt_run.find(f"{W}rPr")
         assert rpr is not None
         assert rpr.find(f"{W}b") is not None
@@ -114,7 +113,7 @@ class TestFindReplaceFormatted:
         doc = _open_doc(p)
         doc.find_replace_formatted("Hello", "Hi", italic=True)
         runs = _get_runs(doc, "00000001")
-        fmt_run = next(r for r in runs if r.find(f"{W}t") is not None and r.find(f"{W}t").text == "Hi")
+        fmt_run = next(r for r in runs if r.find(f"{W}t") is not None and r.find(f"{W}t").text == "Hi")  # noqa: E501
         rpr = fmt_run.find(f"{W}rPr")
         assert rpr is not None
         assert rpr.find(f"{W}i") is not None
@@ -125,7 +124,7 @@ class TestFindReplaceFormatted:
         doc = _open_doc(p)
         doc.find_replace_formatted("Hello", "Hi", color="FF0000")
         runs = _get_runs(doc, "00000001")
-        fmt_run = next(r for r in runs if r.find(f"{W}t") is not None and r.find(f"{W}t").text == "Hi")
+        fmt_run = next(r for r in runs if r.find(f"{W}t") is not None and r.find(f"{W}t").text == "Hi")  # noqa: E501
         rpr = fmt_run.find(f"{W}rPr")
         assert rpr is not None
         color_el = rpr.find(f"{W}color")
@@ -138,7 +137,7 @@ class TestFindReplaceFormatted:
         doc = _open_doc(p)
         doc.find_replace_formatted("Hello", "Hi", size_pt=12.0)
         runs = _get_runs(doc, "00000001")
-        fmt_run = next(r for r in runs if r.find(f"{W}t") is not None and r.find(f"{W}t").text == "Hi")
+        fmt_run = next(r for r in runs if r.find(f"{W}t") is not None and r.find(f"{W}t").text == "Hi")  # noqa: E501
         rpr = fmt_run.find(f"{W}rPr")
         assert rpr is not None
         sz = rpr.find(f"{W}sz")
@@ -175,7 +174,7 @@ class TestFindReplaceFormatted:
         doc = _open_doc(p)
         doc.find_replace_formatted("Hello", "Hi", bold=False)
         runs = _get_runs(doc, "00000001")
-        fmt_run = next(r for r in runs if r.find(f"{W}t") is not None and r.find(f"{W}t").text == "Hi")
+        fmt_run = next(r for r in runs if r.find(f"{W}t") is not None and r.find(f"{W}t").text == "Hi")  # noqa: E501
         rpr = fmt_run.find(f"{W}rPr")
         assert rpr is not None
         b_el = rpr.find(f"{W}b")

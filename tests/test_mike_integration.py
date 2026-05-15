@@ -1,11 +1,12 @@
 """Tests for mike integration: get_body_text, replace_text return, hyperlink, NBSP."""
 from __future__ import annotations
+
 import json
+
 import pytest
+
 from docx_mcp import server
 from docx_mcp.document.tracks import _flatten_para
-from lxml import etree
-
 
 W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 W14 = "{http://schemas.microsoft.com/office/word/2010/wordml}"
@@ -195,7 +196,7 @@ def test_batch_three_replacements_in_one_session(mike_corpus_docx, tmp_path):
     server.save_document(str(out))
     # Re-open and verify all three changes are tracked
     server.open_document(str(out))
-    # get_tracked_changes returns a list of dicts with keys: type, change_id, author, date, para_id, text
+    # get_tracked_changes returns a list of dicts with keys: type, change_id, author, date, para_id, text  # noqa: E501
     changes = json.loads(server.get_tracked_changes())
     by_para: dict[str, list[str]] = {}
     for c in changes:
@@ -229,8 +230,8 @@ def test_accept_change_from_replace_text(mike_corpus_docx, tmp_path):
     # Verify changes are PERSISTED (not just applied to in-memory accepted view)
     changes = json.loads(server.get_tracked_changes())
     remaining_ids = {c["change_id"] for c in changes}
-    assert del_id not in remaining_ids, f"del change {del_id} must be gone after accept; remaining: {remaining_ids}"
-    assert ins_id not in remaining_ids, f"ins change {ins_id} must be gone after accept; remaining: {remaining_ids}"
+    assert del_id not in remaining_ids, f"del change {del_id} must be gone after accept; remaining: {remaining_ids}"  # noqa: E501
+    assert ins_id not in remaining_ids, f"ins change {ins_id} must be gone after accept; remaining: {remaining_ids}"  # noqa: E501
 
 
 # ── Real fixture smoke tests ──────────────────────────────────────────────────

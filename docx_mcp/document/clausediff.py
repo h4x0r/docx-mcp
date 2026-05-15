@@ -102,7 +102,7 @@ class ClauseDiffMixin:
         3. Produces tracked-change output aligned at clause level
         4. Flags reordered, added, deleted, or renamed clauses
 
-        Returns: {"output_path": str, "clauses_compared": int, "clauses_changed": int, "reordered": int}
+        Returns: {"output_path": str, "clauses_compared": int, "clauses_changed": int, "reordered": int}  # noqa: E501
         Raises: DocxMcpError(ErrCode.PART_NOT_FOUND) if other_path doesn't exist.
         """
         if align_by != "heading":
@@ -179,7 +179,7 @@ class ClauseDiffMixin:
         out = output_path if output_path else str(self.workdir / "compare_contracts_output.docx")
         self.save(out, backup=False)
 
-        heading_matches = [(i, j, r) for i, j, r in matched_pairs if clauses_a[i]["heading"] or clauses_b[j]["heading"]]
+        heading_matches = [(i, j, r) for i, j, r in matched_pairs if clauses_a[i]["heading"] or clauses_b[j]["heading"]]  # noqa: E501
         clauses_compared = len(heading_matches) + len(
             [i for i in range(len(clauses_a)) if i not in matched_a and clauses_a[i]["heading"]]
         ) + len(

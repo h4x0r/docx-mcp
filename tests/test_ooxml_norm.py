@@ -21,7 +21,7 @@ import pytest
 from lxml import etree
 
 from docx_mcp import server
-from docx_mcp.document import W, W14
+from docx_mcp.document import W14, W
 
 
 def _j(s: str) -> dict:
@@ -50,10 +50,10 @@ def _minimal_docx(path: Path, body_xml: str) -> None:
     ct = (
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
         '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
-        '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+        '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'  # noqa: E501
         '<Default Extension="xml" ContentType="application/xml"/>'
         '<Override PartName="/word/document.xml"'
-        ' ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'
+        ' ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'  # noqa: E501
         '</Types>'
     )
     rels = (
@@ -126,7 +126,7 @@ class TestZeroWidthSpace:
         # "force\u200bmajeure" — ZWS between two words (no visible space)
         body = (
             f'    <w:p w14:paraId="{self.PARA_ID}" w14:textId="77777777">\n'
-            '      <w:r><w:t xml:space="preserve">The force\u200bmajeure clause applies.</w:t></w:r>\n'
+            '      <w:r><w:t xml:space="preserve">The force\u200bmajeure clause applies.</w:t></w:r>\n'  # noqa: E501
             '    </w:p>'
         )
         _minimal_docx(path, body)
@@ -217,7 +217,7 @@ class TestCaseInsensitive:
         path = tmp_path / "case.docx"
         body = (
             f'    <w:p w14:paraId="{self.PARA_ID}" w14:textId="77777777">\n'
-            '      <w:r><w:t xml:space="preserve">This Agreement shall remain in force.</w:t></w:r>\n'
+            '      <w:r><w:t xml:space="preserve">This Agreement shall remain in force.</w:t></w:r>\n'  # noqa: E501
             '    </w:p>'
         )
         _minimal_docx(path, body)

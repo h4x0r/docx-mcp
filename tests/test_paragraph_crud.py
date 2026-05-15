@@ -41,7 +41,6 @@ class TestParagraphCRUD:
 
         doc = server._doc
         W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
-        W14 = "{http://schemas.microsoft.com/office/word/2010/wordml}"
         root = doc._tree("word/document.xml")
         para = doc._find_para(root, new_pid)
         ppr = para.find(f"{W}pPr")
@@ -114,7 +113,6 @@ class TestParagraphCRUD:
         assert result["deleted"] == "00000004"
 
         doc = server._doc
-        W14 = "{http://schemas.microsoft.com/office/word/2010/wordml}"
         root = doc._tree("word/document.xml")
         found = doc._find_para(root, "00000004")
         assert found is None

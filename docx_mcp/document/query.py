@@ -32,12 +32,12 @@ def _xpath_with_timeout(tree, xpath: str, namespaces: dict, timeout: int = 2):
     signal.alarm(timeout)
     try:
         return tree.xpath(xpath, namespaces=namespaces)
-    except TimeoutError:
+    except TimeoutError as exc:
         raise DocxMcpError(
             ErrCode.XPATH_ERROR,
             "XPath evaluation timed out (possible DoS pattern)",
             hint="Simplify the XPath expression.",
-        )
+        ) from exc
     finally:
         signal.alarm(0)
         signal.signal(signal.SIGALRM, old_handler)

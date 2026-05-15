@@ -64,7 +64,6 @@ class TestCommentCRUD:
         assert cid not in ids
 
     def test_delete_comment_removes_range_markers(self, test_docx: Path) -> None:
-        from lxml import etree
 
         self._open(test_docx)
         cid = self._add_comment("00000002", "range marker test")
@@ -90,7 +89,6 @@ class TestCommentCRUD:
 
     def test_resolve_comment_sets_done(self, test_docx: Path) -> None:
         """Resolving a comment that has a reply (which creates commentsExtended.xml)."""
-        from lxml import etree
 
         self._open(test_docx)
         cid = self._add_comment("00000002", "parent comment")

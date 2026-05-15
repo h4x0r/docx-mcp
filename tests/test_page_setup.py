@@ -1,4 +1,4 @@
-"""Tests for page setup convenience methods: set_page_size, set_page_margins, set_page_orientation."""
+"""Tests for page setup convenience methods: set_page_size, set_page_margins, set_page_orientation."""  # noqa: E501
 
 from __future__ import annotations
 

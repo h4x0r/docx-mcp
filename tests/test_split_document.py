@@ -2,13 +2,9 @@
 
 from __future__ import annotations
 
-import copy
-import json
-import tempfile
 import zipfile
 from pathlib import Path
 
-import pytest
 from lxml import etree
 
 W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"

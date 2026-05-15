@@ -9,7 +9,6 @@ import pytest
 
 from docx_mcp import server
 
-
 W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 W14 = "{http://schemas.microsoft.com/office/word/2010/wordml}"
 

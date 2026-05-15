@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from lxml import etree
 
-from .base import W, W14, _now_iso, _preserve
+from .base import W14, W, _now_iso, _preserve
 from .errors import DocxMcpError, ErrCode
 
 
@@ -837,7 +837,7 @@ class FormattingMixin:
                         insert_at += 1
 
                     fmt_run = etree.Element(f"{W}r")
-                    has_fmt = bold is not None or italic is not None or color is not None or size_pt is not None
+                    has_fmt = bold is not None or italic is not None or color is not None or size_pt is not None  # noqa: E501
                     new_rpr = etree.SubElement(fmt_run, f"{W}rPr") if has_fmt else None
 
                     if bold is True:

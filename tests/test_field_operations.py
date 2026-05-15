@@ -1,12 +1,11 @@
-"""Tests for field operations: delete_field, get_field, insert_date_field, insert_page_number_field."""
+"""Tests for field operations: delete_field, get_field, insert_date_field, insert_page_number_field."""  # noqa: E501
 from __future__ import annotations
 
 from pathlib import Path
 
 import pytest
-from lxml import etree
 
-from docx_mcp.document import DocxDocument, W, W14
+from docx_mcp.document import W14, DocxDocument, W
 from docx_mcp.document.errors import DocxMcpError
 
 _W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"

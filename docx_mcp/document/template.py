@@ -5,7 +5,7 @@ import copy
 
 from lxml import etree
 
-from .base import W, W14, _preserve
+from .base import W14, W, _preserve
 
 
 def _set_sdt_text(sdt: etree._Element, val: str) -> None:

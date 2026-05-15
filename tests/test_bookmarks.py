@@ -1,14 +1,12 @@
 """Tests for BookmarksMixin — Bookmark CRUD."""
 from __future__ import annotations
 
-import zipfile
 from pathlib import Path
 
 import pytest
 
 from docx_mcp.document import DocxDocument
 from docx_mcp.document.errors import DocxMcpError, ErrCode
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -46,7 +44,6 @@ class TestListBookmarks:
 
     def test_skips_internal_underscore_bookmarks(self, tmp_path: Path):
         """Bookmarks whose names start with '_' are excluded."""
-        import zipfile
         from lxml import etree
 
         out = str(tmp_path / "internal.docx")
@@ -94,7 +91,6 @@ class TestAddBookmark:
 
     def test_bookmark_in_document_xml(self, tmp_path: Path, test_docx: Path):
         """bookmarkStart appears in word/document.xml after add_bookmark."""
-        from lxml import etree
         doc = _open(tmp_path, test_docx)
         doc.add_bookmark("00000002", "xml_check")
         tree = doc._require("word/document.xml")

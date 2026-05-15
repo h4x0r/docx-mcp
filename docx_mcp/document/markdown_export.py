@@ -1,8 +1,8 @@
 """Markdown export mixin."""
 from __future__ import annotations
-import os
+
 import re
-from lxml import etree
+
 from .base import W
 
 _HEADING_RE = re.compile(r"^heading\s*([123])$", re.IGNORECASE)
@@ -58,7 +58,7 @@ def _para_to_md(para) -> str:
     level = _heading_level(ppr)
     if level is not None:
         runs = para.findall(f"{W}r")
-        text = "".join(_run_text(r) for r in runs) if runs else "".join(t.text or "" for t in para.iter(f"{W}t"))
+        text = "".join(_run_text(r) for r in runs) if runs else "".join(t.text or "" for t in para.iter(f"{W}t"))  # noqa: E501
         return "#" * level + " " + text
 
     runs = para.findall(f"{W}r")

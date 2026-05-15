@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from lxml import etree
 
-from .base import W, W14
+from .base import W14, W
 from .errors import DocxMcpError, ErrCode
 
 M = "{http://schemas.openxmlformats.org/officeDocument/2006/math}"
@@ -135,15 +135,15 @@ class EquationsMixin:
         """
         try:
             from latex2mathml.converter import convert
-        except ImportError:
+        except ImportError as exc:
             raise DocxMcpError(
                 ErrCode.PII_DEPS_MISSING,
                 "latex2mathml required: pip install latex2mathml",
-            )
+            ) from exc
         try:
             mathml_str = convert(latex)
         except Exception as e:
-            raise DocxMcpError(ErrCode.OOXML_INVALID, f"LaTeX conversion failed: {e}")
+            raise DocxMcpError(ErrCode.OOXML_INVALID, f"LaTeX conversion failed: {e}") from e
 
         mathml_tree = etree.fromstring(mathml_str.encode())
         omml = _mathml_to_omml(mathml_tree)

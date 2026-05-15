@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from lxml import etree
 
-from .base import W, W14, XML_SPACE, _preserve
+from .base import W14, XML_SPACE, W, _preserve
 from .errors import DocxMcpError, ErrCode
 
 
@@ -232,7 +232,7 @@ class FieldsMixin:
             try:
                 start_idx = children.index(begin_run)
             except ValueError:
-                raise ValueError(f"Field '{field_id}' begin run not in paragraph.")
+                raise ValueError(f"Field '{field_id}' begin run not in paragraph.") from None
 
             runs_to_remove = [begin_run]
             for sibling in children[start_idx + 1:]:
@@ -409,10 +409,7 @@ class FieldsMixin:
                 f"Paragraph with paraId '{para_id}' not found.",
             )
 
-        if reset:
-            instr = f" SEQ {seq_name} \\r 1 "
-        else:
-            instr = f" SEQ {seq_name} "
+        instr = f" SEQ {seq_name} \\r 1 " if reset else f" SEQ {seq_name} "
         for run in self._build_field_runs(instr, cached_value="1"):
             para.append(run)
 

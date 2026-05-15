@@ -6,7 +6,7 @@ import zipfile
 
 import pytest
 
-from docx_mcp.document import DocxDocument, W, W14, WP
+from docx_mcp.document import WP, DocxDocument, W
 from docx_mcp.document.errors import DocxMcpError, ErrCode
 
 # WPS namespace constant

@@ -65,7 +65,7 @@ class TestGetStyle:
 class TestCopyStyle:
     def test_copy_style_creates_new_style(self, tmp_path):
         doc = _make_doc(tmp_path)
-        result = doc.copy_style("Normal", "MyNormal")
+        doc.copy_style("Normal", "MyNormal")
         styles = doc.get_styles()
         ids = [s["id"] for s in styles]
         assert "MyNormal" in ids
@@ -113,7 +113,7 @@ class TestCopyStyle:
 
 class TestApplyStyleToRange:
     def _get_first_para_id(self, doc: DocxDocument) -> str:
-        from docx_mcp.document.base import W, W14
+        from docx_mcp.document.base import W14, W
         tree = doc._require("word/document.xml")
         body = tree.find(f"{W}body")
         for p in body:
@@ -131,7 +131,7 @@ class TestApplyStyleToRange:
 
     def test_apply_style_to_multiple_paras(self, tmp_path):
         doc = _make_doc(tmp_path)
-        from docx_mcp.document.base import W, W14
+        from docx_mcp.document.base import W14, W
         tree = doc._require("word/document.xml")
         body = tree.find(f"{W}body")
         para_ids = []
@@ -170,7 +170,7 @@ class TestApplyStyleToRange:
         # Create a custom style and apply it
         doc.create_style("TestApplyStyle", "paragraph")
         doc.apply_style_to_range([para_id], "TestApplyStyle")
-        from docx_mcp.document.base import W, W14
+        from docx_mcp.document.base import W14, W
         tree = doc._require("word/document.xml")
         body = tree.find(f"{W}body")
         for p in body.iter(f"{W}p"):

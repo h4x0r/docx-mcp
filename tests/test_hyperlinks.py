@@ -1,12 +1,10 @@
 """Tests for HyperlinksMixin — Hyperlink CRUD."""
 from __future__ import annotations
 
-import shutil
 import zipfile
 from pathlib import Path
 
 import pytest
-from lxml import etree
 
 from docx_mcp.document import DocxDocument
 from docx_mcp.document.errors import DocxMcpError, ErrCode
@@ -108,7 +106,7 @@ _DOC_RELS_WITH_LINK = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 </Relationships>"""
 
 
-def _build_docx(path: Path, *, document_xml: str = _DOCUMENT_XML_PLAIN, rels: str = _DOC_RELS) -> Path:
+def _build_docx(path: Path, *, document_xml: str = _DOCUMENT_XML_PLAIN, rels: str = _DOC_RELS) -> Path:  # noqa: E501
     with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as zf:
         zf.writestr("[Content_Types].xml", _CONTENT_TYPES.strip())
         zf.writestr("_rels/.rels", _TOP_RELS.strip())

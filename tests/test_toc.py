@@ -1,14 +1,12 @@
-"""Tests for TocMixin — generate_toc, update_toc, generate_list_of_figures, generate_list_of_tables."""
+"""Tests for TocMixin — generate_toc, update_toc, generate_list_of_figures, generate_list_of_tables."""  # noqa: E501
 from __future__ import annotations
 
 import uuid
 from pathlib import Path
 
-import pytest
 from lxml import etree
 
-from docx_mcp.document import DocxDocument, W, W14
-
+from docx_mcp.document import W14, DocxDocument, W
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 

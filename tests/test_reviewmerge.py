@@ -10,7 +10,6 @@ import pytest
 from docx_mcp import server
 from docx_mcp.document.errors import DocxMcpError, ErrCode
 
-
 # ── Minimal DOCX builders ────────────────────────────────────────────────────
 
 _CONTENT_TYPES = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>

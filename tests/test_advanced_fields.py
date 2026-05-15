@@ -1,11 +1,11 @@
-"""Tests for P9.1: advanced field codes — insert_if_field, insert_sequence_field, insert_merge_field."""
+"""Tests for P9.1: advanced field codes — insert_if_field, insert_sequence_field, insert_merge_field."""  # noqa: E501
 from __future__ import annotations
 
 from pathlib import Path
 
 import pytest
 
-from docx_mcp.document import DocxDocument, W, W14
+from docx_mcp.document import W14, DocxDocument, W
 from docx_mcp.document.errors import DocxMcpError, ErrCode
 
 

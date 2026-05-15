@@ -1,14 +1,12 @@
-"""Tests for LitigationMixin: bates_number, redact_text, generate_redaction_log, generate_privilege_log."""
+"""Tests for LitigationMixin: bates_number, redact_text, generate_redaction_log, generate_privilege_log."""  # noqa: E501
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
-import pytest
 from lxml import etree
 
-from docx_mcp.document import DocxDocument, W, W14
+from docx_mcp.document import DocxDocument, W
 
 
 def _make_doc(tmp_path: Path) -> DocxDocument:

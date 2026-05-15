@@ -6,8 +6,7 @@ import pytest
 from lxml import etree
 
 from docx_mcp.document import DocxDocument
-from docx_mcp.document.base import W, W14, WP
-
+from docx_mcp.document.base import W14, WP, W
 
 # ── Helper: insert a wp:docPr-bearing drawing into a paragraph ───────────────
 

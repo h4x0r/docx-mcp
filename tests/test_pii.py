@@ -21,7 +21,7 @@ from __future__ import annotations
 import json
 import zipfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, patch
 
 import pytest
 from lxml import etree
@@ -284,7 +284,7 @@ _A_NS = "http://schemas.openxmlformats.org/drawingml/2006/main"
 _WPS_NS = "http://schemas.microsoft.com/office/word/2010/wordprocessingShape"
 
 
-def _make_fake_result(start: int, end: int, entity_type: str = "EMAIL_ADDRESS", score: float = 0.85):
+def _make_fake_result(start: int, end: int, entity_type: str = "EMAIL_ADDRESS", score: float = 0.85):  # noqa: E501
     """Create a mock Presidio RecognizerResult."""
     r = MagicMock()
     r.entity_type = entity_type

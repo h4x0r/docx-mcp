@@ -63,9 +63,12 @@ select = ["E", "F", "W", "I", "UP", "B", "SIM"]
 
 [tool.ruff.lint.per-file-ignores]
 "docx_mcp/document/creation.py" = ["E501"]  # inline XML templates
+"docx_mcp/document/clausediff.py" = ["E501"]  # long docstring lines
+"docx_mcp/server.py" = ["E501"]  # long docstring lines
 "tests/conftest.py" = ["E501"]  # inline XML templates
 "tests/test_tracks.py" = ["E501"]  # complex assertion expressions
 "tests/test_creation.py" = ["E501"]  # complex assertion expressions
+"tests/test_table_extensions.py" = ["E501"]  # inline XML templates
 
 # ── Pytest ──────────────────────────────────────────────────────────────────
 

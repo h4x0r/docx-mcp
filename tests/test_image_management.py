@@ -1,4 +1,4 @@
-"""Tests for image management tools: delete_image, update_image, set_image_size, set_image_alt_text."""
+"""Tests for image management tools: delete_image, update_image, set_image_size, set_image_alt_text."""  # noqa: E501
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import pytest
 from lxml import etree
 
 from docx_mcp.document import DocxDocument
-from docx_mcp.document.base import A, R, RELS, W, W14, WP
+from docx_mcp.document.base import RELS, W14, WP, A, R, W
 
 _PIC = "{http://schemas.openxmlformats.org/drawingml/2006/picture}"
 

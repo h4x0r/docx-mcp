@@ -165,7 +165,7 @@ class CommentsMixin:
 
     def _create_comments_extended_part(self) -> etree._Element:
         """Create word/commentsExtended.xml and register in rels + content types."""
-        from .base import NSMAP, CT_TYPES, REL_TYPES, RELS, CT
+        from .base import CT, CT_TYPES, NSMAP, REL_TYPES, RELS
 
         root = etree.Element(
             f"{W15}commentsEx",

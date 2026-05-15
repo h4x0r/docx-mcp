@@ -5,7 +5,6 @@ import json
 from pathlib import Path
 
 import pytest
-from lxml import etree
 
 from docx_mcp import server
 from docx_mcp.document.errors import DocxMcpError, ErrCode
@@ -77,8 +76,6 @@ class TestWritePart:
     def test_write_then_read_roundtrip(self, test_docx: Path, tmp_path: Path):
         _open(test_docx)
         doc = _require_doc()
-        # Get current XML, modify it slightly (add an XML comment)
-        original = doc.read_part("word/styles.xml")["xml"]
         # Build a minimal well-formed replacement for styles.xml
         minimal_xml = (
             '<?xml version="1.0" encoding="UTF-8"?>'

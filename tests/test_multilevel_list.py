@@ -1,9 +1,11 @@
-"""Tests for multilevel list methods: create_multilevel_list, restart_numbering, suppress_numbering."""
+"""Tests for multilevel list methods: create_multilevel_list, restart_numbering, suppress_numbering."""  # noqa: E501
 from __future__ import annotations
+
 import uuid
-import pytest
+
 from lxml import etree
-from docx_mcp.document import DocxDocument, W, W14
+
+from docx_mcp.document import W14, DocxDocument, W
 
 
 def _make_doc(tmp_path):
@@ -122,7 +124,7 @@ class TestMultilevelList:
         """create_multilevel_list with style binds abstractNum to heading style."""
         doc = _make_doc(tmp_path)
         levels = [
-            {"num_fmt": "decimal", "lvl_text": "%1.", "indent": 0, "hanging": 360, "style": "Heading 1"},
+            {"num_fmt": "decimal", "lvl_text": "%1.", "indent": 0, "hanging": 360, "style": "Heading 1"},  # noqa: E501
         ]
         result = doc.create_multilevel_list("HeadingList", levels)
         num_tree = doc._tree("word/numbering.xml")

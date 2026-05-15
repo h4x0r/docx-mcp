@@ -36,7 +36,7 @@ class TestDocxMcpError:
         assert issubclass(DocxMcpError, Exception)
 
     def test_can_be_caught_as_exception(self):
-        with pytest.raises(Exception):
+        with pytest.raises(DocxMcpError):
             raise DocxMcpError(ErrCode.STYLE_NOT_FOUND, "style missing")
 
     def test_can_be_caught_as_docxmcperror(self):

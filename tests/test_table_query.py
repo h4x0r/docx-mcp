@@ -13,7 +13,7 @@ def _make_doc_with_table(tmp_path: Path) -> DocxDocument:
     doc = DocxDocument.create(out)
     # get first para_id and add a 2x3 table
     tree = doc._tree("word/document.xml")
-    from docx_mcp.document.base import W, W14
+    from docx_mcp.document.base import W14, W
 
     para = next(p for p in tree.iter(f"{W}p") if p.get(f"{W14}paraId"))
     para_id = para.get(f"{W14}paraId")
@@ -106,7 +106,7 @@ class TestCopyTable:
     def test_copy_table_paraids_regenerated(self, tmp_path):
         doc = _make_doc_with_table(tmp_path)
         doc.copy_table(0)
-        from docx_mcp.document.base import W, W14
+        from docx_mcp.document.base import W14, W
 
         tree = doc._tree("word/document.xml")
         para_ids = [

@@ -22,7 +22,6 @@ import pytest
 from lxml import etree
 
 from docx_mcp import server
-from docx_mcp.document import W, W14
 
 
 def _j(s: str) -> dict:
@@ -36,10 +35,10 @@ def _j(s: str) -> dict:
 _CONTENT_TYPES = (
     '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
     '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
-    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'  # noqa: E501
     '<Default Extension="xml" ContentType="application/xml"/>'
     '<Override PartName="/word/document.xml"'
-    ' ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'
+    ' ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'  # noqa: E501
     '<Override PartName="/docProps/core.xml"'
     ' ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>'
     '<Override PartName="/docProps/app.xml"'

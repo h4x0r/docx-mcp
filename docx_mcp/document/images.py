@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import shutil
 from pathlib import Path
 
@@ -211,10 +212,7 @@ class ImagesMixin:
             raise ValueError(f"Image rId '{rId}' not found in relationships")
 
         target = rel.get("Target", "")
-        if target.startswith("/"):
-            zip_path = target.lstrip("/")
-        else:
-            zip_path = f"word/{target}"
+        zip_path = target.lstrip("/") if target.startswith("/") else f"word/{target}"
 
         new_bytes = Path(new_image_path).read_bytes()
         self._binaries[zip_path] = new_bytes
@@ -375,10 +373,8 @@ class ImagesMixin:
         """Return max existing wp:docPr id + 1 for unique id allocation."""
         max_id = 0
         for el in doc_tree.iter(f"{WP}docPr"):
-            try:
+            with contextlib.suppress(ValueError):
                 max_id = max(max_id, int(el.get("id", "0")))
-            except ValueError:
-                pass
         return max_id + 1
 
     def insert_floating_image(

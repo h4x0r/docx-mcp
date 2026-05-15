@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from docx_mcp.document import DocxDocument, W, W14
+from docx_mcp.document import W14, DocxDocument, W
 from docx_mcp.document.errors import DocxMcpError, ErrCode
 
 
@@ -78,7 +78,7 @@ class TestInsertCodeBlock:
         doc, para_id = _make_doc(tmp_path)
         result = doc.insert_code_block(para_id, "print('hello')")
         tree = doc._tree("word/document.xml")
-        new_para = next((p for p in tree.iter(f"{W}p") if p.get(f"{W14}paraId") == result["para_id"]), None)
+        new_para = next((p for p in tree.iter(f"{W}p") if p.get(f"{W14}paraId") == result["para_id"]), None)  # noqa: E501
         assert new_para is not None
 
     def test_has_courier_new_font(self, tmp_path: Path):

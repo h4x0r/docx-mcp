@@ -1,9 +1,11 @@
 """Hyperlink CRUD mixin."""
 from __future__ import annotations
 
+import contextlib
+
 from lxml import etree
 
-from .base import RELS, W, W14, R
+from .base import RELS, W14, R, W
 from .errors import DocxMcpError, ErrCode
 
 _HYPERLINK_TYPE = (
@@ -185,10 +187,8 @@ def _next_rid(rels: etree._Element) -> str:
     for rel in rels.findall(f"{{{rels_ns}}}Relationship"):
         rid = rel.get("Id", "")
         if rid.startswith("rId"):
-            try:
+            with contextlib.suppress(ValueError):
                 max_n = max(max_n, int(rid[3:]))
-            except ValueError:
-                pass
     return f"rId{max_n + 1}"
 
 

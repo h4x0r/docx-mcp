@@ -4,9 +4,8 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from lxml import etree
 
-from docx_mcp.document import DocxDocument, W, W14
+from docx_mcp.document import W14, DocxDocument, W
 from docx_mcp.document.errors import DocxMcpError, ErrCode
 
 # ── Namespace strings for assertions ────────────────────────────────────────

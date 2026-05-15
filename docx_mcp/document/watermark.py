@@ -6,7 +6,7 @@ import contextlib
 
 from lxml import etree
 
-from .base import V, W, RELS
+from .base import RELS, W
 
 _V_NS = "urn:schemas-microsoft-com:vml"
 _HEADER_REL_TYPE = (
@@ -65,7 +65,6 @@ class WatermarkMixin:
         if path is None:
             path = "word/header1.xml"
 
-        hdr_ns = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
         root = etree.Element(
             f"{W}hdr",
             nsmap={
@@ -171,7 +170,7 @@ class WatermarkMixin:
             {"removed": int} count of watermark <w:r> elements removed.
         """
         # Eagerly load all header parts so lazy-loaded ones are not missed
-        for rel_path in list(self._trees):
+        for _rel_path in list(self._trees):
             pass
         ct = self._tree("[Content_Types].xml")
         if ct is not None:

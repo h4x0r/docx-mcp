@@ -1,5 +1,6 @@
 """Stable error taxonomy for docx-mcp tools."""
 from __future__ import annotations
+
 from enum import Enum
 
 

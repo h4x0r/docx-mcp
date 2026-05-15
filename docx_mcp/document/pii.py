@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
+import contextlib
 import copy
 import os
 import zipfile
 from pathlib import Path
 
 from lxml import etree
-
-from .base import W
 
 _W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 _XML_SPACE = "{http://www.w3.org/XML/1998/namespace}space"
@@ -28,10 +27,8 @@ def _next_drawing_id(doc_tree: etree._Element, _used: set[int] | None = None) ->
     _WP = "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
     used = set()
     for el in doc_tree.iter(f"{{{_WP}}}docPr"):
-        try:
+        with contextlib.suppress(ValueError, TypeError):
             used.add(int(el.get("id", 0)))
-        except (ValueError, TypeError):
-            pass
     if _used:
         used.update(_used)
     n = 1

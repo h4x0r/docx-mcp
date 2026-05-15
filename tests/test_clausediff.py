@@ -11,7 +11,6 @@ import pytest
 from docx_mcp import server
 from docx_mcp.document.errors import DocxMcpError, ErrCode
 
-
 # ── Minimal DOCX builders ────────────────────────────────────────────────────
 
 _CONTENT_TYPES = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -204,7 +203,7 @@ class TestCompareContracts:
         assert result["clauses_compared"] >= 2
 
     def test_heading_style_case_insensitive(self, tmp_path: Path):
-        doc_xml = f"""<?xml version="1.0"?>
+        doc_xml = """<?xml version="1.0"?>
 <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
             xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml">
   <w:body>

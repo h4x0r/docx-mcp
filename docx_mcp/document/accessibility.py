@@ -1,7 +1,7 @@
 """Accessibility mixin: alt text and accessibility check."""
 from __future__ import annotations
 
-from .base import W, WP
+from .base import WP, W
 
 
 class AccessibilityMixin:

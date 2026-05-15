@@ -27,8 +27,7 @@ import pytest
 from lxml import etree
 
 from docx_mcp import server
-from docx_mcp.document import W, W14
-
+from docx_mcp.document import W14, W
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Helpers
@@ -519,7 +518,7 @@ class TestMultiRunSpanning:
         assert result["type"] == "replacement"
         p = _para_xml("00000006")
         del_texts = "".join(dt.text or "" for dt in p.iter(f"{W}delText"))
-        ins_texts = "".join(t.text or "" for t in p.iter(f"{W}ins") for t2 in t.iter(f"{W}t") for _ in [None])
+        ins_texts = "".join(t.text or "" for t in p.iter(f"{W}ins") for t2 in t.iter(f"{W}t") for _ in [None])  # noqa: E501
         # Simpler: collect ins w:t text
         ins_texts = ""
         for ins in p.iter(f"{W}ins"):

@@ -3,8 +3,8 @@ set_column_widths, csv_to_table, table_to_csv."""
 
 import csv
 import io
-import pytest
-from docx_mcp.document import DocxDocument, W, W14
+
+from docx_mcp.document import W14, DocxDocument, W
 
 
 def _make_doc_with_table(tmp_path, rows=3, cols=3):

@@ -1,5 +1,6 @@
 import pytest
-from docx_mcp.document import DocxDocument, W, W14
+
+from docx_mcp.document import W14, DocxDocument, W
 from docx_mcp.document.errors import DocxMcpError, ErrCode
 
 M = "{http://schemas.openxmlformats.org/officeDocument/2006/math}"

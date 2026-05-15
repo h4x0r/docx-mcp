@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import copy
-import os
 import re
 import tempfile
 import zipfile
@@ -99,11 +98,8 @@ class SplittingMixin:
         files: list[str] = []
         used_names: dict[str, int] = {}
 
-        for idx, sec in enumerate(final_sections):
-            if sec["title"] is not None:
-                base = _slugify(sec["title"])
-            else:
-                base = "preamble"
+        for _idx, sec in enumerate(final_sections):
+            base = _slugify(sec["title"]) if sec["title"] is not None else "preamble"
 
             # Deduplicate names
             if base in used_names:
@@ -123,15 +119,14 @@ class SplittingMixin:
                 body_children_xml += etree.tostring(copy.deepcopy(sect_pr))
 
             # Read the parent zip, replace word/document.xml body
-            with zipfile.ZipFile(str(tmp_docx), "r") as zin:
-                with zipfile.ZipFile(out_file, "w", zipfile.ZIP_DEFLATED) as zout:
-                    for item in zin.infolist():
-                        if item.filename == "word/document.xml":
-                            orig_xml = zin.read(item.filename)
-                            new_xml = _replace_body(orig_xml, body_children_xml)
-                            zout.writestr(item, new_xml)
-                        else:
-                            zout.writestr(item, zin.read(item.filename))
+            with zipfile.ZipFile(str(tmp_docx), "r") as zin, zipfile.ZipFile(out_file, "w", zipfile.ZIP_DEFLATED) as zout:  # noqa: E501
+                for item in zin.infolist():
+                    if item.filename == "word/document.xml":
+                        orig_xml = zin.read(item.filename)
+                        new_xml = _replace_body(orig_xml, body_children_xml)
+                        zout.writestr(item, new_xml)
+                    else:
+                        zout.writestr(item, zin.read(item.filename))
 
             files.append(out_file)
 

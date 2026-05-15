@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .base import W, WP
+from .base import WP, W
 
 
 class StatisticsMixin:

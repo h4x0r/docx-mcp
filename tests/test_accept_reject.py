@@ -20,10 +20,10 @@ def _j(s: str) -> list | dict:
 _CT = (
     '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
     '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
-    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'  # noqa: E501
     '<Default Extension="xml" ContentType="application/xml"/>'
     '<Override PartName="/word/document.xml"'
-    ' ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'
+    ' ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'  # noqa: E501
     '</Types>'
 )
 
@@ -131,7 +131,7 @@ class TestAcceptChange:
     def test_accept_unknown_id_raises_value_error(self, tmp_path: Path):
         p = _make_doc(tmp_path, _DOC_ONE_INS)
         server.open_document(str(p))
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             server.accept_change(9999)
 
     def test_accept_ins_text_preserved_in_parent(self, tmp_path: Path):
@@ -172,7 +172,7 @@ class TestRejectChange:
     def test_reject_unknown_id_raises_exception(self, tmp_path: Path):
         p = _make_doc(tmp_path, _DOC_ONE_DEL)
         server.open_document(str(p))
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             server.reject_change(9999)
 
 

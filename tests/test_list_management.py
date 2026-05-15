@@ -6,7 +6,7 @@ import uuid
 import pytest
 from lxml import etree
 
-from docx_mcp.document import DocxDocument, W, W14
+from docx_mcp.document import W14, DocxDocument, W
 
 
 def _make_doc(tmp_path):
