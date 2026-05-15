@@ -37,6 +37,7 @@ def test_fuzz_harness_handles_truncated_zip():
 def test_fuzz_harness_handles_zipslip_payload():
     """ZipSlip payload must not raise an unhandled exception."""
     import io
+
     from tests.fuzz.fuzz_open import TestOneInput
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w") as zf:
@@ -48,6 +49,7 @@ def test_fuzz_harness_handles_zipslip_payload():
 def test_fuzz_harness_handles_xxe_payload():
     """XXE payload must not raise an unhandled exception."""
     import io
+
     from tests.fuzz.fuzz_open import TestOneInput
     evil_xml = (
         '<?xml version="1.0"?>'

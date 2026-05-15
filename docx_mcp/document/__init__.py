@@ -1,5 +1,6 @@
 """DocxDocument: mixin composition and public API."""
 
+from .accessibility import AccessibilityMixin
 from .base import (
     CP,
     CT,
@@ -22,11 +23,15 @@ from .base import (
     _preserve,
 )
 from .bookmarks import BookmarksMixin
-from .contentcontrols import ContentControlsMixin
+from .captions import CaptionMixin
+from .charts import ChartsMixin
+from .clausediff import ClauseDiffMixin
 from .comments import CommentsMixin
 from .compare import CompareMixin
+from .contentcontrols import ContentControlsMixin
 from .creation import CreationMixin
 from .endnotes import EndnotesMixin
+from .equations import EquationsMixin
 from .fields import FieldsMixin
 from .footnotes import FootnotesMixin
 from .formatting import FormattingMixin
@@ -34,38 +39,33 @@ from .headers_footers import HeadersFootersMixin
 from .hyperlinks import HyperlinksMixin
 from .images import ImagesMixin
 from .lists import ListsMixin
+from .litigation import LitigationMixin
+from .markdown_export import MarkdownExportMixin
 from .merge import MergeMixin
 from .metadata import MetadataMixin
+from .pdfexport import PdfExportMixin
 from .pii import PiiMixin
 from .properties import PropertiesMixin
 from .protection import ProtectionMixin
+from .query import XPathMixin
+from .rawparts import RawPartsMixin
 from .reading import ReadingMixin
 from .references import ReferencesMixin
-from .sections import SectionsMixin
-from .styles import StylesMixin
-from .tables import TablesMixin
-from .revisions import RevisionsMixin
-from .tracks import TracksMixin
-from .rawparts import RawPartsMixin
-from .validation import ValidationMixin
-from .query import XPathMixin
-from .toc import TocMixin
-from .template import TemplateMixin
-from .litigation import LitigationMixin
-from .equations import EquationsMixin
-from .charts import ChartsMixin
 from .reviewmerge import ReviewMergeMixin
-from .clausediff import ClauseDiffMixin
+from .revisions import RevisionsMixin
+from .sections import SectionsMixin
 from .sessionlog import SessionLogMixin
-from .markdown_export import MarkdownExportMixin
-from .theme import ThemeMixin
-from .captions import CaptionMixin
-from .watermark import WatermarkMixin
 from .splitting import SplittingMixin
 from .statistics import StatisticsMixin
-from .accessibility import AccessibilityMixin
+from .styles import StylesMixin
+from .tables import TablesMixin
+from .template import TemplateMixin
 from .textboxes import TextBoxesMixin
-from .pdfexport import PdfExportMixin
+from .theme import ThemeMixin
+from .toc import TocMixin
+from .tracks import TracksMixin
+from .validation import ValidationMixin
+from .watermark import WatermarkMixin
 
 
 class DocxDocument(

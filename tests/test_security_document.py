@@ -11,7 +11,6 @@ import pytest
 from docx_mcp.document import DocxDocument
 from docx_mcp.document.errors import DocxMcpError, ErrCode
 
-
 # ── V4: BadZipFile ────────────────────────────────────────────────────────────
 
 def test_corrupt_zip_raises_docxmcperror(tmp_path: Path):

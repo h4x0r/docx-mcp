@@ -1,6 +1,7 @@
 """Security guard tests — input validation."""
 from __future__ import annotations
 
+import contextlib
 import re
 from pathlib import Path
 
@@ -53,10 +54,8 @@ def test_para_id_null_byte_raises():
 @given(st.text(min_size=0, max_size=200))
 @settings(max_examples=500)
 def test_para_id_arbitrary_input_never_crashes(s):
-    try:
+    with contextlib.suppress(ValueError):
         InputGuard.para_id(s)
-    except ValueError:
-        pass  # expected for invalid inputs
 
 
 # ── output_path ───────────────────────────────────────────────────────────────
@@ -86,10 +85,8 @@ def test_output_path_absolute_traversal_raises():
 @given(st.text(min_size=1, max_size=300))
 @settings(max_examples=300)
 def test_output_path_arbitrary_never_crashes(s):
-    try:
+    with contextlib.suppress(ValueError, OSError):
         InputGuard.output_path(s)
-    except (ValueError, OSError):
-        pass
 
 
 # ── color_hex ────────────────────────────────────────────────────────────────
@@ -140,10 +137,8 @@ def test_bounded_int_rejects_bool():
 
 @given(st.integers(min_value=-(2**62), max_value=2**62))
 def test_bounded_int_arbitrary_never_crashes(n):
-    try:
+    with contextlib.suppress(ValueError):
         InputGuard.bounded_int(n, 1, 100, "test")
-    except ValueError:
-        pass
 
 
 # ── regex_pattern ─────────────────────────────────────────────────────────────
