@@ -29,6 +29,23 @@ from lxml import etree
 from docx_mcp import server
 
 
+def _trf_model_available() -> bool:
+    """Return True only if spaCy + en_core_web_trf + curated_transformer are all present."""
+    try:
+        import spacy
+
+        spacy.load("en_core_web_trf")
+        return True
+    except Exception:
+        return False
+
+
+_NEEDS_TRF = pytest.mark.skipif(
+    not _trf_model_available(),
+    reason="en_core_web_trf / spacy-curated-transformers not installed",
+)
+
+
 def _j(s: str) -> dict:
     return json.loads(s)
 
@@ -167,6 +184,7 @@ def duplicate_pii_docx(tmp_path: Path) -> Path:
 # ─────────────────────────────────────────────────────────────────────────────
 
 
+@_NEEDS_TRF
 class TestPiiDetection:
     def test_detects_email_address(self, email_docx: Path):
         """Presidio identifies EMAIL_ADDRESS in dry_run mode."""
@@ -231,6 +249,7 @@ class TestPiiDetection:
 # ─────────────────────────────────────────────────────────────────────────────
 
 
+@_NEEDS_TRF
 class TestPiiRedaction:
     def test_email_absent_from_output(self, email_docx: Path, tmp_path: Path):
         """After scrub, the email address is not present in the output document."""
