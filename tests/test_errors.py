@@ -1,4 +1,5 @@
 """Tests for the stable error taxonomy (Phase 1a)."""
+
 from __future__ import annotations
 
 import pytest

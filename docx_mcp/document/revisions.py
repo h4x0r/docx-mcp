@@ -34,31 +34,29 @@ class RevisionsMixin:
             for child in para:
                 tag = child.tag
                 if tag == f"{W}ins":
-                    text = "".join(
-                        t.text or ""
-                        for t in child.iter(f"{W}t")
+                    text = "".join(t.text or "" for t in child.iter(f"{W}t"))
+                    results.append(
+                        {
+                            "type": "insertion",
+                            "change_id": _int_id(child.get(f"{W}id")),
+                            "author": child.get(f"{W}author", ""),
+                            "date": child.get(f"{W}date", ""),
+                            "para_id": para_id,
+                            "text": text,
+                        }
                     )
-                    results.append({
-                        "type": "insertion",
-                        "change_id": _int_id(child.get(f"{W}id")),
-                        "author": child.get(f"{W}author", ""),
-                        "date": child.get(f"{W}date", ""),
-                        "para_id": para_id,
-                        "text": text,
-                    })
                 elif tag == f"{W}del":
-                    text = "".join(
-                        dt.text or ""
-                        for dt in child.iter(f"{W}delText")
+                    text = "".join(dt.text or "" for dt in child.iter(f"{W}delText"))
+                    results.append(
+                        {
+                            "type": "deletion",
+                            "change_id": _int_id(child.get(f"{W}id")),
+                            "author": child.get(f"{W}author", ""),
+                            "date": child.get(f"{W}date", ""),
+                            "para_id": para_id,
+                            "text": text,
+                        }
                     )
-                    results.append({
-                        "type": "deletion",
-                        "change_id": _int_id(child.get(f"{W}id")),
-                        "author": child.get(f"{W}author", ""),
-                        "date": child.get(f"{W}date", ""),
-                        "para_id": para_id,
-                        "text": text,
-                    })
 
         return results
 
@@ -84,9 +82,7 @@ class RevisionsMixin:
             # Write to disk so workdir is consistent
             fp = self.workdir / "word" / "settings.xml"
             fp.parent.mkdir(parents=True, exist_ok=True)
-            etree.ElementTree(settings).write(
-                str(fp), xml_declaration=True, encoding="UTF-8"
-            )
+            etree.ElementTree(settings).write(str(fp), xml_declaration=True, encoding="UTF-8")
 
             # Register content-type Override
             ct = self._tree("[Content_Types].xml")
@@ -105,9 +101,7 @@ class RevisionsMixin:
             # Register relationship entry
             rels = self._tree("word/_rels/document.xml.rels")
             if rels is not None:
-                existing_targets = {
-                    r.get("Target") for r in rels.findall(f"{RELS}Relationship")
-                }
+                existing_targets = {r.get("Target") for r in rels.findall(f"{RELS}Relationship")}
                 if "settings.xml" not in existing_targets:
                     max_rid = 0
                     for r in rels.findall(f"{RELS}Relationship"):

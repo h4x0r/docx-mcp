@@ -21,38 +21,37 @@ def _make_doc(tmp_path: Path) -> DocxDocument:
         f'<w:document xmlns:w="{W_ns}" xmlns:w14="{W14_ns}">'
         "<w:body>"
         f'<w:p w14:paraId="00000001"><w:pPr><w:pStyle w:val="Heading1"/></w:pPr>'
-        f'<w:r><w:t>Title One</w:t></w:r></w:p>'
+        f"<w:r><w:t>Title One</w:t></w:r></w:p>"
         f'<w:p w14:paraId="00000002"><w:pPr><w:pStyle w:val="Heading2"/></w:pPr>'
-        f'<w:r><w:t>Section Two</w:t></w:r></w:p>'
+        f"<w:r><w:t>Section Two</w:t></w:r></w:p>"
         f'<w:p w14:paraId="00000003"><w:pPr><w:pStyle w:val="Heading3"/></w:pPr>'
-        f'<w:r><w:t>Subsection Three</w:t></w:r></w:p>'
+        f"<w:r><w:t>Subsection Three</w:t></w:r></w:p>"
         f'<w:p w14:paraId="00000004">'
-        f'<w:r><w:rPr><w:b/></w:rPr><w:t>BoldWord</w:t></w:r>'
-        f'</w:p>'
+        f"<w:r><w:rPr><w:b/></w:rPr><w:t>BoldWord</w:t></w:r>"
+        f"</w:p>"
         f'<w:p w14:paraId="00000005">'
-        f'<w:r><w:rPr><w:i/></w:rPr><w:t>ItalicWord</w:t></w:r>'
-        f'</w:p>'
+        f"<w:r><w:rPr><w:i/></w:rPr><w:t>ItalicWord</w:t></w:r>"
+        f"</w:p>"
         f'<w:p w14:paraId="00000006">'
-        f'<w:r><w:t>Plain text here</w:t></w:r>'
-        f'</w:p>'
+        f"<w:r><w:t>Plain text here</w:t></w:r>"
+        f"</w:p>"
         f'<w:p w14:paraId="00000007">'
         f'<w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="1"/></w:numPr></w:pPr>'
-        f'<w:r><w:t>List item</w:t></w:r>'
-        f'</w:p>'
+        f"<w:r><w:t>List item</w:t></w:r>"
+        f"</w:p>"
         f'<w:p w14:paraId="00000008"/>'
-        f'<w:tbl>'
-        f'<w:tr><w:tc><w:p><w:r><w:t>H1</w:t></w:r></w:p></w:tc>'
-        f'<w:tc><w:p><w:r><w:t>H2</w:t></w:r></w:p></w:tc></w:tr>'
-        f'<w:tr><w:tc><w:p><w:r><w:t>R1C1</w:t></w:r></w:p></w:tc>'
-        f'<w:tc><w:p><w:r><w:t>R1C2</w:t></w:r></w:p></w:tc></w:tr>'
-        f'</w:tbl>'
+        f"<w:tbl>"
+        f"<w:tr><w:tc><w:p><w:r><w:t>H1</w:t></w:r></w:p></w:tc>"
+        f"<w:tc><w:p><w:r><w:t>H2</w:t></w:r></w:p></w:tc></w:tr>"
+        f"<w:tr><w:tc><w:p><w:r><w:t>R1C1</w:t></w:r></w:p></w:tc>"
+        f"<w:tc><w:p><w:r><w:t>R1C2</w:t></w:r></w:p></w:tc></w:tr>"
+        f"</w:tbl>"
         "<w:sectPr/>"
         "</w:body>"
         "</w:document>"
     )
     rels_xml = (
-        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-        f'<Relationships xmlns="{rels_ns}"/>'
+        f'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="{rels_ns}"/>'
     )
     top_rels = (
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
@@ -87,7 +86,6 @@ def _make_doc(tmp_path: Path) -> DocxDocument:
 
 
 class TestMarkdownExport:
-
     def test_heading1_produces_h1(self, tmp_path: Path) -> None:
         doc = _make_doc(tmp_path)
         result = doc.export_markdown(str(tmp_path / "out.md"))
@@ -172,7 +170,7 @@ class TestMarkdownExport:
             f'<w:document xmlns:w="{W_ns}" xmlns:w14="{W14_ns}">'
             "<w:body>"
             f'<w:p w14:paraId="00000001"><w:pPr><w:pStyle w:val="heading 1"/></w:pPr>'
-            f'<w:r><w:t>Space Variant</w:t></w:r></w:p>'
+            f"<w:r><w:t>Space Variant</w:t></w:r></w:p>"
             "<w:sectPr/>"
             "</w:body>"
             "</w:document>"

@@ -1,4 +1,5 @@
 """Tests for P9.4: block elements — insert_blockquote, insert_code_block."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -14,9 +15,7 @@ def _make_doc(tmp_path: Path) -> tuple[DocxDocument, str]:
     doc = DocxDocument.create(out)
     tree = doc._tree("word/document.xml")
     para_id = next(
-        p.get(f"{W14}paraId")
-        for p in tree.iter(f"{W}p")
-        if p.get(f"{W14}paraId") is not None
+        p.get(f"{W14}paraId") for p in tree.iter(f"{W}p") if p.get(f"{W14}paraId") is not None
     )
     return doc, para_id
 
@@ -78,7 +77,9 @@ class TestInsertCodeBlock:
         doc, para_id = _make_doc(tmp_path)
         result = doc.insert_code_block(para_id, "print('hello')")
         tree = doc._tree("word/document.xml")
-        new_para = next((p for p in tree.iter(f"{W}p") if p.get(f"{W14}paraId") == result["para_id"]), None)  # noqa: E501
+        new_para = next(
+            (p for p in tree.iter(f"{W}p") if p.get(f"{W14}paraId") == result["para_id"]), None
+        )  # noqa: E501
         assert new_para is not None
 
     def test_has_courier_new_font(self, tmp_path: Path):

@@ -1,4 +1,5 @@
 """Accessibility mixin: alt text and accessibility check."""
+
 from __future__ import annotations
 
 from .base import WP, W
@@ -82,11 +83,13 @@ class AccessibilityMixin:
         for idx, el in enumerate(doc.iter(f"{WP}docPr")):
             descr = el.get("descr", "")
             if not descr:
-                issues.append({
-                    "type": "missing_alt_text",
-                    "image_index": idx,
-                    "description": f"Image {idx} has no alt text",
-                })
+                issues.append(
+                    {
+                        "type": "missing_alt_text",
+                        "image_index": idx,
+                        "description": f"Image {idx} has no alt text",
+                    }
+                )
 
         # Check tables for missing header row
         for idx, tbl in enumerate(doc.iter(f"{W}tbl")):
@@ -97,10 +100,12 @@ class AccessibilityMixin:
             trpr = first_row.find(f"{W}trPr")
             has_header = trpr is not None and trpr.find(f"{W}tblHeader") is not None
             if not has_header:
-                issues.append({
-                    "type": "table_no_header",
-                    "table_index": idx,
-                    "description": f"Table {idx} has no header row",
-                })
+                issues.append(
+                    {
+                        "type": "table_no_header",
+                        "table_index": idx,
+                        "description": f"Table {idx} has no header row",
+                    }
+                )
 
         return {"issue_count": len(issues), "issues": issues}

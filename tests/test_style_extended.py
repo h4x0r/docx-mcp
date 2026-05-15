@@ -1,4 +1,5 @@
 """Tests for style extended: get_style, copy_style, apply_style_to_range."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -114,6 +115,7 @@ class TestCopyStyle:
 class TestApplyStyleToRange:
     def _get_first_para_id(self, doc: DocxDocument) -> str:
         from docx_mcp.document.base import W14, W
+
         tree = doc._require("word/document.xml")
         body = tree.find(f"{W}body")
         for p in body:
@@ -132,6 +134,7 @@ class TestApplyStyleToRange:
     def test_apply_style_to_multiple_paras(self, tmp_path):
         doc = _make_doc(tmp_path)
         from docx_mcp.document.base import W14, W
+
         tree = doc._require("word/document.xml")
         body = tree.find(f"{W}body")
         para_ids = []
@@ -171,6 +174,7 @@ class TestApplyStyleToRange:
         doc.create_style("TestApplyStyle", "paragraph")
         doc.apply_style_to_range([para_id], "TestApplyStyle")
         from docx_mcp.document.base import W14, W
+
         tree = doc._require("word/document.xml")
         body = tree.find(f"{W}body")
         for p in body.iter(f"{W}p"):

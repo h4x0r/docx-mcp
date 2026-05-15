@@ -1,4 +1,5 @@
 """Tests for BookmarksMixin — Bookmark CRUD."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -12,9 +13,11 @@ from docx_mcp.document.errors import DocxMcpError, ErrCode
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _open(tmp_path: Path, test_docx: Path) -> DocxDocument:
     """Copy fixture to tmp_path so each test gets a clean copy, then open."""
     import shutil
+
     dest = tmp_path / "work.docx"
     shutil.copy2(test_docx, dest)
     doc = DocxDocument(str(dest))
@@ -25,6 +28,7 @@ def _open(tmp_path: Path, test_docx: Path) -> DocxDocument:
 # ---------------------------------------------------------------------------
 # TestListBookmarks
 # ---------------------------------------------------------------------------
+
 
 class TestListBookmarks:
     def test_empty_doc_has_no_bookmarks(self, tmp_path: Path):
@@ -79,6 +83,7 @@ class TestListBookmarks:
 # ---------------------------------------------------------------------------
 # TestAddBookmark
 # ---------------------------------------------------------------------------
+
 
 class TestAddBookmark:
     def test_add_bookmark(self, tmp_path: Path, test_docx: Path):
@@ -135,6 +140,7 @@ class TestAddBookmark:
 # TestRemoveBookmark
 # ---------------------------------------------------------------------------
 
+
 class TestRemoveBookmark:
     def test_remove_bookmark(self, tmp_path: Path, test_docx: Path):
         """remove_bookmark returns {"removed": name}."""
@@ -157,17 +163,20 @@ class TestRemoveBookmark:
         doc.remove_bookmark("cleanup_test")
         W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
         tree = doc._require("word/document.xml")
-        starts = [s for s in tree.findall(f".//{{{W}}}bookmarkStart")
-                  if s.get(f"{{{W}}}name") == "cleanup_test"]
+        starts = [
+            s
+            for s in tree.findall(f".//{{{W}}}bookmarkStart")
+            if s.get(f"{{{W}}}name") == "cleanup_test"
+        ]
         assert starts == []
-        ends = [e for e in tree.findall(f".//{{{W}}}bookmarkEnd")
-                if e.get(f"{{{W}}}id") == bm_id]
+        ends = [e for e in tree.findall(f".//{{{W}}}bookmarkEnd") if e.get(f"{{{W}}}id") == bm_id]
         assert ends == []
 
 
 # ---------------------------------------------------------------------------
 # TestGetBookmarkedText
 # ---------------------------------------------------------------------------
+
 
 class TestGetBookmarkedText:
     def test_get_text(self, tmp_path: Path, test_docx: Path):

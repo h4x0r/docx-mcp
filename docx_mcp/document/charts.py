@@ -1,4 +1,5 @@
 """Charts mixin: native DrawingML chart insertion (no Excel required)."""
+
 from __future__ import annotations
 
 from lxml import etree
@@ -8,17 +9,13 @@ from .errors import DocxMcpError, ErrCode
 
 # ── Chart-specific namespace constants ──────────────────────────────────────
 C = "{http://schemas.openxmlformats.org/drawingml/2006/chart}"
-_C_NS = "http://schemas.openxmlformats.org/drawingml/2006/chart"   # bare URI
-_A_NS = A[1:-1]    # bare URI
+_C_NS = "http://schemas.openxmlformats.org/drawingml/2006/chart"  # bare URI
+_A_NS = A[1:-1]  # bare URI
 _WP_NS = WP[1:-1]  # bare URI
-_R_NS = R[1:-1]    # bare URI
+_R_NS = R[1:-1]  # bare URI
 
-_CHART_REL_TYPE = (
-    "http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart"
-)
-_CHART_CT = (
-    "application/vnd.openxmlformats-officedocument.drawingml.chart+xml"
-)
+_CHART_REL_TYPE = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart"
+_CHART_CT = "application/vnd.openxmlformats-officedocument.drawingml.chart+xml"
 
 
 def _col_letter(n: int) -> str:
@@ -96,9 +93,7 @@ def _build_chart_xml(
         if categories:
             cat = etree.SubElement(ser, f"{C}cat")
             cat_ref = etree.SubElement(cat, f"{C}strRef")
-            etree.SubElement(cat_ref, f"{C}f").text = (
-                f"Sheet1!$A$2:$A${len(categories) + 1}"
-            )
+            etree.SubElement(cat_ref, f"{C}f").text = f"Sheet1!$A$2:$A${len(categories) + 1}"
             cat_cache = etree.SubElement(cat_ref, f"{C}strCache")
             etree.SubElement(cat_cache, f"{C}ptCount", {"val": str(len(categories))})
             for ci, cat_name in enumerate(categories):
@@ -109,9 +104,9 @@ def _build_chart_xml(
         val_el = etree.SubElement(ser, f"{C}val")
         num_ref = etree.SubElement(val_el, f"{C}numRef")
         values = ser_data.get("values", [])
-        etree.SubElement(num_ref, f"{C}f").text = (
-            f"Sheet1!${_col_letter(idx + 2)}$2:${_col_letter(idx + 2)}${len(values) + 1}"
-        )
+        etree.SubElement(
+            num_ref, f"{C}f"
+        ).text = f"Sheet1!${_col_letter(idx + 2)}$2:${_col_letter(idx + 2)}${len(values) + 1}"
         num_cache = etree.SubElement(num_ref, f"{C}numCache")
         etree.SubElement(num_cache, f"{C}formatCode").text = "General"
         etree.SubElement(num_cache, f"{C}ptCount", {"val": str(len(values))})
@@ -149,9 +144,9 @@ def _rebuild_series(chart_el: etree._Element, series: list[dict]) -> None:
         val_el = etree.SubElement(ser, f"{C}val")
         num_ref = etree.SubElement(val_el, f"{C}numRef")
         values = ser_data.get("values", [])
-        etree.SubElement(num_ref, f"{C}f").text = (
-            f"Sheet1!${_col_letter(idx + 2)}$2:${_col_letter(idx + 2)}${len(values) + 1}"
-        )
+        etree.SubElement(
+            num_ref, f"{C}f"
+        ).text = f"Sheet1!${_col_letter(idx + 2)}$2:${_col_letter(idx + 2)}${len(values) + 1}"
         num_cache = etree.SubElement(num_ref, f"{C}numCache")
         etree.SubElement(num_cache, f"{C}formatCode").text = "General"
         etree.SubElement(num_cache, f"{C}ptCount", {"val": str(len(values))})
@@ -226,6 +221,7 @@ class ChartsMixin:
                     f"Chart {chart_id!r} not found",
                 )
             from lxml import etree as _etree
+
             parser = _etree.XMLParser(remove_blank_text=False)
             chart_tree = _etree.parse(str(fp), parser).getroot()
             self._trees[chart_path] = chart_tree
@@ -328,9 +324,7 @@ class ChartsMixin:
 
         # docPr id must be unique across ALL drawing objects (images + charts)
         existing_doc_pr_ids = [
-            int(dp.get("id", "0"))
-            for dp in doc.iter(f"{WP}docPr")
-            if dp.get("id", "").isdigit()
+            int(dp.get("id", "0")) for dp in doc.iter(f"{WP}docPr") if dp.get("id", "").isdigit()
         ]
         doc_pr_id = max(existing_doc_pr_ids, default=0) + 1
 

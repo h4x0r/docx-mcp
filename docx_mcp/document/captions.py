@@ -8,7 +8,6 @@ from .base import W14, XML_SPACE, W
 
 
 class CaptionMixin:
-
     def insert_caption(self, after_para_id: str, text: str, label: str = "Figure") -> dict:
         doc = self._tree("word/document.xml")
 
@@ -17,9 +16,12 @@ class CaptionMixin:
             raise ValueError(f"Paragraph '{after_para_id}' not found")
 
         existing_captions = [
-            p for p in doc.iter(f"{W}p")
-            if (p.find(f"{W}pPr/{W}pStyle") is not None
-                and p.find(f"{W}pPr/{W}pStyle").get(f"{W}val", "").lower() == "caption")
+            p
+            for p in doc.iter(f"{W}p")
+            if (
+                p.find(f"{W}pPr/{W}pStyle") is not None
+                and p.find(f"{W}pPr/{W}pStyle").get(f"{W}val", "").lower() == "caption"
+            )
         ]
         seq_num = len(existing_captions) + 1
 

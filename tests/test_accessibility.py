@@ -10,6 +10,7 @@ from docx_mcp.document.base import W14, WP, W
 
 # ── Helper: insert a wp:docPr-bearing drawing into a paragraph ───────────────
 
+
 def _insert_drawing(doc: DocxDocument, para_id: str, image_name: str = "TestImage") -> None:
     """Insert a minimal wp:docPr-bearing drawing into a paragraph for testing."""
     tree = doc._tree("word/document.xml")
@@ -24,6 +25,7 @@ def _insert_drawing(doc: DocxDocument, para_id: str, image_name: str = "TestImag
 
 
 # ── Tests: set_alt_text ──────────────────────────────────────────────────────
+
 
 class TestSetAltText:
     def test_set_descr_returns_correct_dict(self, test_docx):
@@ -72,6 +74,7 @@ class TestSetAltText:
 
 # ── Tests: get_alt_text ──────────────────────────────────────────────────────
 
+
 class TestGetAltText:
     def test_get_returns_correct_dict(self, test_docx):
         doc = DocxDocument(str(test_docx))
@@ -100,6 +103,7 @@ class TestGetAltText:
 
 # ── Tests: check_accessibility ───────────────────────────────────────────────
 
+
 class TestCheckAccessibility:
     def test_no_issues_when_all_ok(self, test_docx, tmp_path):
         """Doc with image that HAS alt text and table with header — no issues."""
@@ -113,6 +117,7 @@ class TestCheckAccessibility:
 
         # Build a minimal doc with no images and no tables
         import zipfile
+
         no_img_doc = tmp_path / "no_img.docx"
         _CONTENT_TYPES = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">

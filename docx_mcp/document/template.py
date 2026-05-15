@@ -1,4 +1,5 @@
 """TemplateMixin: fill SDT content controls from a data dict."""
+
 from __future__ import annotations
 
 import copy

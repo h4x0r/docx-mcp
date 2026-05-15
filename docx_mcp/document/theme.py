@@ -9,23 +9,29 @@ from .base import A
 _THEME_PATH = "word/theme/theme1.xml"
 
 _VALID_SLOTS = {
-    "dk1", "lt1", "dk2", "lt2",
-    "accent1", "accent2", "accent3", "accent4", "accent5", "accent6",
-    "hlink", "folHlink",
+    "dk1",
+    "lt1",
+    "dk2",
+    "lt2",
+    "accent1",
+    "accent2",
+    "accent3",
+    "accent4",
+    "accent5",
+    "accent6",
+    "hlink",
+    "folHlink",
 }
 
 _ANS = "http://schemas.openxmlformats.org/drawingml/2006/main"
 
 
 class ThemeMixin:
-
     def get_theme_colors(self) -> dict:
         theme = self._tree(_THEME_PATH)
         if theme is None:
             return {}
-        clr_scheme = theme.find(
-            f"{A}themeElements/{A}clrScheme"
-        )
+        clr_scheme = theme.find(f"{A}themeElements/{A}clrScheme")
         if clr_scheme is None:
             return {}
         result: dict[str, str] = {}
@@ -48,9 +54,7 @@ class ThemeMixin:
         theme = self._tree(_THEME_PATH)
         if theme is None:
             raise RuntimeError("No theme file found in document")
-        clr_scheme = theme.find(
-            f"{A}themeElements/{A}clrScheme"
-        )
+        clr_scheme = theme.find(f"{A}themeElements/{A}clrScheme")
         if clr_scheme is None:
             raise RuntimeError("Theme XML missing clrScheme element")
         slot_el = clr_scheme.find(f"{A}{slot}")

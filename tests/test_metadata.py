@@ -43,7 +43,7 @@ _CONTENT_TYPES = (
     ' ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>'
     '<Override PartName="/docProps/app.xml"'
     ' ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>'
-    '</Types>'
+    "</Types>"
 )
 
 _TOP_RELS = (
@@ -58,29 +58,29 @@ _TOP_RELS = (
     '<Relationship Id="rId3"'
     ' Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties"'
     ' Target="docProps/app.xml"/>'
-    '</Relationships>'
+    "</Relationships>"
 )
 
 _CORE_XML = (
     '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-    '<cp:coreProperties'
+    "<cp:coreProperties"
     ' xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties"'
     ' xmlns:dc="http://purl.org/dc/elements/1.1/"'
     ' xmlns:dcterms="http://purl.org/dc/terms/"'
     ' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
-    '<dc:creator>Alice Smith</dc:creator>'
-    '<cp:lastModifiedBy>Bob Jones</cp:lastModifiedBy>'
-    '<dc:title>Confidential Agreement</dc:title>'
-    '<cp:revision>42</cp:revision>'
-    '</cp:coreProperties>'
+    "<dc:creator>Alice Smith</dc:creator>"
+    "<cp:lastModifiedBy>Bob Jones</cp:lastModifiedBy>"
+    "<dc:title>Confidential Agreement</dc:title>"
+    "<cp:revision>42</cp:revision>"
+    "</cp:coreProperties>"
 )
 
 _APP_XML = (
     '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
     '<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties">'
-    '<Application>Microsoft Office Word</Application>'
-    '<Company>Acme Legal LLP</Company>'
-    '</Properties>'
+    "<Application>Microsoft Office Word</Application>"
+    "<Company>Acme Legal LLP</Company>"
+    "</Properties>"
 )
 
 _SETTINGS_XML = (
@@ -89,7 +89,7 @@ _SETTINGS_XML = (
     ' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
     '<w:attachedTemplate r:id="rId1"/>'
     '<w:rsids><w:rsidDel w:val="00AB1234"/><w:rsidR w:val="00CD5678"/></w:rsids>'
-    '</w:settings>'
+    "</w:settings>"
 )
 
 _WORD_RELS = (
@@ -99,7 +99,7 @@ _WORD_RELS = (
     ' Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/attachedTemplate"'
     ' Target="file:///C:/Users/alice/AppData/Roaming/Microsoft/Templates/Acme.dotx"'
     ' TargetMode="External"/>'
-    '</Relationships>'
+    "</Relationships>"
 )
 
 
@@ -113,22 +113,22 @@ def _build_full_docx(path: Path) -> None:
     """
     doc_xml = (
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
-        '<w:document\n'
+        "<w:document\n"
         '    xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"\n'
         '    xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml">\n'
-        '  <w:body>\n'
+        "  <w:body>\n"
         '    <w:p w14:paraId="BB000001" w14:textId="77777777"'
         '      w:rsidR="00AB1234" w:rsidRDefault="00AB1234">\n'
         '      <w:r w:rsidRPr="00CD5678"><w:t xml:space="preserve">Unchanged text. </w:t></w:r>\n'
         '      <w:ins w:id="1" w:author="Alice Smith" w:date="2026-01-01T00:00:00Z">\n'
-        '        <w:r><w:t>inserted</w:t></w:r>\n'
-        '      </w:ins>\n'
+        "        <w:r><w:t>inserted</w:t></w:r>\n"
+        "      </w:ins>\n"
         '      <w:del w:id="2" w:author="Alice Smith" w:date="2026-01-01T00:00:00Z">\n'
-        '        <w:r><w:delText>deleted</w:delText></w:r>\n'
-        '      </w:del>\n'
-        '    </w:p>\n'
-        '  </w:body>\n'
-        '</w:document>'
+        "        <w:r><w:delText>deleted</w:delText></w:r>\n"
+        "      </w:del>\n"
+        "    </w:p>\n"
+        "  </w:body>\n"
+        "</w:document>"
     )
     with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as zf:
         zf.writestr("[Content_Types].xml", _CONTENT_TYPES)
@@ -156,7 +156,6 @@ def _get_zip_text(path: Path, member: str) -> str:
 
 
 class TestMetadataSanitize:
-
     @pytest.fixture()
     def full_docx(self, tmp_path: Path) -> Path:
         p = tmp_path / "full.docx"

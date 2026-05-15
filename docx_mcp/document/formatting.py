@@ -386,9 +386,11 @@ class FormattingMixin:
         if ppr is not None:
             ind = ppr.find(f"{W}ind")
             if ind is not None:
+
                 def _int(attr: str) -> int:
                     v = ind.get(f"{W}{attr}")
                     return int(v) if v is not None else 0
+
                 ind_dict["left_twips"] = _int("left")
                 ind_dict["right_twips"] = _int("right")
                 ind_dict["first_line_twips"] = _int("firstLine")
@@ -399,9 +401,11 @@ class FormattingMixin:
         if ppr is not None:
             sp = ppr.find(f"{W}spacing")
             if sp is not None:
+
                 def _int_sp(attr: str) -> int:
                     v = sp.get(f"{W}{attr}")
                     return int(v) if v is not None else 0
+
                 sp_dict["before_twips"] = _int_sp("before")
                 sp_dict["after_twips"] = _int_sp("after")
                 sp_dict["line_value"] = _int_sp("line")
@@ -489,15 +493,17 @@ class FormattingMixin:
                 if color_el is not None:
                     color = color_el.get(f"{W}val")
 
-            result.append({
-                "run_idx": idx,
-                "text": text,
-                "bold": bold,
-                "italic": italic,
-                "font": font,
-                "size_pt": size_pt,
-                "color": color,
-            })
+            result.append(
+                {
+                    "run_idx": idx,
+                    "text": text,
+                    "bold": bold,
+                    "italic": italic,
+                    "font": font,
+                    "size_pt": size_pt,
+                    "color": color,
+                }
+            )
 
         return result
 
@@ -837,7 +843,12 @@ class FormattingMixin:
                         insert_at += 1
 
                     fmt_run = etree.Element(f"{W}r")
-                    has_fmt = bold is not None or italic is not None or color is not None or size_pt is not None  # noqa: E501
+                    has_fmt = (
+                        bold is not None
+                        or italic is not None
+                        or color is not None
+                        or size_pt is not None
+                    )  # noqa: E501
                     new_rpr = etree.SubElement(fmt_run, f"{W}rPr") if has_fmt else None
 
                     if bold is True:
@@ -868,7 +879,7 @@ class FormattingMixin:
                     parent.insert(insert_at, fmt_run)
                     insert_at += 1
 
-                    after_text = full[idx + len(find):]
+                    after_text = full[idx + len(find) :]
                     if after_text:
                         after_run = self._make_run(after_text, rpr_bytes)
                         parent.insert(insert_at, after_run)

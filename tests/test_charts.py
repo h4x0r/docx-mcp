@@ -1,4 +1,5 @@
 """Tests for native chart insertion (Task #17)."""
+
 from __future__ import annotations
 
 import pytest
@@ -39,8 +40,7 @@ class TestCharts:
         doc.insert_bar_chart(para_id, "Chart", _SERIES, _CATS)
         rels = doc._tree("word/_rels/document.xml.rels")
         chart_rels = [
-            r for r in rels.iter(f"{RELS}Relationship")
-            if "chart" in r.get("Type", "").lower()
+            r for r in rels.iter(f"{RELS}Relationship") if "chart" in r.get("Type", "").lower()
         ]
         assert len(chart_rels) >= 1
 
@@ -104,6 +104,7 @@ class TestCharts:
     def test_update_chart_data_unknown_type_raises(self, tmp_path):
         """update_chart_data raises OOXML_INVALID if chart type not recognised."""
         from docx_mcp.document.errors import DocxMcpError, ErrCode
+
         doc = _make_doc(tmp_path)
         para_id = _get_para_id(doc)
         result = doc.insert_bar_chart(para_id, "Chart", _SERIES, _CATS)
@@ -134,8 +135,8 @@ class TestCharts:
         doc.insert_bar_chart(para_id, "Chart", _SERIES, _CATS)
         chart_xml = (doc.workdir / "word" / "charts" / "chart1.xml").read_text(encoding="utf-8")
         # Attributes like val and idx on chart elements must NOT have the c: prefix
-        assert 'c:val=' not in chart_xml
-        assert 'c:idx=' not in chart_xml
+        assert "c:val=" not in chart_xml
+        assert "c:idx=" not in chart_xml
         # But the actual values should be present as plain attributes
-        assert 'val=' in chart_xml
-        assert 'idx=' in chart_xml
+        assert "val=" in chart_xml
+        assert "idx=" in chart_xml

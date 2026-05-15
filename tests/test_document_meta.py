@@ -17,35 +17,36 @@ def _j(s: str) -> list | dict:
 
 # ── Fixture helpers ──────────────────────────────────────────────────────────
 
+
 def _build_outline_docx(path: Path) -> None:
     """DOCX with H1, H2, H3 headings and w14:paraId attributes."""
     doc_xml = (
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
-        '<w:document\n'
+        "<w:document\n"
         '    xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"\n'
         '    xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml">\n'
-        '  <w:body>\n'
+        "  <w:body>\n"
         '    <w:p w14:paraId="00000001" w14:textId="77777777">\n'
         '      <w:pPr><w:pStyle w:val="Heading1"/></w:pPr>\n'
-        '      <w:r><w:t>Chapter One</w:t></w:r>\n'
-        '    </w:p>\n'
+        "      <w:r><w:t>Chapter One</w:t></w:r>\n"
+        "    </w:p>\n"
         '    <w:p w14:paraId="00000002" w14:textId="77777777">\n'
-        '      <w:r><w:t>Body text here.</w:t></w:r>\n'
-        '    </w:p>\n'
+        "      <w:r><w:t>Body text here.</w:t></w:r>\n"
+        "    </w:p>\n"
         '    <w:p w14:paraId="00000003" w14:textId="77777777">\n'
         '      <w:pPr><w:pStyle w:val="Heading2"/></w:pPr>\n'
-        '      <w:r><w:t>Section One</w:t></w:r>\n'
-        '    </w:p>\n'
+        "      <w:r><w:t>Section One</w:t></w:r>\n"
+        "    </w:p>\n"
         '    <w:p w14:paraId="00000004" w14:textId="77777777">\n'
         '      <w:pPr><w:pStyle w:val="Heading3"/></w:pPr>\n'
-        '      <w:r><w:t>Subsection</w:t></w:r>\n'
-        '    </w:p>\n'
+        "      <w:r><w:t>Subsection</w:t></w:r>\n"
+        "    </w:p>\n"
         '    <w:p w14:paraId="00000005" w14:textId="77777777">\n'
         '      <w:pPr><w:pStyle w:val="Heading1"/></w:pPr>\n'
-        '      <w:r><w:t>Chapter Two</w:t></w:r>\n'
-        '    </w:p>\n'
-        '  </w:body>\n'
-        '</w:document>\n'
+        "      <w:r><w:t>Chapter Two</w:t></w:r>\n"
+        "    </w:p>\n"
+        "  </w:body>\n"
+        "</w:document>\n"
     )
     _write_minimal_docx(path, doc_xml)
 
@@ -57,13 +58,13 @@ def _build_lang_docx(path: Path) -> None:
         '<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">\n'
         '  <w:style w:type="paragraph" w:default="1" w:styleId="Normal">\n'
         '    <w:name w:val="Normal"/>\n'
-        '    <w:rPr/>\n'
-        '  </w:style>\n'
+        "    <w:rPr/>\n"
+        "  </w:style>\n"
         '  <w:style w:type="paragraph" w:styleId="Heading1">\n'
         '    <w:name w:val="heading 1"/>\n'
         '    <w:basedOn w:val="Normal"/>\n'
-        '  </w:style>\n'
-        '</w:styles>\n'
+        "  </w:style>\n"
+        "</w:styles>\n"
     )
     _write_minimal_docx(path, _minimal_doc_xml(), styles_xml=styles_xml)
 
@@ -75,8 +76,8 @@ def _build_lang_no_rpr_docx(path: Path) -> None:
         '<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">\n'
         '  <w:style w:type="paragraph" w:default="1" w:styleId="Normal">\n'
         '    <w:name w:val="Normal"/>\n'
-        '  </w:style>\n'
-        '</w:styles>\n'
+        "  </w:style>\n"
+        "</w:styles>\n"
     )
     _write_minimal_docx(path, _minimal_doc_xml(), styles_xml=styles_xml)
 
@@ -84,15 +85,15 @@ def _build_lang_no_rpr_docx(path: Path) -> None:
 def _minimal_doc_xml() -> str:
     return (
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
-        '<w:document\n'
+        "<w:document\n"
         '    xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"\n'
         '    xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml">\n'
-        '  <w:body>\n'
+        "  <w:body>\n"
         '    <w:p w14:paraId="00000001" w14:textId="77777777">\n'
-        '      <w:r><w:t>Hello</w:t></w:r>\n'
-        '    </w:p>\n'
-        '  </w:body>\n'
-        '</w:document>\n'
+        "      <w:r><w:t>Hello</w:t></w:r>\n"
+        "    </w:p>\n"
+        "  </w:body>\n"
+        "</w:document>\n"
     )
 
 
@@ -120,7 +121,7 @@ def _write_minimal_docx(
             '  <Override PartName="/word/settings.xml"\n'
             '    ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/>\n'  # noqa: E501
         )
-    content_types += '</Types>\n'
+    content_types += "</Types>\n"
 
     top_rels = (
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
@@ -128,7 +129,7 @@ def _write_minimal_docx(
         '  <Relationship Id="rId1"\n'
         '    Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument"\n'
         '    Target="word/document.xml"/>\n'
-        '</Relationships>\n'
+        "</Relationships>\n"
     )
 
     doc_rels = (
@@ -147,7 +148,7 @@ def _write_minimal_docx(
             '    Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings"\n'
             '    Target="settings.xml"/>\n'
         )
-    doc_rels += '</Relationships>\n'
+    doc_rels += "</Relationships>\n"
 
     with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as zf:
         zf.writestr("[Content_Types].xml", content_types)

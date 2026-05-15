@@ -442,9 +442,7 @@ class TablesMixin:
                 col_count = 0
 
         if len(widths_cm) != col_count:
-            raise ValueError(
-                f"len(widths_cm)={len(widths_cm)} != column_count={col_count}"
-            )
+            raise ValueError(f"len(widths_cm)={len(widths_cm)} != column_count={col_count}")
 
         twips = [int(w * _CM_TO_TWIPS) for w in widths_cm]
 
@@ -635,7 +633,12 @@ class TablesMixin:
             v_align = etree.SubElement(tc_pr, f"{W}vAlign")
         v_align.set(f"{W}val", alignment)
         self._mark("word/document.xml")
-        return {"table_idx": table_idx, "row_idx": row_idx, "col_idx": col_idx, "alignment": alignment}  # noqa: E501
+        return {
+            "table_idx": table_idx,
+            "row_idx": row_idx,
+            "col_idx": col_idx,
+            "alignment": alignment,
+        }  # noqa: E501
 
     def set_row_height(
         self, table_idx: int, row_idx: int, height_mm: float, rule: str = "exact"
@@ -723,7 +726,12 @@ class TablesMixin:
         shd.set(f"{W}color", "auto")
         shd.set(f"{W}fill", fill_color)
         self._mark("word/document.xml")
-        return {"table_idx": table_idx, "row_idx": row_idx, "col_idx": col_idx, "fill_color": fill_color}  # noqa: E501
+        return {
+            "table_idx": table_idx,
+            "row_idx": row_idx,
+            "col_idx": col_idx,
+            "fill_color": fill_color,
+        }  # noqa: E501
 
     def set_table_style(self, table_idx: int, style_name: str) -> dict:
         tbl = self._get_table(table_idx)
@@ -797,9 +805,7 @@ class TablesMixin:
         tbl = self._get_table(table_idx)
         rows = tbl.findall(f"{W}tr")
         if row_index < 0 or row_index >= len(rows):
-            raise ValueError(
-                f"Row index {row_index} out of range (have {len(rows)})"
-            )
+            raise ValueError(f"Row index {row_index} out of range (have {len(rows)})")
 
         original = rows[row_index]
         new_row = copy.deepcopy(original)

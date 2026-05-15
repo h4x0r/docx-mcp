@@ -1,4 +1,5 @@
 """Bookmark CRUD mixin."""
+
 from __future__ import annotations
 
 import contextlib
@@ -25,9 +26,7 @@ class BookmarksMixin:
         doc = self._require("word/document.xml")
         # Build lookup: id -> bookmarkEnd element
         end_ids: set[str] = {
-            el.get(f"{W}id")
-            for el in doc.iter(f"{W}bookmarkEnd")
-            if el.get(f"{W}id") is not None
+            el.get(f"{W}id") for el in doc.iter(f"{W}bookmarkEnd") if el.get(f"{W}id") is not None
         }
 
         result: list[dict] = []

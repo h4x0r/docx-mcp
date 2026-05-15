@@ -1,4 +1,5 @@
 """Equation support: LaTeX → MathML → OMML (Office Math Markup Language)."""
+
 from __future__ import annotations
 
 from lxml import etree
@@ -181,8 +182,10 @@ class EquationsMixin:
                 prev = omath_para.getprevious()
                 if prev is not None and prev.tag == f"{W}p":
                     para_id = prev.get(f"{W14}paraId")
-            results.append({
-                "omml_xml": etree.tostring(omath, encoding="unicode"),
-                "para_id": para_id,
-            })
+            results.append(
+                {
+                    "omml_xml": etree.tostring(omath, encoding="unicode"),
+                    "para_id": para_id,
+                }
+            )
         return results

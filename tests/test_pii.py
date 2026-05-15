@@ -47,16 +47,14 @@ def _write_docx(path: Path, paragraphs: list[str]) -> None:
         paras_xml += (
             f'    <w:p w14:paraId="DD{i:06d}" w14:textId="77777777">\n'
             f'      <w:r><w:t xml:space="preserve">{text}</w:t></w:r>\n'
-            f'    </w:p>\n'
+            f"    </w:p>\n"
         )
     doc_xml = (
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
-        '<w:document\n'
+        "<w:document\n"
         '    xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"\n'
         '    xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml">\n'
-        '  <w:body>\n'
-        + paras_xml
-        + '  </w:body>\n</w:document>'
+        "  <w:body>\n" + paras_xml + "  </w:body>\n</w:document>"
     )
     ct = (
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
@@ -66,7 +64,7 @@ def _write_docx(path: Path, paragraphs: list[str]) -> None:
         '<Default Extension="xml" ContentType="application/xml"/>'
         '<Override PartName="/word/document.xml" ContentType='
         '"application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'
-        '</Types>'
+        "</Types>"
     )
     rels = (
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
@@ -74,7 +72,7 @@ def _write_docx(path: Path, paragraphs: list[str]) -> None:
         '<Relationship Id="rId1" Type='
         '"http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument"'
         ' Target="word/document.xml"/>'
-        '</Relationships>'
+        "</Relationships>"
     )
     with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as zf:
         zf.writestr("[Content_Types].xml", ct)
@@ -102,27 +100,36 @@ def _get_doc_root(path: Path) -> etree._Element:
 @pytest.fixture()
 def email_docx(tmp_path: Path) -> Path:
     p = tmp_path / "email.docx"
-    _write_docx(p, [
-        "Please contact Alice at alice@acme-legal.com for further details.",
-    ])
+    _write_docx(
+        p,
+        [
+            "Please contact Alice at alice@acme-legal.com for further details.",
+        ],
+    )
     return p
 
 
 @pytest.fixture()
 def person_docx(tmp_path: Path) -> Path:
     p = tmp_path / "person.docx"
-    _write_docx(p, [
-        "The defendant, Robert Johnson, appeared before the court.",
-    ])
+    _write_docx(
+        p,
+        [
+            "The defendant, Robert Johnson, appeared before the court.",
+        ],
+    )
     return p
 
 
 @pytest.fixture()
 def phone_docx(tmp_path: Path) -> Path:
     p = tmp_path / "phone.docx"
-    _write_docx(p, [
-        "Call our office at (415) 555-0192 to schedule an appointment.",
-    ])
+    _write_docx(
+        p,
+        [
+            "Call our office at (415) 555-0192 to schedule an appointment.",
+        ],
+    )
     return p
 
 
@@ -130,11 +137,14 @@ def phone_docx(tmp_path: Path) -> Path:
 def mixed_pii_docx(tmp_path: Path) -> Path:
     """Document with email + person name + surrounding non-PII context."""
     p = tmp_path / "mixed.docx"
-    _write_docx(p, [
-        "Plaintiff Sarah Connor filed suit against Cyberdyne Systems.",
-        "Her email is sarah.connor@resistance.org and she is represented by counsel.",
-        "The foregoing agreement is binding on all parties.",
-    ])
+    _write_docx(
+        p,
+        [
+            "Plaintiff Sarah Connor filed suit against Cyberdyne Systems.",
+            "Her email is sarah.connor@resistance.org and she is represented by counsel.",
+            "The foregoing agreement is binding on all parties.",
+        ],
+    )
     return p
 
 
@@ -142,10 +152,13 @@ def mixed_pii_docx(tmp_path: Path) -> Path:
 def duplicate_pii_docx(tmp_path: Path) -> Path:
     """Same email address appears in two separate paragraphs."""
     p = tmp_path / "dup.docx"
-    _write_docx(p, [
-        "Send the brief to bob@lawfirm.io by Friday.",
-        "All filings must also be copied to bob@lawfirm.io as per standing order.",
-    ])
+    _write_docx(
+        p,
+        [
+            "Send the brief to bob@lawfirm.io by Friday.",
+            "All filings must also be copied to bob@lawfirm.io as per standing order.",
+        ],
+    )
     return p
 
 
@@ -155,7 +168,6 @@ def duplicate_pii_docx(tmp_path: Path) -> Path:
 
 
 class TestPiiDetection:
-
     def test_detects_email_address(self, email_docx: Path):
         """Presidio identifies EMAIL_ADDRESS in dry_run mode."""
         server.open_document(str(email_docx))
@@ -202,10 +214,13 @@ class TestPiiDetection:
     def test_no_pii_returns_empty_entities(self, tmp_path: Path):
         """Document with no PII returns empty entity list in dry_run."""
         p = tmp_path / "clean.docx"
-        _write_docx(p, [
-            "The foregoing terms and conditions are agreed upon by all parties.",
-            "This agreement shall be governed by the laws of the jurisdiction.",
-        ])
+        _write_docx(
+            p,
+            [
+                "The foregoing terms and conditions are agreed upon by all parties.",
+                "This agreement shall be governed by the laws of the jurisdiction.",
+            ],
+        )
         server.open_document(str(p))
         result = _j(server.scrub_pii(output_path="", dry_run=True))
         assert result["entities"] == []
@@ -217,7 +232,6 @@ class TestPiiDetection:
 
 
 class TestPiiRedaction:
-
     def test_email_absent_from_output(self, email_docx: Path, tmp_path: Path):
         """After scrub, the email address is not present in the output document."""
         server.open_document(str(email_docx))
@@ -284,7 +298,9 @@ _A_NS = "http://schemas.openxmlformats.org/drawingml/2006/main"
 _WPS_NS = "http://schemas.microsoft.com/office/word/2010/wordprocessingShape"
 
 
-def _make_fake_result(start: int, end: int, entity_type: str = "EMAIL_ADDRESS", score: float = 0.85):  # noqa: E501
+def _make_fake_result(
+    start: int, end: int, entity_type: str = "EMAIL_ADDRESS", score: float = 0.85
+):  # noqa: E501
     """Create a mock Presidio RecognizerResult."""
     r = MagicMock()
     r.entity_type = entity_type
@@ -357,7 +373,8 @@ class TestTrueRedaction:
         solid_fills = list(root.iter(f"{{{_A_NS}}}solidFill"))
         assert solid_fills, "No a:solidFill found in redacted document"
         black_fills = [
-            sf for sf in solid_fills
+            sf
+            for sf in solid_fills
             if sf.find(f"{{{_A_NS}}}srgbClr") is not None
             and sf.find(f"{{{_A_NS}}}srgbClr").get("val", "").upper() == "000000"
         ]
@@ -414,10 +431,12 @@ class TestAutoDownload:
                 raise OSError("model not found")
             return MagicMock()  # simulate loaded model
 
-        with patch("spacy.load", side_effect=fake_load), \
-             patch("spacy.cli.download") as mock_dl, \
-             patch("presidio_analyzer.AnalyzerEngine"), \
-             patch("presidio_analyzer.nlp_engine.NlpEngineProvider"):
+        with (
+            patch("spacy.load", side_effect=fake_load),
+            patch("spacy.cli.download") as mock_dl,
+            patch("presidio_analyzer.AnalyzerEngine"),
+            patch("presidio_analyzer.nlp_engine.NlpEngineProvider"),
+        ):
             pii_mod._get_analyzer()
             mock_dl.assert_called_once_with("en_core_web_trf")
 

@@ -26,6 +26,7 @@ class TestSessionLog:
         assert "timestamp" in entry
         # timestamp must be ISO-format string
         from datetime import datetime
+
         datetime.fromisoformat(entry["timestamp"])
 
     def test_record_op_multiple(self, tmp_path: Path) -> None:
@@ -76,6 +77,7 @@ class TestSessionLog:
 
     def test_no_document_raises(self) -> None:
         from docx_mcp import server
+
         server._doc = None
         with pytest.raises(RuntimeError, match="No document"):
             server.get_session_log()

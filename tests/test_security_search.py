@@ -1,4 +1,5 @@
 """Security tests for search_text ReDoS protection."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -10,6 +11,7 @@ from docx_mcp.document import DocxDocument
 
 def _open_doc(tmp_path: Path) -> DocxDocument:
     from tests.conftest import _build_fixture
+
     path = tmp_path / "test.docx"
     _build_fixture(path)
     doc = DocxDocument(str(path))

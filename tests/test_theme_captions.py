@@ -90,7 +90,6 @@ def _open_doc(path: Path) -> DocxDocument:
 
 
 class TestThemeMixin:
-
     def test_get_theme_colors_returns_dict_with_slots(self, tmp_path: Path) -> None:
         p = tmp_path / "doc.docx"
         _build_docx(p)
@@ -152,7 +151,6 @@ class TestThemeMixin:
 
 
 class TestCaptionMixin:
-
     def test_insert_caption_inserts_after_target(self, tmp_path: Path) -> None:
         p = tmp_path / "doc.docx"
         _build_docx(p)

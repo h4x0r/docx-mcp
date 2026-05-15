@@ -13,7 +13,6 @@ W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 
 
 class TestRunEffects:
-
     def _open(self, path: Path) -> None:
         server._doc = None
         server.open_document(str(path))
@@ -67,7 +66,9 @@ class TestRunEffects:
         assert rpr is not None
         assert rpr.find(f"{W}strike") is not None
 
-    def test_set_run_strikethrough_double_sets_dstrike_removes_strike(self, test_docx: Path) -> None:  # noqa: E501
+    def test_set_run_strikethrough_double_sets_dstrike_removes_strike(
+        self, test_docx: Path
+    ) -> None:  # noqa: E501
         self._open(test_docx)
         server.set_run_strikethrough("00000006", 0, False)
         result = json.loads(server.set_run_strikethrough("00000006", 0, True))

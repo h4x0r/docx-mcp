@@ -188,6 +188,7 @@ class TestMergeReviewRounds:
         rev = self.tmp / "reviewer1.docx"
         _build_docx(rev, _REVIEWER_INS_XML)
         import json
+
         raw = server.merge_review_rounds([str(rev)])
         data = json.loads(raw)
         assert "merged" in data

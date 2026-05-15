@@ -22,6 +22,7 @@ _WPS_NS = "http://schemas.microsoft.com/office/word/2010/wordprocessingShape"
 _RECT_CX = "914400"
 _RECT_CY = "228600"
 
+
 def _next_drawing_id(doc_tree: etree._Element, _used: set[int] | None = None) -> int:
     """Return an ID not used by any existing wp:docPr in doc_tree."""
     _WP = "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
@@ -62,11 +63,13 @@ def _get_analyzer():
         spacy.load(_MODEL_NAME)
     except OSError:
         import sys
+
         print(
             f"[docx-mcp] Downloading {_MODEL_NAME} NER model (~430MB, one-time)...",
             file=sys.stderr,
         )
         from spacy.cli import download as _spacy_download
+
         _spacy_download(_MODEL_NAME)
 
     nlp_config = {
@@ -346,14 +349,16 @@ class PiiMixin:
                 score_threshold=confidence_threshold,
             )
             for r in results:
-                detected.append({
-                    "type": r.entity_type,
-                    "text": full_text[r.start:r.end],
-                    "para_index": para_idx,
-                    "start": r.start,
-                    "end": r.end,
-                    "score": round(r.score, 3),
-                })
+                detected.append(
+                    {
+                        "type": r.entity_type,
+                        "text": full_text[r.start : r.end],
+                        "para_index": para_idx,
+                        "start": r.start,
+                        "end": r.end,
+                        "score": round(r.score, 3),
+                    }
+                )
 
         if dry_run:
             return {"path": None, "entities": detected}

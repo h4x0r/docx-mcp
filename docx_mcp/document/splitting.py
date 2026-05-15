@@ -82,9 +82,7 @@ class SplittingMixin:
         for sec in sections:
             if sec["title"] is None:
                 has_content = any(
-                    _para_text(el).strip()
-                    for el in sec["elements"]
-                    if el.tag == f"{W}p"
+                    _para_text(el).strip() for el in sec["elements"] if el.tag == f"{W}p"
                 )
                 if not has_content:
                     continue
@@ -119,7 +117,10 @@ class SplittingMixin:
                 body_children_xml += etree.tostring(copy.deepcopy(sect_pr))
 
             # Read the parent zip, replace word/document.xml body
-            with zipfile.ZipFile(str(tmp_docx), "r") as zin, zipfile.ZipFile(out_file, "w", zipfile.ZIP_DEFLATED) as zout:  # noqa: E501
+            with (
+                zipfile.ZipFile(str(tmp_docx), "r") as zin,
+                zipfile.ZipFile(out_file, "w", zipfile.ZIP_DEFLATED) as zout,
+            ):  # noqa: E501
                 for item in zin.infolist():
                     if item.filename == "word/document.xml":
                         orig_xml = zin.read(item.filename)

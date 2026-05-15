@@ -29,12 +29,9 @@ def _para(para_id: str):
 
 
 class TestSetParagraphIndentation:
-
     def test_set_paragraph_indentation_left_right(self, test_docx: Path) -> None:
         _open(test_docx)
-        result = json.loads(
-            server.set_paragraph_indentation("00000002", left_cm=2.0, right_cm=1.0)
-        )
+        result = json.loads(server.set_paragraph_indentation("00000002", left_cm=2.0, right_cm=1.0))
         assert result["para_id"] == "00000002"
         assert result["left_cm"] == 2.0
         assert result["right_cm"] == 1.0
@@ -49,9 +46,7 @@ class TestSetParagraphIndentation:
 
     def test_set_paragraph_indentation_first_line(self, test_docx: Path) -> None:
         _open(test_docx)
-        result = json.loads(
-            server.set_paragraph_indentation("00000002", first_line_cm=1.27)
-        )
+        result = json.loads(server.set_paragraph_indentation("00000002", first_line_cm=1.27))
         assert result["first_line_cm"] == 1.27
 
         para = _para("00000002")
@@ -65,19 +60,14 @@ class TestSetParagraphIndentation:
     def test_set_paragraph_indentation_both_raises(self, test_docx: Path) -> None:
         _open(test_docx)
         with pytest.raises(ValueError, match="mutually exclusive"):
-            server._doc.set_paragraph_indentation(
-                "00000002", first_line_cm=1.0, hanging_cm=0.5
-            )
+            server._doc.set_paragraph_indentation("00000002", first_line_cm=1.0, hanging_cm=0.5)
 
 
 class TestSetLineSpacing:
-
     def test_set_line_spacing_auto(self, test_docx: Path) -> None:
         _open(test_docx)
         # 1.5 lines = 360 in 240ths-of-a-line units
-        result = json.loads(
-            server.set_line_spacing("00000002", line_rule="auto", line_value=360)
-        )
+        result = json.loads(server.set_line_spacing("00000002", line_rule="auto", line_value=360))
         assert result["para_id"] == "00000002"
         assert result["line_rule"] == "auto"
         assert result["line_value"] == 360
@@ -108,14 +98,12 @@ class TestSetLineSpacing:
 
 
 class TestGetParagraphFormat:
-
     def test_get_paragraph_format_full(self, test_docx: Path) -> None:
         _open(test_docx)
         # Set up some formatting first
         server._doc.set_paragraph_indentation("00000002", left_cm=1.0, right_cm=0.5)
         server._doc.set_line_spacing(
-            "00000002", line_rule="auto", line_value=240,
-            space_before_pt=6.0, space_after_pt=3.0
+            "00000002", line_rule="auto", line_value=240, space_before_pt=6.0, space_after_pt=3.0
         )
         server._doc.set_paragraph_border("00000002", ["top"])
         server._doc.set_paragraph_shading("00000002", "FF0000")
@@ -130,7 +118,7 @@ class TestGetParagraphFormat:
         assert result["spacing"]["line_value"] == 240
         assert result["spacing"]["line_rule"] == "auto"
         assert result["spacing"]["before_twips"] == 120  # 6pt * 20
-        assert result["spacing"]["after_twips"] == 60    # 3pt * 20
+        assert result["spacing"]["after_twips"] == 60  # 3pt * 20
 
         assert result["border"] is True
         assert result["shading"] is True

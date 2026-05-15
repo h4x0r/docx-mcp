@@ -26,28 +26,32 @@ from .base import W, _now_iso, _preserve
 # Values that are non-empty are SUBSTITUTED (typographic chars → ASCII equivalent).
 _PRENORM_MAP: dict[str, str] = {
     # Typographic quotes → ASCII equivalents (1:1 substitution)
-    "\u2018": "'", "\u2019": "'",  # left / right single quotation mark
-    "\u201a": "'", "\u201b": "'",  # single low-9 / high-reversed-9
-    "\u201c": '"', "\u201d": '"',  # left / right double quotation mark
-    "\u201e": '"', "\u201f": '"',  # double low-9 / high-reversed-9
+    "\u2018": "'",
+    "\u2019": "'",  # left / right single quotation mark
+    "\u201a": "'",
+    "\u201b": "'",  # single low-9 / high-reversed-9
+    "\u201c": '"',
+    "\u201d": '"',  # left / right double quotation mark
+    "\u201e": '"',
+    "\u201f": '"',  # double low-9 / high-reversed-9
     # Dashes → hyphen (1:1 substitution)
-    "\u2014": "-",                  # em dash
-    "\u2013": "-",                  # en dash
-    "\u2011": "-",                  # non-breaking hyphen
+    "\u2014": "-",  # em dash
+    "\u2013": "-",  # en dash
+    "\u2011": "-",  # non-breaking hyphen
     # Non-breaking / special spaces → regular space (1:1 substitution)
-    "\u00a0": " ",                  # non-breaking space (NBSP)
-    "\u2007": " ",                  # figure space
-    "\u2009": " ",                  # thin space
-    "\u200a": " ",                  # hair space
-    "\u202f": " ",                  # narrow no-break space
+    "\u00a0": " ",  # non-breaking space (NBSP)
+    "\u2007": " ",  # figure space
+    "\u2009": " ",  # thin space
+    "\u200a": " ",  # hair space
+    "\u202f": " ",  # narrow no-break space
     # Invisible characters → removed (empty string)
     # These render as nothing; queries must not include them.
-    "\u00ad": "",                   # soft hyphen (line-break hint)
-    "\u200b": "",                   # zero-width space
-    "\u200c": "",                   # zero-width non-joiner
-    "\u200d": "",                   # zero-width joiner
-    "\u2060": "",                   # word joiner
-    "\ufeff": "",                   # BOM / zero-width no-break space
+    "\u00ad": "",  # soft hyphen (line-break hint)
+    "\u200b": "",  # zero-width space
+    "\u200c": "",  # zero-width non-joiner
+    "\u200d": "",  # zero-width joiner
+    "\u2060": "",  # word joiner
+    "\ufeff": "",  # BOM / zero-width no-break space
 }
 
 
@@ -67,7 +71,7 @@ def _prenorm_with_idx(text: str) -> tuple[str, list[int]]:
     prenorm_to_orig: list[int] = []
     for i, ch in enumerate(text):
         replacement = _PRENORM_MAP.get(ch, ch)
-        for c in replacement:           # empty string → zero iterations (char dropped)
+        for c in replacement:  # empty string → zero iterations (char dropped)
             result.append(c)
             prenorm_to_orig.append(i)
     return "".join(result), prenorm_to_orig
@@ -95,9 +99,7 @@ def _normalize_ws(text: str) -> tuple[str, list[int]]:
     return "".join(result), orig_idx
 
 
-def _norm(
-    text: str, *, ignore_case: bool = False
-) -> tuple[str, list[int]]:
+def _norm(text: str, *, ignore_case: bool = False) -> tuple[str, list[int]]:
     """Pre-normalize, whitespace-collapse, and optionally casefold.
 
     Returns ``(norm_text, orig_idx)`` where ``orig_idx[i]`` is the index in
@@ -133,7 +135,7 @@ class _Slot:
         self.char = char
         self.run_el = run_el
         self.rpr_bytes = rpr_bytes
-        self.idx = idx       # absolute position in the full slots list
+        self.idx = idx  # absolute position in the full slots list
         self.in_ins = in_ins  # w:ins parent element, or None
 
 
@@ -329,9 +331,7 @@ def _collapse_diff(find: str, replace: str) -> tuple[str, str, str, str]:
     tokens_r = re.split(r"(\s+)", replace)
     matcher = difflib.SequenceMatcher(None, tokens_f, tokens_r, autojunk=False)
     changed = [
-        (tag, i1, i2, j1, j2)
-        for tag, i1, i2, j1, j2 in matcher.get_opcodes()
-        if tag != "equal"
+        (tag, i1, i2, j1, j2) for tag, i1, i2, j1, j2 in matcher.get_opcodes() if tag != "equal"
     ]
     if not changed:
         return find, "", "", ""
@@ -373,8 +373,7 @@ def _apply_deletion(
     for s in del_slots:
         if s.in_ins is not None:
             raise ValueError(
-                "Cannot delete text inside an existing w:ins; "
-                "accept or reject the insertion first"
+                "Cannot delete text inside an existing w:ins; accept or reject the insertion first"
             )
 
     # ── Group consecutive del_slots by run_el ─────────────────────────────
@@ -639,7 +638,13 @@ class TracksMixin:
         real_slot_e = real_slot_s + len(del_text)
 
         if not del_text and not ins_text:
-            return {"del_id": None, "ins_id": None, "type": "replacement", "author": author, "date": _now_iso()}  # noqa: E501
+            return {
+                "del_id": None,
+                "ins_id": None,
+                "type": "replacement",
+                "author": author,
+                "date": _now_iso(),
+            }  # noqa: E501
 
         cid = self._next_markup_id(doc)
         now = _now_iso()

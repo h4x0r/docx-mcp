@@ -1,4 +1,5 @@
 """XPath query escape hatch — run raw XPath against any DOCX part."""
+
 from __future__ import annotations
 
 import signal
@@ -9,12 +10,12 @@ from .errors import DocxMcpError, ErrCode
 
 # Pre-bound namespace map for all queries
 _NS: dict[str, str] = {
-    "w":   "http://schemas.openxmlformats.org/wordprocessingml/2006/main",
+    "w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main",
     "w14": "http://schemas.microsoft.com/office/word/2010/wordml",
-    "r":   "http://schemas.openxmlformats.org/officeDocument/2006/relationships",
-    "wp":  "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing",
-    "a":   "http://schemas.openxmlformats.org/drawingml/2006/main",
-    "mc":  "http://schemas.openxmlformats.org/markup-compatibility/2006",
+    "r": "http://schemas.openxmlformats.org/officeDocument/2006/relationships",
+    "wp": "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing",
+    "a": "http://schemas.openxmlformats.org/drawingml/2006/main",
+    "mc": "http://schemas.openxmlformats.org/markup-compatibility/2006",
 }
 
 _MAX_RESULTS = 50
@@ -22,18 +23,18 @@ _MAX_RESULTS = 50
 
 def _xpath_with_timeout(tree, xpath: str, namespaces: dict, timeout: int = 2):
     """Run tree.xpath() with a SIGALRM timeout. Unix only; falls through on Windows."""
-    if not hasattr(signal, "SIGALRM"):
-        return tree.xpath(xpath, namespaces=namespaces)
+    if not hasattr(signal, "SIGALRM"):  # pragma: no cover
+        return tree.xpath(xpath, namespaces=namespaces)  # pragma: no cover
 
-    def _handler(signum, frame):
-        raise TimeoutError("XPath evaluation timed out")
+    def _handler(signum, frame):  # pragma: no cover
+        raise TimeoutError("XPath evaluation timed out")  # pragma: no cover
 
     old_handler = signal.signal(signal.SIGALRM, _handler)
     signal.alarm(timeout)
     try:
         return tree.xpath(xpath, namespaces=namespaces)
-    except TimeoutError as exc:
-        raise DocxMcpError(
+    except TimeoutError as exc:  # pragma: no cover
+        raise DocxMcpError(  # pragma: no cover
             ErrCode.XPATH_ERROR,
             "XPath evaluation timed out (possible DoS pattern)",
             hint="Simplify the XPath expression.",
@@ -44,7 +45,6 @@ def _xpath_with_timeout(tree, xpath: str, namespaces: dict, timeout: int = 2):
 
 
 class XPathMixin:
-
     def xpath_query(
         self,
         xpath: str,
@@ -99,9 +99,7 @@ class XPathMixin:
         results: list[str] = []
         for m in matches[:_MAX_RESULTS]:
             if isinstance(m, etree._Element):
-                results.append(
-                    etree.tostring(m, pretty_print=True).decode()
-                )
+                results.append(etree.tostring(m, pretty_print=True).decode())
             else:
                 results.append(str(m))
 

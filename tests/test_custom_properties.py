@@ -14,10 +14,13 @@ VT = f"{{{VT_NS}}}"
 
 
 def _inject_custom(doc, props: dict) -> None:
-    root = etree.Element(f"{CUSTOM}Properties", nsmap={
-        None: CUSTOM_NS,
-        "vt": VT_NS,
-    })
+    root = etree.Element(
+        f"{CUSTOM}Properties",
+        nsmap={
+            None: CUSTOM_NS,
+            "vt": VT_NS,
+        },
+    )
     for pid_offset, (name, value) in enumerate(props.items()):
         prop = etree.SubElement(root, f"{CUSTOM}property")
         prop.set("fmtid", "{D5CDD505-2E9C-101B-9397-08002B2CF9AE}")

@@ -14,7 +14,6 @@ W14 = "{http://schemas.microsoft.com/office/word/2010/wordml}"
 
 
 class TestRunFormatting:
-
     def _open(self, path: Path) -> None:
         server._doc = None
         server.open_document(str(path))

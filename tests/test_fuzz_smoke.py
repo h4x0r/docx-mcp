@@ -1,4 +1,5 @@
 """Smoke tests for the atheris fuzzer harness — runs without atheris installed."""
+
 from __future__ import annotations
 
 import io
@@ -16,21 +17,25 @@ def _minimal_docx_bytes() -> bytes:
 
 def test_fuzz_harness_handles_valid_input():
     from tests.fuzz.fuzz_open import TestOneInput
+
     TestOneInput(_minimal_docx_bytes())
 
 
 def test_fuzz_harness_handles_garbage():
     from tests.fuzz.fuzz_open import TestOneInput
+
     TestOneInput(b"not a zip file at all")
 
 
 def test_fuzz_harness_handles_empty():
     from tests.fuzz.fuzz_open import TestOneInput
+
     TestOneInput(b"")
 
 
 def test_fuzz_harness_handles_truncated_zip():
     from tests.fuzz.fuzz_open import TestOneInput
+
     TestOneInput(b"PK\x03\x04\x14\x00")
 
 
@@ -39,6 +44,7 @@ def test_fuzz_harness_handles_zipslip_payload():
     import io
 
     from tests.fuzz.fuzz_open import TestOneInput
+
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w") as zf:
         zf.writestr("[Content_Types].xml", "<Types/>")
@@ -51,6 +57,7 @@ def test_fuzz_harness_handles_xxe_payload():
     import io
 
     from tests.fuzz.fuzz_open import TestOneInput
+
     evil_xml = (
         '<?xml version="1.0"?>'
         '<!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>'

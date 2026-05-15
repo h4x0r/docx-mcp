@@ -13,7 +13,6 @@ W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 
 
 class TestRunAdvanced:
-
     def _open(self, path: Path) -> None:
         server._doc = None
         server.open_document(str(path))

@@ -111,7 +111,8 @@ class TestCommentCRUD:
         cm_tree = doc._tree("word/comments.xml")
         # Get the paraId of parent comment's first paragraph
         parent_el = next(
-            c for c in cm_tree.findall(
+            c
+            for c in cm_tree.findall(
                 "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}comment"
             )
             if c.get("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}id") == str(cid)

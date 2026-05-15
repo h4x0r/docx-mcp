@@ -179,11 +179,19 @@ class ClauseDiffMixin:
         out = output_path if output_path else str(self.workdir / "compare_contracts_output.docx")
         self.save(out, backup=False)
 
-        heading_matches = [(i, j, r) for i, j, r in matched_pairs if clauses_a[i]["heading"] or clauses_b[j]["heading"]]  # noqa: E501
-        clauses_compared = len(heading_matches) + len(
-            [i for i in range(len(clauses_a)) if i not in matched_a and clauses_a[i]["heading"]]
-        ) + len(
-            [j for j in range(len(clauses_b)) if j not in matched_b and clauses_b[j]["heading"]]
+        heading_matches = [
+            (i, j, r)
+            for i, j, r in matched_pairs
+            if clauses_a[i]["heading"] or clauses_b[j]["heading"]
+        ]  # noqa: E501
+        clauses_compared = (
+            len(heading_matches)
+            + len(
+                [i for i in range(len(clauses_a)) if i not in matched_a and clauses_a[i]["heading"]]
+            )
+            + len(
+                [j for j in range(len(clauses_b)) if j not in matched_b and clauses_b[j]["heading"]]
+            )
         )
 
         return {

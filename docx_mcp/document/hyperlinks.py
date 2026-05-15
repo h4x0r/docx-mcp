@@ -1,4 +1,5 @@
 """Hyperlink CRUD mixin."""
+
 from __future__ import annotations
 
 import contextlib
@@ -8,9 +9,7 @@ from lxml import etree
 from .base import RELS, W14, R, W
 from .errors import DocxMcpError, ErrCode
 
-_HYPERLINK_TYPE = (
-    "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink"
-)
+_HYPERLINK_TYPE = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink"
 _RELS_PATH = "word/_rels/document.xml.rels"
 
 
@@ -138,15 +137,11 @@ class HyperlinksMixin:
 
         para = self._find_para(doc, para_id)
         if para is None:
-            raise DocxMcpError(
-                ErrCode.BOOKMARK_NOT_FOUND, f"Hyperlink not found: {url_or_anchor}"
-            )
+            raise DocxMcpError(ErrCode.BOOKMARK_NOT_FOUND, f"Hyperlink not found: {url_or_anchor}")
 
         target_hl = _find_hyperlink(para, url_or_anchor, rels)
         if target_hl is None:
-            raise DocxMcpError(
-                ErrCode.BOOKMARK_NOT_FOUND, f"Hyperlink not found: {url_or_anchor}"
-            )
+            raise DocxMcpError(ErrCode.BOOKMARK_NOT_FOUND, f"Hyperlink not found: {url_or_anchor}")
 
         # Move child runs to parent before the hyperlink element, then remove it
         parent = target_hl.getparent()
@@ -170,15 +165,14 @@ class HyperlinksMixin:
         rels = self._require(_RELS_PATH)
         rel = rels.find(f'{{{RELS[1:-1]}}}Relationship[@Id="{r_id}"]')
         if rel is None:
-            raise DocxMcpError(
-                ErrCode.BOOKMARK_NOT_FOUND, f"Relationship not found: {r_id}"
-            )
+            raise DocxMcpError(ErrCode.BOOKMARK_NOT_FOUND, f"Relationship not found: {r_id}")
         rel.set("Target", new_url)
         self._mark(_RELS_PATH)
         return {"r_id": r_id, "new_url": new_url}
 
 
 # ── Module-level helpers ──────────────────────────────────────────────────────
+
 
 def _next_rid(rels: etree._Element) -> str:
     """Return the next available rIdN by scanning existing Relationship/@Id values."""

@@ -1,4 +1,5 @@
 """TocMixin — Table of Contents, List of Figures, List of Tables generation."""
+
 from __future__ import annotations
 
 import re
@@ -104,7 +105,9 @@ class TocMixin:
                     return child, idx
         return None, -1
 
-    def _find_caption_field_para(self, body, caption_type: str) -> tuple[etree._Element | None, int]:  # noqa: E501
+    def _find_caption_field_para(
+        self, body, caption_type: str
+    ) -> tuple[etree._Element | None, int]:  # noqa: E501
         """Find existing LoF/LoT field paragraph by caption type (Figure|Table)."""
         children = list(body)
         for idx, child in enumerate(children):

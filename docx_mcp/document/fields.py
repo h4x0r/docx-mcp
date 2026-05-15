@@ -1,4 +1,5 @@
 """FieldsMixin — Word complex field insertion and management."""
+
 from __future__ import annotations
 
 from lxml import etree
@@ -10,9 +11,7 @@ from .errors import DocxMcpError, ErrCode
 class FieldsMixin:
     """Insert and manage Word complex fields (fldChar / instrText)."""
 
-    def add_field(
-        self, para_id: str, field_code: str, cached_value: str = ""
-    ) -> dict:
+    def add_field(self, para_id: str, field_code: str, cached_value: str = "") -> dict:
         """Insert a Word complex field at the end of a paragraph.
 
         Inserts the five-run structure:
@@ -138,7 +137,7 @@ class FieldsMixin:
             cached_parts: list[str] = []
             state = "instr"  # "instr" -> after begin, "cached" -> after separate
 
-            for sibling in children[start_idx + 1:]:
+            for sibling in children[start_idx + 1 :]:
                 # Check for fldChar in this run
                 fc = sibling.find(f"{W}fldChar")
                 if fc is not None:
@@ -164,15 +163,17 @@ class FieldsMixin:
             field_id = f"field_{field_index}"
             field_index += 1
 
-            results.append({
-                "field_id": field_id,
-                "code": code,
-                "type": field_type,
-                "instruction": code,
-                "result": cached,
-                "cached_value": cached,
-                "para_id": para_id,
-            })
+            results.append(
+                {
+                    "field_id": field_id,
+                    "code": code,
+                    "type": field_type,
+                    "instruction": code,
+                    "result": cached,
+                    "cached_value": cached,
+                    "para_id": para_id,
+                }
+            )
 
         return results
 
@@ -235,7 +236,7 @@ class FieldsMixin:
                 raise ValueError(f"Field '{field_id}' begin run not in paragraph.") from None
 
             runs_to_remove = [begin_run]
-            for sibling in children[start_idx + 1:]:
+            for sibling in children[start_idx + 1 :]:
                 runs_to_remove.append(sibling)
                 fc = sibling.find(f"{W}fldChar")
                 if fc is not None and fc.get(f"{W}fldCharType") == "end":

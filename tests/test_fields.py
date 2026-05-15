@@ -1,4 +1,5 @@
 """Tests for FieldsMixin — field insertion (add_field, update_fields, list_fields)."""
+
 from __future__ import annotations
 
 from pathlib import Path

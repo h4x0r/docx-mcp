@@ -1,4 +1,5 @@
 """Tests for multilevel list methods: create_multilevel_list, restart_numbering, suppress_numbering."""  # noqa: E501
+
 from __future__ import annotations
 
 import uuid
@@ -56,9 +57,12 @@ class TestMultilevelList:
     def test_numbering_xml_abstract_num_created(self, tmp_path):
         """abstractNum and num entries are both created in numbering.xml."""
         doc = _make_doc(tmp_path)
-        result = doc.create_multilevel_list("TestList", [
-            {"num_fmt": "bullet", "lvl_text": "•", "indent": 720, "hanging": 360},
-        ])
+        result = doc.create_multilevel_list(
+            "TestList",
+            [
+                {"num_fmt": "bullet", "lvl_text": "•", "indent": 720, "hanging": 360},
+            ],
+        )
         num_tree = doc._tree("word/numbering.xml")
         # Both abstractNum and num should exist
         abs_nums = num_tree.findall(f"{W}abstractNum")
@@ -124,7 +128,13 @@ class TestMultilevelList:
         """create_multilevel_list with style binds abstractNum to heading style."""
         doc = _make_doc(tmp_path)
         levels = [
-            {"num_fmt": "decimal", "lvl_text": "%1.", "indent": 0, "hanging": 360, "style": "Heading 1"},  # noqa: E501
+            {
+                "num_fmt": "decimal",
+                "lvl_text": "%1.",
+                "indent": 0,
+                "hanging": 360,
+                "style": "Heading 1",
+            },  # noqa: E501
         ]
         result = doc.create_multilevel_list("HeadingList", levels)
         num_tree = doc._tree("word/numbering.xml")

@@ -1,4 +1,5 @@
 """Tests for XPath query escape hatch — xpath_query tool."""
+
 from __future__ import annotations
 
 import json
@@ -38,9 +39,7 @@ def _make_doc_with_paragraphs(tmp_path: Path, n: int) -> Path:
             f"<w:r><w:t>{text}</w:t></w:r></w:p>"
         )
 
-    body_paras = "".join(
-        para(f"Para {i}", f"{i:08X}") for i in range(1, n + 1)
-    )
+    body_paras = "".join(para(f"Para {i}", f"{i:08X}") for i in range(1, n + 1))
 
     document_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <w:document xmlns:w="{W}" xmlns:w14="{W14}">
@@ -160,9 +159,7 @@ class TestXpathQuery:
     def test_finds_by_style(self, tmp_path: Path):
         path = _make_doc_with_heading(tmp_path)
         _open(path)
-        result = _require_doc().xpath_query(
-            "//w:p[w:pPr/w:pStyle/@w:val='Heading1']"
-        )
+        result = _require_doc().xpath_query("//w:p[w:pPr/w:pStyle/@w:val='Heading1']")
         assert result["count"] >= 1
         assert result["returned"] >= 1
         assert "Heading1" in result["results"][0]

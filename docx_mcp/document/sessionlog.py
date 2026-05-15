@@ -11,12 +11,14 @@ class SessionLogMixin:
     def _record_op(self, tool: str, args: dict, result: dict) -> None:
         if not hasattr(self, "_session_log"):
             self._session_log: list[dict] = []
-        self._session_log.append({
-            "tool": tool,
-            "args": args,
-            "result": result,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-        })
+        self._session_log.append(
+            {
+                "tool": tool,
+                "args": args,
+                "result": result,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+        )
 
     def get_session_log(self) -> list[dict]:
         """Return all operations performed this session as replayable JSON.

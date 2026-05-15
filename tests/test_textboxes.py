@@ -121,8 +121,8 @@ class TestInsertTextBox:
             tree = doc._tree("word/document.xml")
             extent = tree.find(f".//{WP}extent")
             assert extent is not None
-            assert extent.get("cx") == "720000"   # 2 * 360000
-            assert extent.get("cy") == "360000"   # 1 * 360000
+            assert extent.get("cx") == "720000"  # 2 * 360000
+            assert extent.get("cy") == "360000"  # 1 * 360000
         finally:
             doc.close()
 

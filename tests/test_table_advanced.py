@@ -76,14 +76,10 @@ class TestDuplicateTableRow:
         rows = tables[table_idx].findall(f"{W}tr")
         # New row is at index 1; its para IDs must not overlap with old row 0 ids
         new_row_ids = {
-            p.get(f"{W14}paraId")
-            for p in rows[1].iter(f"{W}p")
-            if p.get(f"{W14}paraId")
+            p.get(f"{W14}paraId") for p in rows[1].iter(f"{W}p") if p.get(f"{W14}paraId")
         }
         old_row_0_ids = {
-            p.get(f"{W14}paraId")
-            for p in rows[0].iter(f"{W}p")
-            if p.get(f"{W14}paraId")
+            p.get(f"{W14}paraId") for p in rows[0].iter(f"{W}p") if p.get(f"{W14}paraId")
         }
         # No shared para IDs between original row 0 and new row 1
         assert new_row_ids.isdisjoint(old_row_0_ids)

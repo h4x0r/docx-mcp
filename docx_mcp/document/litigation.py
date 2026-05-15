@@ -130,7 +130,14 @@ class LitigationMixin:
                 run_text = t_el.text
 
                 matched = False
-                if exact_text is not None and run_text == exact_text or exact_text is not None and exact_text in run_text or pattern is not None and re.search(pattern, run_text):  # noqa: E501
+                if (
+                    exact_text is not None
+                    and run_text == exact_text
+                    or exact_text is not None
+                    and exact_text in run_text
+                    or pattern is not None
+                    and re.search(pattern, run_text)
+                ):  # noqa: E501
                     matched = True
 
                 if matched:
@@ -276,11 +283,11 @@ class LitigationMixin:
             log_doc.modify_cell(tbl_idx, 0, col_idx, header)
 
         # Data row from document metadata
-        log_doc.modify_cell(tbl_idx, 1, 0, "")          # Bates Range (TBD)
+        log_doc.modify_cell(tbl_idx, 1, 0, "")  # Bates Range (TBD)
         log_doc.modify_cell(tbl_idx, 1, 1, author)
         log_doc.modify_cell(tbl_idx, 1, 2, created)
         log_doc.modify_cell(tbl_idx, 1, 3, title)
-        log_doc.modify_cell(tbl_idx, 1, 4, "")          # Privilege Basis (TBD)
+        log_doc.modify_cell(tbl_idx, 1, 4, "")  # Privilege Basis (TBD)
 
         log_doc.save(output_path, backup=False)
 

@@ -1,4 +1,5 @@
 """PDF export mixin: convert the open document to PDF via LibreOffice headless."""
+
 from __future__ import annotations
 
 import shutil
@@ -7,7 +8,6 @@ from pathlib import Path
 
 
 class PdfExportMixin:
-
     def convert_to_pdf(self, output_path: str) -> dict:
         """Convert the current document to PDF using LibreOffice headless.
 
@@ -41,15 +41,21 @@ class PdfExportMixin:
         outdir.mkdir(parents=True, exist_ok=True)
 
         result = subprocess.run(
-            [lo, "--headless", "--convert-to", "pdf", "--outdir", str(outdir),
-             str(self.source_path)],
+            [
+                lo,
+                "--headless",
+                "--convert-to",
+                "pdf",
+                "--outdir",
+                str(outdir),
+                str(self.source_path),
+            ],
             capture_output=True,
             text=True,
         )
         if result.returncode != 0:
             raise RuntimeError(
-                f"LibreOffice conversion failed (exit {result.returncode}): "
-                f"{result.stderr.strip()}"
+                f"LibreOffice conversion failed (exit {result.returncode}): {result.stderr.strip()}"
             )
 
         # LibreOffice names the output after the input stem

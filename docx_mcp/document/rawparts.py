@@ -1,4 +1,5 @@
 """Raw XML part access — power-user escape hatch."""
+
 from __future__ import annotations
 
 import os
@@ -10,7 +11,6 @@ from .errors import DocxMcpError, ErrCode
 
 
 class RawPartsMixin:
-
     def list_parts(self) -> list[str]:
         """Return sorted list of all part paths in the DOCX zip."""
         parts: list[str] = []

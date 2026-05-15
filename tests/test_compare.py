@@ -37,16 +37,14 @@ def _write_docx(path: Path, paragraphs: list[str]) -> None:
         paras += (
             f'    <w:p w14:paraId="{para_id}" w14:textId="77777777">\n'
             f'      <w:r><w:t xml:space="preserve">{text}</w:t></w:r>\n'
-            f'    </w:p>\n'
+            f"    </w:p>\n"
         )
     doc_xml = (
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
-        '<w:document\n'
+        "<w:document\n"
         '    xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"\n'
         '    xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml">\n'
-        '  <w:body>\n'
-        + paras
-        + '  </w:body>\n</w:document>'
+        "  <w:body>\n" + paras + "  </w:body>\n</w:document>"
     )
     ct = (
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
@@ -55,7 +53,7 @@ def _write_docx(path: Path, paragraphs: list[str]) -> None:
         '<Default Extension="xml" ContentType="application/xml"/>'
         '<Override PartName="/word/document.xml"'
         ' ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'  # noqa: E501
-        '</Types>'
+        "</Types>"
     )
     rels = (
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
@@ -63,7 +61,7 @@ def _write_docx(path: Path, paragraphs: list[str]) -> None:
         '<Relationship Id="rId1"'
         ' Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument"'
         ' Target="word/document.xml"/>'
-        '</Relationships>'
+        "</Relationships>"
     )
     with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as zf:
         zf.writestr("[Content_Types].xml", ct)
@@ -86,7 +84,6 @@ W = lambda tag: f"{{{W_NS}}}{tag}"  # noqa: E731
 
 
 class TestCompareDocuments:
-
     # ── Identical documents ───────────────────────────────────────────────────
 
     def test_identical_documents_produce_no_tracked_changes(self, tmp_path: Path):
@@ -114,9 +111,7 @@ class TestCompareDocuments:
         root = _get_doc_root(out)
         ins_els = list(root.iter(W("ins")))
         assert len(ins_els) >= 1
-        ins_texts = "".join(
-            t.text or "" for ins in ins_els for t in ins.iter(W("t"))
-        )
+        ins_texts = "".join(t.text or "" for ins in ins_els for t in ins.iter(W("t")))
         assert "Second paragraph NEW" in ins_texts
 
     # ── Deleted paragraph ─────────────────────────────────────────────────────
@@ -132,9 +127,7 @@ class TestCompareDocuments:
         root = _get_doc_root(out)
         del_els = list(root.iter(W("del")))
         assert len(del_els) >= 1
-        del_texts = "".join(
-            dt.text or "" for del_el in del_els for dt in del_el.iter(W("delText"))
-        )
+        del_texts = "".join(dt.text or "" for del_el in del_els for dt in del_el.iter(W("delText")))
         assert "REMOVED PARAGRAPH" in del_texts
 
     # ── Modified paragraph (word-level diff) ──────────────────────────────────
@@ -151,12 +144,8 @@ class TestCompareDocuments:
         _write_docx(revised, ["The payment is due within 30 days."])
         _j(server.compare_documents(str(base), str(revised), str(out)))
         root = _get_doc_root(out)
-        del_texts = "".join(
-            dt.text or "" for dt in root.iter(W("delText"))
-        )
-        ins_texts = "".join(
-            t.text or "" for ins in root.iter(W("ins")) for t in ins.iter(W("t"))
-        )
+        del_texts = "".join(dt.text or "" for dt in root.iter(W("delText")))
+        ins_texts = "".join(t.text or "" for ins in root.iter(W("ins")) for t in ins.iter(W("t")))
         assert "thirty" in del_texts
         assert "30" in ins_texts
         # "The payment is due within" and "days." are NOT tracked
@@ -170,16 +159,22 @@ class TestCompareDocuments:
         base = tmp_path / "base.docx"
         revised = tmp_path / "revised.docx"
         out = tmp_path / "out.docx"
-        _write_docx(base, [
-            "Unchanged first paragraph.",
-            "This paragraph will be deleted.",
-            "This paragraph will be modified.",
-        ])
-        _write_docx(revised, [
-            "Unchanged first paragraph.",
-            "This paragraph will be changed.",
-            "Brand new paragraph added.",
-        ])
+        _write_docx(
+            base,
+            [
+                "Unchanged first paragraph.",
+                "This paragraph will be deleted.",
+                "This paragraph will be modified.",
+            ],
+        )
+        _write_docx(
+            revised,
+            [
+                "Unchanged first paragraph.",
+                "This paragraph will be changed.",
+                "Brand new paragraph added.",
+            ],
+        )
         _j(server.compare_documents(str(base), str(revised), str(out)))
         root = _get_doc_root(out)
         del_els = list(root.iter(W("del")))

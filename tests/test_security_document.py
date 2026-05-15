@@ -1,4 +1,5 @@
 """Security tests for document-layer hardening (V1–V4)."""
+
 from __future__ import annotations
 
 import io
@@ -12,6 +13,7 @@ from docx_mcp.document import DocxDocument
 from docx_mcp.document.errors import DocxMcpError, ErrCode
 
 # ── V4: BadZipFile ────────────────────────────────────────────────────────────
+
 
 def test_corrupt_zip_raises_docxmcperror(tmp_path: Path):
     """A file with garbage bytes raises DocxMcpError(OOXML_INVALID), not BadZipFile."""
@@ -44,6 +46,7 @@ def test_empty_file_raises_docxmcperror(tmp_path: Path):
 
 
 # ── V1: ZipSlip ───────────────────────────────────────────────────────────────
+
 
 def _make_zipslip_docx(tmp_path: Path, evil_entry: str) -> Path:
     """Build a fake DOCX (valid ZIP structure) with a traversal entry name."""
@@ -78,6 +81,7 @@ def test_zipslip_absolute_raises(tmp_path: Path):
 
 # ── V2: XXE ───────────────────────────────────────────────────────────────────
 
+
 def _make_xxe_docx(tmp_path: Path) -> Path:
     """DOCX with an XXE payload in document.xml."""
     path = tmp_path / "xxe.docx"
@@ -99,6 +103,7 @@ def _make_xxe_docx(tmp_path: Path) -> Path:
 def test_xxe_entity_not_resolved(tmp_path: Path):
     """XXE payload in document.xml must not resolve external entities."""
     from lxml import etree
+
     path = _make_xxe_docx(tmp_path)
     doc = DocxDocument(str(path))
     doc.open()
@@ -110,6 +115,7 @@ def test_xxe_entity_not_resolved(tmp_path: Path):
 
 
 # ── V3: ZIP bomb ─────────────────────────────────────────────────────────────
+
 
 def _make_too_many_entries_docx(tmp_path: Path, n: int) -> Path:
     """DOCX ZIP with n entries (entry count bomb)."""
@@ -168,9 +174,11 @@ def test_zip_bomb_declared_size_raises(tmp_path: Path):
 
 # ── V6: output_path traversal ────────────────────────────────────────────────
 
+
 def _make_open_doc(tmp_path: Path) -> DocxDocument:
     """Return an open DocxDocument."""
     from tests.conftest import _build_fixture
+
     path = tmp_path / "src.docx"
     _build_fixture(path)
     doc = DocxDocument(str(path))

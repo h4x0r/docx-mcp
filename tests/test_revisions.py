@@ -40,29 +40,29 @@ def _minimal_docx_with_revisions(path: Path) -> None:
     """
     doc_xml = (
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
-        '<w:document\n'
+        "<w:document\n"
         '    xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"\n'
         '    xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml">\n'
-        '  <w:body>\n'
+        "  <w:body>\n"
         '    <w:p w14:paraId="AA000001" w14:textId="77777777">\n'
         '      <w:r><w:t xml:space="preserve">Before </w:t></w:r>\n'
         '      <w:ins w:id="1" w:author="Alice" w:date="2026-01-15T10:00:00Z">\n'
-        '        <w:r><w:t>INSERTED_WORD</w:t></w:r>\n'
-        '      </w:ins>\n'
+        "        <w:r><w:t>INSERTED_WORD</w:t></w:r>\n"
+        "      </w:ins>\n"
         '      <w:r><w:t xml:space="preserve"> after.</w:t></w:r>\n'
-        '    </w:p>\n'
+        "    </w:p>\n"
         '    <w:p w14:paraId="AA000002" w14:textId="77777777">\n'
         '      <w:r><w:t xml:space="preserve">Text with </w:t></w:r>\n'
         '      <w:del w:id="2" w:author="Bob" w:date="2026-01-16T14:30:00Z">\n'
-        '        <w:r><w:delText>DELETED_WORD</w:delText></w:r>\n'
-        '      </w:del>\n'
+        "        <w:r><w:delText>DELETED_WORD</w:delText></w:r>\n"
+        "      </w:del>\n"
         '      <w:r><w:t xml:space="preserve"> removed.</w:t></w:r>\n'
-        '    </w:p>\n'
+        "    </w:p>\n"
         '    <w:p w14:paraId="AA000003" w14:textId="77777777">\n'
-        '      <w:r><w:t>No changes here.</w:t></w:r>\n'
-        '    </w:p>\n'
-        '  </w:body>\n'
-        '</w:document>'
+        "      <w:r><w:t>No changes here.</w:t></w:r>\n"
+        "    </w:p>\n"
+        "  </w:body>\n"
+        "</w:document>"
     )
     _write_zip(path, doc_xml)
 
@@ -70,15 +70,15 @@ def _minimal_docx_with_revisions(path: Path) -> None:
 def _minimal_docx_empty(path: Path) -> None:
     doc_xml = (
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
-        '<w:document\n'
+        "<w:document\n"
         '    xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"\n'
         '    xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml">\n'
-        '  <w:body>\n'
+        "  <w:body>\n"
         '    <w:p w14:paraId="AA000010" w14:textId="77777777">\n'
-        '      <w:r><w:t>No tracked changes.</w:t></w:r>\n'
-        '    </w:p>\n'
-        '  </w:body>\n'
-        '</w:document>'
+        "      <w:r><w:t>No tracked changes.</w:t></w:r>\n"
+        "    </w:p>\n"
+        "  </w:body>\n"
+        "</w:document>"
     )
     _write_zip(path, doc_xml)
 
@@ -91,7 +91,7 @@ def _write_zip(path: Path, doc_xml: str) -> None:
         '<Default Extension="xml" ContentType="application/xml"/>'
         '<Override PartName="/word/document.xml"'
         ' ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'  # noqa: E501
-        '</Types>'
+        "</Types>"
     )
     rels = (
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
@@ -99,7 +99,7 @@ def _write_zip(path: Path, doc_xml: str) -> None:
         '<Relationship Id="rId1"'
         ' Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument"'
         ' Target="word/document.xml"/>'
-        '</Relationships>'
+        "</Relationships>"
     )
     with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as zf:
         zf.writestr("[Content_Types].xml", ct)

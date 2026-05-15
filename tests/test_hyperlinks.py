@@ -1,4 +1,5 @@
 """Tests for HyperlinksMixin — Hyperlink CRUD."""
+
 from __future__ import annotations
 
 import zipfile
@@ -106,7 +107,9 @@ _DOC_RELS_WITH_LINK = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 </Relationships>"""
 
 
-def _build_docx(path: Path, *, document_xml: str = _DOCUMENT_XML_PLAIN, rels: str = _DOC_RELS) -> Path:  # noqa: E501
+def _build_docx(
+    path: Path, *, document_xml: str = _DOCUMENT_XML_PLAIN, rels: str = _DOC_RELS
+) -> Path:  # noqa: E501
     with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as zf:
         zf.writestr("[Content_Types].xml", _CONTENT_TYPES.strip())
         zf.writestr("_rels/.rels", _TOP_RELS.strip())
@@ -124,6 +127,7 @@ def _open(path: Path) -> DocxDocument:
 
 
 # ── TestListHyperlinks ────────────────────────────────────────────────────────
+
 
 class TestListHyperlinks:
     def test_empty_returns_empty(self, tmp_path: Path):
@@ -162,6 +166,7 @@ class TestListHyperlinks:
 
 
 # ── TestAddHyperlink ──────────────────────────────────────────────────────────
+
 
 class TestAddHyperlink:
     def test_add_external_hyperlink(self, tmp_path: Path):
@@ -211,6 +216,7 @@ class TestAddHyperlink:
 
 # ── TestAddInternalLink ───────────────────────────────────────────────────────
 
+
 class TestAddInternalLink:
     def test_add_internal_link(self, tmp_path: Path):
         path = _build_docx(tmp_path / "doc.docx")
@@ -241,6 +247,7 @@ class TestAddInternalLink:
 
 # ── TestRemoveHyperlink ───────────────────────────────────────────────────────
 
+
 class TestRemoveHyperlink:
     def test_remove_preserves_text(self, tmp_path: Path):
         path = _build_docx(
@@ -269,6 +276,7 @@ class TestRemoveHyperlink:
 
 
 # ── TestUpdateHyperlink ───────────────────────────────────────────────────────
+
 
 class TestUpdateHyperlink:
     def test_update_url(self, tmp_path: Path):

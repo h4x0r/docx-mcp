@@ -1,4 +1,5 @@
 """Security guard tests — input validation."""
+
 from __future__ import annotations
 
 import contextlib
@@ -22,6 +23,7 @@ def test_unsafe_path_code_exists():
 
 
 # ── para_id ──────────────────────────────────────────────────────────────────
+
 
 def test_para_id_valid():
     assert InputGuard.para_id("1A2B3C4D") == "1A2B3C4D"
@@ -60,6 +62,7 @@ def test_para_id_arbitrary_input_never_crashes(s):
 
 # ── output_path ───────────────────────────────────────────────────────────────
 
+
 def test_output_path_valid(tmp_path):
     p = str(tmp_path / "out.docx")
     result = InputGuard.output_path(p)
@@ -91,6 +94,7 @@ def test_output_path_arbitrary_never_crashes(s):
 
 # ── color_hex ────────────────────────────────────────────────────────────────
 
+
 def test_color_hex_valid():
     assert InputGuard.color_hex("FF0000") == "FF0000"
 
@@ -110,6 +114,7 @@ def test_color_hex_non_hex_raises():
 
 
 # ── bounded_int ───────────────────────────────────────────────────────────────
+
 
 def test_bounded_int_valid():
     assert InputGuard.bounded_int(5, 1, 10, "width") == 5
@@ -142,6 +147,7 @@ def test_bounded_int_arbitrary_never_crashes(n):
 
 
 # ── regex_pattern ─────────────────────────────────────────────────────────────
+
 
 def test_regex_pattern_valid():
     pat = InputGuard.regex_pattern(r"\d+")

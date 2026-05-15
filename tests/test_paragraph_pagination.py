@@ -33,7 +33,6 @@ def _ppr(para_id: str):
 
 
 class TestSetKeepWithNext:
-
     def test_set_keep_with_next_enabled(self, test_docx: Path) -> None:
         _open(test_docx)
         result = json.loads(server.set_keep_with_next("00000002", True))
@@ -56,7 +55,6 @@ class TestSetKeepWithNext:
 
 
 class TestSetKeepLinesTogether:
-
     def test_set_keep_lines_together_enabled(self, test_docx: Path) -> None:
         _open(test_docx)
         result = json.loads(server.set_keep_lines_together("00000002", True))
@@ -69,7 +67,6 @@ class TestSetKeepLinesTogether:
 
 
 class TestSetPageBreakBefore:
-
     def test_set_page_break_before_enabled(self, test_docx: Path) -> None:
         _open(test_docx)
         result = json.loads(server.set_page_break_before("00000002", True))
@@ -82,7 +79,6 @@ class TestSetPageBreakBefore:
 
 
 class TestSetWidowControl:
-
     def test_set_widow_control_enabled(self, test_docx: Path) -> None:
         _open(test_docx)
         result = json.loads(server.set_widow_control("00000002", True))
@@ -95,7 +91,6 @@ class TestSetWidowControl:
 
 
 class TestPaginationNotFound:
-
     def test_pagination_not_found_raises(self, test_docx: Path) -> None:
         _open(test_docx)
         with pytest.raises(ValueError, match="not found"):

@@ -148,17 +148,17 @@ def _build_smartquote_docx(path: Path) -> None:
     """Paragraph 00000020 contains smart quotes, NBSP, em-dash."""
     doc_xml = (
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
-        '<w:document\n'
+        "<w:document\n"
         '    xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"\n'
         '    xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml">\n'
-        '  <w:body>\n'
+        "  <w:body>\n"
         '    <w:p w14:paraId="00000020" w14:textId="77777777">\n'
         '      <w:r><w:t xml:space="preserve">'
-        '\u201cThe\u00a0contract\u201d\u2014effective\u00a0immediately.'
-        '</w:t></w:r>\n'
-        '    </w:p>\n'
-        '  </w:body>\n'
-        '</w:document>'
+        "\u201cThe\u00a0contract\u201d\u2014effective\u00a0immediately."
+        "</w:t></w:r>\n"
+        "    </w:p>\n"
+        "  </w:body>\n"
+        "</w:document>"
     )
 
     content_types = """\
@@ -237,11 +237,7 @@ class TestAcceptedViewFlattener:
         assert result["type"] == "deletion"
         # The word 'plain' should now be wrapped in w:del
         p = _para_xml("00000010")
-        del_texts = [
-            dt.text
-            for dt in p.iter(f"{W}delText")
-            if dt.text
-        ]
+        del_texts = [dt.text for dt in p.iter(f"{W}delText") if dt.text]
         assert any("plain" in t for t in del_texts)
 
     def test_insert_text_targets_text_adjacent_to_existing_ins(self):
@@ -373,9 +369,7 @@ class TestNormalisation:
         assert result["type"] == "deletion"
         # The w:delText should contain the ORIGINAL smart-quote characters
         p = _para_xml("00000020")
-        del_texts = "".join(
-            dt.text for dt in p.iter(f"{W}delText") if dt.text
-        )
+        del_texts = "".join(dt.text for dt in p.iter(f"{W}delText") if dt.text)
         assert "\u201c" in del_texts or "\u201d" in del_texts
 
     def test_delete_with_regular_dash_matches_em_dash(self):
@@ -386,7 +380,7 @@ class TestNormalisation:
             server.delete_text(
                 "00000020",
                 "effective",
-                context_before="-",   # normalised form of em-dash
+                context_before="-",  # normalised form of em-dash
                 context_after=" immediately",
             )
         )
@@ -400,7 +394,7 @@ class TestNormalisation:
             server.delete_text(
                 "00000020",
                 "contract",
-                context_before="The ",   # regular space (doc has NBSP)
+                context_before="The ",  # regular space (doc has NBSP)
                 context_after="\u201d",
             )
         )
@@ -451,9 +445,7 @@ class TestMultiRunSpanning:
         assert result["type"] == "deletion"
         # The deleted text should appear inside w:del
         p = _para_xml("00000006")
-        del_texts = "".join(
-            dt.text or "" for dt in p.iter(f"{W}delText")
-        )
+        del_texts = "".join(dt.text or "" for dt in p.iter(f"{W}delText"))
         assert "First" in del_texts
         assert "bold" in del_texts
 
@@ -472,9 +464,9 @@ class TestMultiRunSpanning:
         assert len(del_runs) >= 2
         # The bold run's rPr should include w:b
         bold_runs = [
-            r for r in del_runs
-            if r.find(f"{W}rPr") is not None
-            and r.find(f"{W}rPr").find(f"{W}b") is not None
+            r
+            for r in del_runs
+            if r.find(f"{W}rPr") is not None and r.find(f"{W}rPr").find(f"{W}b") is not None
         ]
         assert len(bold_runs) >= 1
 
@@ -518,7 +510,9 @@ class TestMultiRunSpanning:
         assert result["type"] == "replacement"
         p = _para_xml("00000006")
         del_texts = "".join(dt.text or "" for dt in p.iter(f"{W}delText"))
-        ins_texts = "".join(t.text or "" for t in p.iter(f"{W}ins") for t2 in t.iter(f"{W}t") for _ in [None])  # noqa: E501
+        ins_texts = "".join(
+            t.text or "" for t in p.iter(f"{W}ins") for t2 in t.iter(f"{W}t") for _ in [None]
+        )  # noqa: E501
         # Simpler: collect ins w:t text
         ins_texts = ""
         for ins in p.iter(f"{W}ins"):

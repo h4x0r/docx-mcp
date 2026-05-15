@@ -134,11 +134,13 @@ class ReadingMixin:
             level = int(m.group(1))
             if level > max_level:
                 continue
-            outline.append({
-                "level": level,
-                "text": self._text(para),
-                "para_id": para.get(f"{W14}paraId", ""),
-            })
+            outline.append(
+                {
+                    "level": level,
+                    "text": self._text(para),
+                    "para_id": para.get(f"{W14}paraId", ""),
+                }
+            )
         return outline
 
     def copy_document(self, output_path: str) -> dict:

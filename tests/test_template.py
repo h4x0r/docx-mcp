@@ -1,4 +1,5 @@
 """Tests for TemplateMixin — fill_template, list_template_fields, validate_template_data."""
+
 from __future__ import annotations
 
 import uuid

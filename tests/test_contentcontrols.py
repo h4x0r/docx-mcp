@@ -1,4 +1,5 @@
 """Tests for ContentControlsMixin — SDT content controls."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -64,7 +65,9 @@ class TestContentControls:
         """Dropdown SDT has listItem entries for each option."""
         doc, para_id = _make_doc(tmp_path)
         result = doc.add_content_control(
-            para_id, "dd1", "dropdown",
+            para_id,
+            "dd1",
+            "dropdown",
             label="Pick one",
             options=["Alpha", "Beta", "Gamma"],
             default="Alpha",
@@ -95,7 +98,9 @@ class TestContentControls:
         """Date SDT has w:date element in sdtPr."""
         doc, para_id = _make_doc(tmp_path)
         result = doc.add_content_control(
-            para_id, "dt1", "date",
+            para_id,
+            "dt1",
+            "date",
             label="Pick Date",
             default="January 1, 2024",
         )
@@ -121,7 +126,9 @@ class TestContentControls:
         """Text SDT has w:text element in sdtPr."""
         doc, para_id = _make_doc(tmp_path)
         result = doc.add_content_control(
-            para_id, "txt1", "text",
+            para_id,
+            "txt1",
+            "text",
             label="Enter text",
             default="placeholder",
         )

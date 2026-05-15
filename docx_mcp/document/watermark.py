@@ -9,12 +9,8 @@ from lxml import etree
 from .base import RELS, W
 
 _V_NS = "urn:schemas-microsoft-com:vml"
-_HEADER_REL_TYPE = (
-    "http://schemas.openxmlformats.org/officeDocument/2006/relationships/header"
-)
-_HEADER_CT = (
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"
-)
+_HEADER_REL_TYPE = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/header"
+_HEADER_CT = "application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"
 
 _STYLE_DIAGONAL = (
     "position:absolute;"
@@ -76,12 +72,11 @@ class WatermarkMixin:
         self._trees[path] = root
 
         import os
+
         if self.workdir:
             fp = self.workdir / path
             fp.parent.mkdir(parents=True, exist_ok=True)
-            etree.ElementTree(root).write(
-                str(fp), xml_declaration=True, encoding="UTF-8"
-            )
+            etree.ElementTree(root).write(str(fp), xml_declaration=True, encoding="UTF-8")
 
         ct = self._tree("[Content_Types].xml")
         CT = "{http://schemas.openxmlformats.org/package/2006/content-types}"
@@ -96,9 +91,7 @@ class WatermarkMixin:
 
         rels_tree = self._tree("word/_rels/document.xml.rels")
         if rels_tree is not None:
-            existing_targets = {
-                r.get("Target") for r in rels_tree.findall(f"{RELS}Relationship")
-            }
+            existing_targets = {r.get("Target") for r in rels_tree.findall(f"{RELS}Relationship")}
             fname = os.path.basename(path)
             if fname not in existing_targets:
                 max_rid = 0
@@ -190,9 +183,7 @@ class WatermarkMixin:
                 pict = run.find(f"{W}pict")
                 if pict is None:
                     continue
-                has_textpath = any(
-                    True for _ in pict.iter(f"{{{_V_NS}}}textpath")
-                )
+                has_textpath = any(True for _ in pict.iter(f"{{{_V_NS}}}textpath"))
                 if not has_textpath:
                     continue
                 parent = run.getparent()

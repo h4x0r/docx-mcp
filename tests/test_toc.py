@@ -1,4 +1,5 @@
 """Tests for TocMixin — generate_toc, update_toc, generate_list_of_figures, generate_list_of_tables."""  # noqa: E501
+
 from __future__ import annotations
 
 import uuid
@@ -45,6 +46,7 @@ def _get_instr_texts(doc: DocxDocument) -> list[str]:
 def _get_toc_entry_styles(doc: DocxDocument) -> list[str]:
     """Return pStyle values of paragraphs that have a TOC N entry style (TOC1, TOC2, TOC3)."""
     import re
+
     tree = doc._tree("word/document.xml")
     styles = []
     for p in tree.iter(f"{W}p"):

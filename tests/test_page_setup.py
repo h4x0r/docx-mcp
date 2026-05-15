@@ -56,9 +56,9 @@ class TestPageSetup:
     # ── set_page_margins ──────────────────────────────────────────────────────
 
     def test_set_page_margins_all(self):
-        result = _j(server.set_page_margins(
-            top_mm=25.4, bottom_mm=25.4, left_mm=31.75, right_mm=31.75
-        ))
+        result = _j(
+            server.set_page_margins(top_mm=25.4, bottom_mm=25.4, left_mm=31.75, right_mm=31.75)
+        )
         margins = result["margins_mm"]
         assert margins["top"] == 25.4
         assert margins["bottom"] == 25.4

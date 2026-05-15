@@ -8,6 +8,7 @@ Usage:
 Invariant: any input must either succeed or raise one of the expected
 exceptions. An unhandled exception = crash = fuzzer finds a bug.
 """
+
 from __future__ import annotations
 
 import contextlib
@@ -18,6 +19,7 @@ from pathlib import Path
 
 try:
     import atheris
+
     ATHERIS_AVAILABLE = True
 except ImportError:
     ATHERIS_AVAILABLE = False

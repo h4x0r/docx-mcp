@@ -99,10 +99,13 @@ class PropertiesMixin:
         """Upsert a custom property by name."""
         root = self._tree("docProps/custom.xml")
         if root is None:
-            root = etree.Element(f"{CUSTOM}Properties", nsmap={
-                None: CUSTOM_NS,
-                "vt": VT_NS,
-            })
+            root = etree.Element(
+                f"{CUSTOM}Properties",
+                nsmap={
+                    None: CUSTOM_NS,
+                    "vt": VT_NS,
+                },
+            )
             self._trees["docProps/custom.xml"] = root
 
         existing = root.find(f"{CUSTOM}property[@name='{name}']")

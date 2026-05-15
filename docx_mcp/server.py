@@ -333,19 +333,13 @@ def set_cell_width(table_idx: int, row_idx: int, col_idx: int, width_mm: float) 
 
 
 @mcp.tool()
-def set_cell_vertical_alignment(
-    table_idx: int, row_idx: int, col_idx: int, alignment: str
-) -> str:
+def set_cell_vertical_alignment(table_idx: int, row_idx: int, col_idx: int, alignment: str) -> str:
     """Set vertical alignment of a table cell: top, center, or bottom."""
-    return _js(
-        _require_doc().set_cell_vertical_alignment(table_idx, row_idx, col_idx, alignment)
-    )
+    return _js(_require_doc().set_cell_vertical_alignment(table_idx, row_idx, col_idx, alignment))
 
 
 @mcp.tool()
-def set_row_height(
-    table_idx: int, row_idx: int, height_mm: float, rule: str = "exact"
-) -> str:
+def set_row_height(table_idx: int, row_idx: int, height_mm: float, rule: str = "exact") -> str:
     """Set row height in millimetres. rule: exact, atLeast, or auto."""
     return _js(_require_doc().set_row_height(table_idx, row_idx, height_mm, rule=rule))
 
@@ -364,7 +358,11 @@ def set_table_borders(
     size: int = 4,
 ) -> str:
     """Set borders on all six sides of a table (top, bottom, left, right, insideH, insideV)."""
-    return _js(_require_doc().set_table_borders(table_idx, border_style=border_style, color=color, size=size))  # noqa: E501
+    return _js(
+        _require_doc().set_table_borders(
+            table_idx, border_style=border_style, color=color, size=size
+        )
+    )  # noqa: E501
 
 
 @mcp.tool()
@@ -376,7 +374,9 @@ def set_cell_shading(
     pattern: str = "clear",
 ) -> str:
     """Set background shading fill color on a table cell."""
-    return _js(_require_doc().set_cell_shading(table_idx, row_idx, col_idx, fill_color, pattern=pattern))  # noqa: E501
+    return _js(
+        _require_doc().set_cell_shading(table_idx, row_idx, col_idx, fill_color, pattern=pattern)
+    )  # noqa: E501
 
 
 @mcp.tool()
@@ -428,7 +428,9 @@ def create_style(
         based_on: Optional styleId this style inherits from.
         next_style: Optional styleId applied to the next paragraph.
     """
-    return _js(_require_doc().create_style(name, style_type, based_on=based_on, next_style=next_style))  # noqa: E501
+    return _js(
+        _require_doc().create_style(name, style_type, based_on=based_on, next_style=next_style)
+    )  # noqa: E501
 
 
 @mcp.tool()
@@ -640,7 +642,9 @@ def insert_floating_image(
 ) -> str:
     """Insert a floating (anchored) image. wrap: square|topbottom|none."""
     doc = _require_doc()
-    return _js(doc.insert_floating_image(para_id, image_path, width_cm, height_cm, h_pos, v_pos, wrap))  # noqa: E501
+    return _js(
+        doc.insert_floating_image(para_id, image_path, width_cm, height_cm, h_pos, v_pos, wrap)
+    )  # noqa: E501
 
 
 @mcp.tool()
@@ -888,7 +892,6 @@ def set_section_properties(
             margin_right=margin_right or None,
         )
     )
-
 
 
 @mcp.tool()
@@ -1154,11 +1157,17 @@ def insert_text(
         context_after: Text immediately after the insertion point (for precise anchoring).
         ignore_case: If True, match context_before/context_after case-insensitively.
     """
-    return _js(_require_doc().insert_text(
-        para_id, text, position=position, author=author,
-        context_before=context_before, context_after=context_after,
-        ignore_case=ignore_case,
-    ))
+    return _js(
+        _require_doc().insert_text(
+            para_id,
+            text,
+            position=position,
+            author=author,
+            context_before=context_before,
+            context_after=context_after,
+            ignore_case=ignore_case,
+        )
+    )
 
 
 @mcp.tool()
@@ -1184,11 +1193,16 @@ def delete_text(
         context_after: Text immediately after the target (for precise anchoring).
         ignore_case: If True, match text and context case-insensitively (output preserves original casing).  # noqa: E501
     """
-    return _js(_require_doc().delete_text(
-        para_id, text, author=author,
-        context_before=context_before, context_after=context_after,
-        ignore_case=ignore_case,
-    ))
+    return _js(
+        _require_doc().delete_text(
+            para_id,
+            text,
+            author=author,
+            context_before=context_before,
+            context_after=context_after,
+            ignore_case=ignore_case,
+        )
+    )
 
 
 @mcp.tool()
@@ -1214,11 +1228,17 @@ def replace_text(
         context_before: Text immediately before the target (for precise anchoring).
         context_after: Text immediately after the target (for precise anchoring).
     """
-    return _js(_require_doc().replace_text(
-        para_id, find=find, replace=replace, author=author,
-        context_before=context_before, context_after=context_after,
-        ignore_case=ignore_case,
-    ))
+    return _js(
+        _require_doc().replace_text(
+            para_id,
+            find=find,
+            replace=replace,
+            author=author,
+            context_before=context_before,
+            context_after=context_after,
+            ignore_case=ignore_case,
+        )
+    )
 
 
 @mcp.tool()
@@ -1475,14 +1495,16 @@ def scrub_pii(
         also_sanitize_metadata: Apply level-3 metadata sanitization (default True).
         redact_authors_as: Replacement author string for metadata pass.
     """
-    return _js(_require_doc().scrub_pii(
-        output_path,
-        entities=entities,
-        confidence_threshold=confidence_threshold,
-        dry_run=dry_run,
-        also_sanitize_metadata=also_sanitize_metadata,
-        redact_authors_as=redact_authors_as,
-    ))
+    return _js(
+        _require_doc().scrub_pii(
+            output_path,
+            entities=entities,
+            confidence_threshold=confidence_threshold,
+            dry_run=dry_run,
+            also_sanitize_metadata=also_sanitize_metadata,
+            redact_authors_as=redact_authors_as,
+        )
+    )
 
 
 @mcp.tool()
@@ -1504,11 +1526,13 @@ def sanitize_metadata(
         level: Sanitization depth (1, 2, or 3). Default 1.
         redact_authors_as: Replacement author string for level 2+. Default "Anonymous".
     """
-    return _js(_require_doc().sanitize_metadata(
-        output_path,
-        level=level,
-        redact_authors_as=redact_authors_as,
-    ))
+    return _js(
+        _require_doc().sanitize_metadata(
+            output_path,
+            level=level,
+            redact_authors_as=redact_authors_as,
+        )
+    )
 
 
 @mcp.tool()
@@ -1714,9 +1738,7 @@ def delete_field(field_id: str) -> str:
 
 
 @mcp.tool()
-def insert_date_field(
-    para_id: str, date_format: str = r'\@ "MMMM d, yyyy"'
-) -> str:
+def insert_date_field(para_id: str, date_format: str = r'\@ "MMMM d, yyyy"') -> str:
     """Insert a DATE field at the end of a paragraph.
 
     Args:
@@ -1927,7 +1949,11 @@ def update_content_control(
         placeholder_text: New placeholder text. Omit to leave unchanged.
     """
     doc = _require_doc()
-    return _js(doc.update_content_control(control_id, title=title, tag=tag, placeholder_text=placeholder_text))  # noqa: E501
+    return _js(
+        doc.update_content_control(
+            control_id, title=title, tag=tag, placeholder_text=placeholder_text
+        )
+    )  # noqa: E501
 
 
 # ── Template Filling ─────────────────────────────────────────────────────────
@@ -2015,7 +2041,9 @@ def demote_list_item(para_id: str) -> str:
 
 
 @mcp.tool()
-def bates_number(prefix: str, start: int = 1, digits: int = 6, position: str = "footer-right") -> str:  # noqa: E501
+def bates_number(
+    prefix: str, start: int = 1, digits: int = 6, position: str = "footer-right"
+) -> str:  # noqa: E501
     """Add Bates numbering stamp to document footer.
 
     Args:
@@ -2589,8 +2617,6 @@ def export_markdown(output_path: str = "") -> str:
     return _js(_require_doc().export_markdown(output_path))
 
 
-
-
 @mcp.tool()
 def get_theme_colors() -> str:
     """Return the named color slots from word/theme/theme1.xml.
@@ -2647,16 +2673,16 @@ def find_replace_formatted(
         color: Font color as 6-digit hex (e.g. "FF0000"). None leaves color unchanged.
         size_pt: Font size in points (e.g. 12.0). None leaves size unchanged.
     """
-    return _js(_require_doc().find_replace_formatted(
-        find,
-        replace,
-        bold=bold,
-        italic=italic,
-        color=color,
-        size_pt=size_pt,
-    ))
-
-
+    return _js(
+        _require_doc().find_replace_formatted(
+            find,
+            replace,
+            bold=bold,
+            italic=italic,
+            color=color,
+            size_pt=size_pt,
+        )
+    )
 
 
 @mcp.tool()
@@ -2669,7 +2695,9 @@ def split_document(output_dir: str = "", at_heading_level: int = 1) -> str:
 
     Returns: {"output_dir": str, "files": list[str], "parts": int}
     """
-    return _js(_require_doc().split_document(output_dir=output_dir, at_heading_level=at_heading_level))  # noqa: E501
+    return _js(
+        _require_doc().split_document(output_dir=output_dir, at_heading_level=at_heading_level)
+    )  # noqa: E501
 
 
 @mcp.tool()
@@ -2946,7 +2974,9 @@ def insert_text_box(
     Returns:
         JSON with para_id (new paragraph), text, width_cm, height_cm.
     """
-    return _js(_require_doc().insert_text_box(para_id, text, width_cm=width_cm, height_cm=height_cm))  # noqa: E501
+    return _js(
+        _require_doc().insert_text_box(para_id, text, width_cm=width_cm, height_cm=height_cm)
+    )  # noqa: E501
 
 
 # ── Entry point ─────────────────────────────────────────────────────────────

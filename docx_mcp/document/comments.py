@@ -251,9 +251,7 @@ class CommentsMixin:
 
         # Get paraId of comment's first paragraph for commentsExtended cleanup
         first_para = comment_el.find(f"{W}p")
-        comment_para_id = (
-            first_para.get(f"{W14}paraId") if first_para is not None else None
-        )
+        comment_para_id = first_para.get(f"{W14}paraId") if first_para is not None else None
 
         # Remove from comments.xml
         cm_tree.remove(comment_el)

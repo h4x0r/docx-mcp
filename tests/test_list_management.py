@@ -1,4 +1,5 @@
 """Tests for list management tools: get_lists, promote_list_item, demote_list_item."""
+
 from __future__ import annotations
 
 import uuid

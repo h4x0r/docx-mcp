@@ -53,7 +53,6 @@ def _build_doc(tmp_path: Path, body_xml: str) -> DocxDocument:
 
 
 class TestGetWordCount:
-
     def test_empty_doc_returns_zero(self, tmp_path: Path) -> None:
         doc = _build_doc(tmp_path, "")
         assert doc.get_word_count() == 0
@@ -85,7 +84,6 @@ class TestGetWordCount:
 
 
 class TestGetStatistics:
-
     def test_returns_all_six_keys(self, tmp_path: Path) -> None:
         doc = _build_doc(tmp_path, "")
         stats = doc.get_statistics()

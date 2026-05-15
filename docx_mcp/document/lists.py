@@ -270,11 +270,13 @@ class ListsMixin:
                 if fmt_el is not None:
                     num_format = fmt_el.get(f"{W}val", "")
 
-            result.append({
-                "abstract_num_id": abs_id,
-                "num_format": num_format,
-                "levels": levels,
-            })
+            result.append(
+                {
+                    "abstract_num_id": abs_id,
+                    "num_format": num_format,
+                    "levels": levels,
+                }
+            )
 
         return result
 

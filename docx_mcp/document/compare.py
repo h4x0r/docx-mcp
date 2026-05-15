@@ -233,9 +233,7 @@ class CompareMixin:
 
         # Insert before sectPr if present
         body_children = list(body)
-        sect_pr = next(
-            (c for c in body_children if c.tag == _wt("sectPr")), None
-        )
+        sect_pr = next((c for c in body_children if c.tag == _wt("sectPr")), None)
         insert_before = sect_pr if sect_pr is not None else None
 
         for para in output_paras:
@@ -249,11 +247,14 @@ class CompareMixin:
         )
 
         # Copy base DOCX, replace word/document.xml with merged content
-        with zipfile.ZipFile(base_path) as src_zip, zipfile.ZipFile(output_path, "w", zipfile.ZIP_DEFLATED) as out_zip:  # noqa: E501
-                for name in src_zip.namelist():
-                    out_zip.writestr(
-                        name,
-                        out_bytes if name == "word/document.xml" else src_zip.read(name),
-                    )
+        with (
+            zipfile.ZipFile(base_path) as src_zip,
+            zipfile.ZipFile(output_path, "w", zipfile.ZIP_DEFLATED) as out_zip,
+        ):  # noqa: E501
+            for name in src_zip.namelist():
+                out_zip.writestr(
+                    name,
+                    out_bytes if name == "word/document.xml" else src_zip.read(name),
+                )
 
         return {"path": output_path}

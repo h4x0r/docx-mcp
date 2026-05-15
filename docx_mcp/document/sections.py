@@ -228,9 +228,7 @@ class SectionsMixin:
             sectprs = [(sect_pr_el, True)]
 
         if section_index < 0 or section_index >= len(sectprs):
-            raise ValueError(
-                f"section_index {section_index} out of range (0..{len(sectprs) - 1})"
-            )
+            raise ValueError(f"section_index {section_index} out of range (0..{len(sectprs) - 1})")
         sect_pr, _ = sectprs[section_index]
 
         existing = sect_pr.find(f"{W}titlePg")
@@ -270,9 +268,7 @@ class SectionsMixin:
 
             fp = self.workdir / "word" / "settings.xml"
             fp.parent.mkdir(parents=True, exist_ok=True)
-            etree.ElementTree(settings).write(
-                str(fp), xml_declaration=True, encoding="UTF-8"
-            )
+            etree.ElementTree(settings).write(str(fp), xml_declaration=True, encoding="UTF-8")
 
             ct = self._tree("[Content_Types].xml")
             if ct is not None:
@@ -289,9 +285,7 @@ class SectionsMixin:
 
             rels = self._tree("word/_rels/document.xml.rels")
             if rels is not None:
-                existing_targets = {
-                    r.get("Target") for r in rels.findall(f"{RELS}Relationship")
-                }
+                existing_targets = {r.get("Target") for r in rels.findall(f"{RELS}Relationship")}
                 if "settings.xml" not in existing_targets:
                     max_rid = 0
                     for r in rels.findall(f"{RELS}Relationship"):
@@ -348,7 +342,9 @@ class SectionsMixin:
             break_type = ""
         else:
             type_el = sectpr.find(f"{W_NS}type")
-            break_type = type_el.get(f"{W_NS}val", "continuous") if type_el is not None else "continuous"  # noqa: E501
+            break_type = (
+                type_el.get(f"{W_NS}val", "continuous") if type_el is not None else "continuous"
+            )  # noqa: E501
 
         # page size
         pg_sz = sectpr.find(f"{W_NS}pgSz")
@@ -422,9 +418,7 @@ class SectionsMixin:
         body = doc.find(f"{W}body")
         sectprs = self._collect_sectprs(body)
         if section_index < 0 or section_index >= len(sectprs):
-            raise ValueError(
-                f"section_index {section_index} out of range (0..{len(sectprs) - 1})"
-            )
+            raise ValueError(f"section_index {section_index} out of range (0..{len(sectprs) - 1})")
         sect_pr, _ = sectprs[section_index]
 
         # Remove existing w:cols
@@ -555,9 +549,7 @@ class SectionsMixin:
             para_id: paraId of paragraph with section break. None = body section.
         """
         if orientation not in ("portrait", "landscape"):
-            raise ValueError(
-                f"orientation must be 'portrait' or 'landscape', got {orientation!r}"
-            )
+            raise ValueError(f"orientation must be 'portrait' or 'landscape', got {orientation!r}")
 
         doc = self._require("word/document.xml")
 

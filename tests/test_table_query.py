@@ -1,4 +1,5 @@
 """Tests for table query: get_table, get_cell_text, copy_table."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -109,11 +110,7 @@ class TestCopyTable:
         from docx_mcp.document.base import W14, W
 
         tree = doc._tree("word/document.xml")
-        para_ids = [
-            p.get(f"{W14}paraId")
-            for p in tree.iter(f"{W}p")
-            if p.get(f"{W14}paraId")
-        ]
+        para_ids = [p.get(f"{W14}paraId") for p in tree.iter(f"{W}p") if p.get(f"{W14}paraId")]
         # All paraIds should be unique (no duplicates between original and copy)
         assert len(para_ids) == len(set(para_ids)), "Duplicate paraIds found after copy_table"
 

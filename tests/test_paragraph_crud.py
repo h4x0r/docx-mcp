@@ -11,7 +11,6 @@ from docx_mcp import server
 
 
 class TestParagraphCRUD:
-
     def _open(self, path: Path) -> None:
         server._doc = None
         server.open_document(str(path))

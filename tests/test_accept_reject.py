@@ -24,7 +24,7 @@ _CT = (
     '<Default Extension="xml" ContentType="application/xml"/>'
     '<Override PartName="/word/document.xml"'
     ' ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'  # noqa: E501
-    '</Types>'
+    "</Types>"
 )
 
 _RELS = (
@@ -33,7 +33,7 @@ _RELS = (
     '<Relationship Id="rId1"'
     ' Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument"'
     ' Target="word/document.xml"/>'
-    '</Relationships>'
+    "</Relationships>"
 )
 
 

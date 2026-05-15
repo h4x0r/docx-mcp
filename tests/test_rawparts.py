@@ -1,4 +1,5 @@
 """Tests for raw XML part access — list_parts, read_part, write_part."""
+
 from __future__ import annotations
 
 import json

@@ -1,4 +1,5 @@
 """Tests for P9.1: advanced field codes — insert_if_field, insert_sequence_field, insert_merge_field."""  # noqa: E501
+
 from __future__ import annotations
 
 from pathlib import Path

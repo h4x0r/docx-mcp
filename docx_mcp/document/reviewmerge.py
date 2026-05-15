@@ -44,26 +44,30 @@ def _extract_changes(doc_xml: bytes) -> list[dict]:
             tag = child.tag
             if tag == f"{W}ins":
                 text = _ins_text(child)
-                changes.append({
-                    "kind": "ins",
-                    "preceding": preceding,
-                    "text": text,
-                    "author": child.get(f"{W}author", ""),
-                    "date": child.get(f"{W}date", ""),
-                    "element": child,
-                    "fingerprint": ("ins", preceding, text),
-                })
+                changes.append(
+                    {
+                        "kind": "ins",
+                        "preceding": preceding,
+                        "text": text,
+                        "author": child.get(f"{W}author", ""),
+                        "date": child.get(f"{W}date", ""),
+                        "element": child,
+                        "fingerprint": ("ins", preceding, text),
+                    }
+                )
             elif tag == f"{W}del":
                 text = _del_text(child)
-                changes.append({
-                    "kind": "del",
-                    "preceding": preceding,
-                    "text": text,
-                    "author": child.get(f"{W}author", ""),
-                    "date": child.get(f"{W}date", ""),
-                    "element": child,
-                    "fingerprint": ("del", preceding, text),
-                })
+                changes.append(
+                    {
+                        "kind": "del",
+                        "preceding": preceding,
+                        "text": text,
+                        "author": child.get(f"{W}author", ""),
+                        "date": child.get(f"{W}date", ""),
+                        "element": child,
+                        "fingerprint": ("del", preceding, text),
+                    }
+                )
     return changes
 
 
@@ -112,13 +116,15 @@ class ReviewMergeMixin:
                 continue
             first_text = range_texts.get(range_key)
             if first_text is not None and first_text != ch["text"]:
-                conflicts.append({
-                    "kind": ch["kind"],
-                    "preceding": ch["preceding"],
-                    "text": ch["text"],
-                    "author": ch["author"],
-                    "date": ch["date"],
-                })
+                conflicts.append(
+                    {
+                        "kind": ch["kind"],
+                        "preceding": ch["preceding"],
+                        "text": ch["text"],
+                        "author": ch["author"],
+                        "date": ch["date"],
+                    }
+                )
             else:
                 seen_fps.add(fp)
                 range_texts[range_key] = ch["text"]

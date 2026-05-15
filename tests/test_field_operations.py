@@ -1,4 +1,5 @@
 """Tests for field operations: delete_field, get_field, insert_date_field, insert_page_number_field."""  # noqa: E501
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -34,9 +35,7 @@ class TestInsertDateField:
         doc.insert_date_field(para_id)
 
         tree = doc._tree("word/document.xml")
-        para = next(
-            p for p in tree.iter(f"{W}p") if p.get(f"{W14}paraId") == para_id
-        )
+        para = next(p for p in tree.iter(f"{W}p") if p.get(f"{W14}paraId") == para_id)
         fld_chars = list(para.iter(f"{W}fldChar"))
         types = [fc.get(f"{W}fldCharType") for fc in fld_chars]
         assert "begin" in types
@@ -53,9 +52,7 @@ class TestInsertDateField:
         doc.insert_date_field(para_id)
 
         tree = doc._tree("word/document.xml")
-        para = next(
-            p for p in tree.iter(f"{W}p") if p.get(f"{W14}paraId") == para_id
-        )
+        para = next(p for p in tree.iter(f"{W}p") if p.get(f"{W14}paraId") == para_id)
         instr_els = list(para.iter(f"{W}instrText"))
         assert any("DATE" in (el.text or "") for el in instr_els)
 
@@ -81,9 +78,7 @@ class TestInsertPageNumberField:
         doc.insert_page_number_field(para_id)
 
         tree = doc._tree("word/document.xml")
-        para = next(
-            p for p in tree.iter(f"{W}p") if p.get(f"{W14}paraId") == para_id
-        )
+        para = next(p for p in tree.iter(f"{W}p") if p.get(f"{W14}paraId") == para_id)
         instr_els = list(para.iter(f"{W}instrText"))
         assert any("PAGE" in (el.text or "") for el in instr_els)
 
@@ -134,9 +129,7 @@ class TestDeleteField:
 
         # Paragraph should no longer have fldChar runs
         tree = doc._tree("word/document.xml")
-        para = next(
-            p for p in tree.iter(f"{W}p") if p.get(f"{W14}paraId") == para_id
-        )
+        para = next(p for p in tree.iter(f"{W}p") if p.get(f"{W14}paraId") == para_id)
         fld_chars = list(para.iter(f"{W}fldChar"))
         assert len(fld_chars) == 0
 

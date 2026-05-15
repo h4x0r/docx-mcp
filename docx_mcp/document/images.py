@@ -12,9 +12,9 @@ from .base import CT, RELS, W14, WP, A, R, W
 
 # Additional namespace constants for floating images
 _PIC = "{http://schemas.openxmlformats.org/drawingml/2006/picture}"
-_PIC_NS = _PIC[1:-1]   # bare URI (no braces) for attribute values / nsmap keys
-_WP_NS = WP[1:-1]      # bare URI derived from imported WP constant
-_A_NS = A[1:-1]        # bare URI derived from imported A constant
+_PIC_NS = _PIC[1:-1]  # bare URI (no braces) for attribute values / nsmap keys
+_WP_NS = WP[1:-1]  # bare URI derived from imported WP constant
+_A_NS = A[1:-1]  # bare URI derived from imported A constant
 _R_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"  # bare URI for nsmap
 
 

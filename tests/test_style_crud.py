@@ -46,10 +46,10 @@ class TestCreateStyle:
         doc = _make_doc(tmp_path)
         doc.create_style("SectionTitle", "paragraph", next_style="Normal")
         from docx_mcp.document.base import W
+
         tree = doc._tree("word/styles.xml")
         style_el = next(
-            s for s in tree.findall(f"{W}style")
-            if s.get(f"{W}styleId") == "SectionTitle"
+            s for s in tree.findall(f"{W}style") if s.get(f"{W}styleId") == "SectionTitle"
         )
         next_el = style_el.find(f"{W}next")
         assert next_el is not None
@@ -82,11 +82,9 @@ class TestUpdateStyle:
         doc.create_style("StyleB", "paragraph")
         doc.update_style("StyleB", next_style="Normal")
         from docx_mcp.document.base import W
+
         tree = doc._tree("word/styles.xml")
-        style_el = next(
-            s for s in tree.findall(f"{W}style")
-            if s.get(f"{W}styleId") == "StyleB"
-        )
+        style_el = next(s for s in tree.findall(f"{W}style") if s.get(f"{W}styleId") == "StyleB")
         next_el = style_el.find(f"{W}next")
         assert next_el is not None
         assert next_el.get(f"{W}val") == "Normal"

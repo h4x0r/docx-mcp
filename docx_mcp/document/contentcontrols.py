@@ -1,4 +1,5 @@
 """Content Controls (SDT) mixin — checkbox, dropdown, date picker, plain text."""
+
 from __future__ import annotations
 
 from lxml import etree
@@ -42,7 +43,7 @@ def _make_sdt(
 
     elif control_type == "dropdown":
         ddl = etree.SubElement(sdtPr, f"{W}dropDownList")
-        for opt in (options or []):
+        for opt in options or []:
             item = etree.SubElement(ddl, f"{W}listItem")
             item.set(f"{W}displayText", opt)
             item.set(f"{W}value", opt)

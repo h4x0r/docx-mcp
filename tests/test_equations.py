@@ -60,8 +60,10 @@ class TestEquations:
 
 def _make_import_blocker(blocked_module):
     real_import = __import__
+
     def patched_import(name, *args, **kwargs):
         if name == blocked_module or name.startswith(blocked_module + "."):
             raise ImportError(f"Mocked: {name} not available")
         return real_import(name, *args, **kwargs)
+
     return patched_import
