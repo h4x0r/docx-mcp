@@ -56,6 +56,16 @@ from .equations import EquationsMixin
 from .charts import ChartsMixin
 from .reviewmerge import ReviewMergeMixin
 from .clausediff import ClauseDiffMixin
+from .sessionlog import SessionLogMixin
+from .markdown_export import MarkdownExportMixin
+from .theme import ThemeMixin
+from .captions import CaptionMixin
+from .watermark import WatermarkMixin
+from .splitting import SplittingMixin
+from .statistics import StatisticsMixin
+from .accessibility import AccessibilityMixin
+from .textboxes import TextBoxesMixin
+from .pdfexport import PdfExportMixin
 
 
 class DocxDocument(
@@ -95,6 +105,16 @@ class DocxDocument(
     ChartsMixin,
     ReviewMergeMixin,
     ClauseDiffMixin,
+    MarkdownExportMixin,
+    SessionLogMixin,
+    ThemeMixin,
+    CaptionMixin,
+    WatermarkMixin,
+    SplittingMixin,
+    StatisticsMixin,
+    AccessibilityMixin,
+    TextBoxesMixin,
+    PdfExportMixin,
 ):
     """Word document editor with OOXML-level control."""
 
@@ -121,4 +141,6 @@ __all__ = [
     "CT_TYPES",
     "_now_iso",
     "_preserve",
+    "WatermarkMixin",
+    "SplittingMixin",
 ]

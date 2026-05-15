@@ -78,6 +78,93 @@ class FootnotesMixin:
 
         return {"footnote_id": next_id, "para_id": para_id}
 
+    def update_footnote(self, footnote_id: int, text: str) -> dict:
+        """Update the text of an existing footnote.
+
+        Replaces the content of the first non-reference text run in the footnote.
+        Built-in footnotes (id < 1) are rejected.
+        """
+        if footnote_id < 1:
+            raise ValueError(f"Footnote id {footnote_id} not found")
+        fn_tree = self._require("word/footnotes.xml")
+        # Find the target footnote element
+        target = None
+        for fn in fn_tree.findall(f"{W}footnote"):
+            if fn.get(f"{W}id") == str(footnote_id):
+                target = fn
+                break
+        if target is None:
+            raise ValueError(f"Footnote id {footnote_id} not found")
+        # Find all w:r elements inside the footnote paragraphs
+        # Skip the reference run (has w:rStyle[@w:val="FootnoteReference"])
+        # Update (or create) the first text run after the reference run
+        for para in target.findall(f"{W}p"):
+            text_run = None
+            for run in para.findall(f"{W}r"):
+                rpr = run.find(f"{W}rPr")
+                is_ref = False
+                if rpr is not None:
+                    rs = rpr.find(f"{W}rStyle")
+                    if rs is not None and rs.get(f"{W}val") == "FootnoteReference":
+                        is_ref = True
+                if is_ref:
+                    continue
+                # First non-ref run with real content (skip whitespace separators)
+                t_el = run.find(f"{W}t")
+                if t_el is not None and t_el.text and t_el.text.strip():
+                    text_run = run
+                    break
+            if text_run is not None:
+                t_el = text_run.find(f"{W}t")
+                _preserve(t_el, text)
+                self._mark("word/footnotes.xml")
+                return {"footnote_id": footnote_id, "text": text}
+            # No text run found — add one to this para
+            new_run = etree.SubElement(para, f"{W}r")
+            new_t = etree.SubElement(new_run, f"{W}t")
+            _preserve(new_t, text)
+            self._mark("word/footnotes.xml")
+            return {"footnote_id": footnote_id, "text": text}
+        # Footnote has no paragraphs — add one
+        para = etree.SubElement(target, f"{W}p")
+        new_run = etree.SubElement(para, f"{W}r")
+        new_t = etree.SubElement(new_run, f"{W}t")
+        _preserve(new_t, text)
+        self._mark("word/footnotes.xml")
+        return {"footnote_id": footnote_id, "text": text}
+
+    def delete_footnote(self, footnote_id: int) -> dict:
+        """Delete a footnote definition and its in-body reference run.
+
+        Removes w:footnote from word/footnotes.xml and removes the w:r
+        containing w:footnoteReference[@w:id="{footnote_id}"] from document.xml.
+        """
+        if footnote_id < 1:
+            raise ValueError(f"Footnote id {footnote_id} not found")
+        fn_tree = self._require("word/footnotes.xml")
+        target = None
+        for fn in fn_tree.findall(f"{W}footnote"):
+            if fn.get(f"{W}id") == str(footnote_id):
+                target = fn
+                break
+        if target is None:
+            raise ValueError(f"Footnote id {footnote_id} not found")
+        fn_tree.remove(target)
+        self._mark("word/footnotes.xml")
+        # Remove in-body reference run
+        doc = self._tree("word/document.xml")
+        if doc is not None:
+            for ref_el in doc.iter(f"{W}footnoteReference"):
+                if ref_el.get(f"{W}id") == str(footnote_id):
+                    ref_run = ref_el.getparent()
+                    if ref_run is not None:
+                        para = ref_run.getparent()
+                        if para is not None:
+                            para.remove(ref_run)
+                    self._mark("word/document.xml")
+                    break
+        return {"deleted": footnote_id}
+
     def validate_footnotes(self) -> dict:
         """Cross-reference footnote IDs between document.xml and footnotes.xml."""
         doc = self._tree("word/document.xml")

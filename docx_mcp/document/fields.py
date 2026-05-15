@@ -90,18 +90,23 @@ class FieldsMixin:
         """Walk document XML and return all complex fields.
 
         Each entry contains:
+          - field_id: positional identifier (e.g. "field_0")
           - code: stripped instrText content
-          - cached_value: text from runs between separate and end fldChar
+          - type: first word of code (field type keyword)
+          - instruction: full instrText content (same as code)
+          - result: text from runs between separate and end fldChar
+          - cached_value: alias for result (backward compat)
           - para_id: w14:paraId of the enclosing <w:p>, or None
 
         Returns:
-            List of {"code": str, "cached_value": str, "para_id": str | None}
+            List of field dicts.
         """
         doc = self._tree("word/document.xml")
         if doc is None:
             return []
 
         results: list[dict] = []
+        field_index = 0
 
         # Find all begin fldChar runs
         for fld_char in doc.iter(f"{W}fldChar"):
@@ -153,10 +158,301 @@ class FieldsMixin:
                         if t.text:
                             cached_parts.append(t.text)
 
+            code = "".join(code_parts).strip()
+            field_type = code.split()[0] if code else ""
+            cached = "".join(cached_parts)
+            field_id = f"field_{field_index}"
+            field_index += 1
+
             results.append({
-                "code": "".join(code_parts).strip(),
-                "cached_value": "".join(cached_parts),
+                "field_id": field_id,
+                "code": code,
+                "type": field_type,
+                "instruction": code,
+                "result": cached,
+                "cached_value": cached,
                 "para_id": para_id,
             })
 
         return results
+
+    def get_field(self, field_id: str) -> dict:
+        """Return details of a single field by field_id.
+
+        Args:
+            field_id: Positional identifier returned by list_fields (e.g. "field_0").
+
+        Returns:
+            {"field_id": str, "type": str, "instruction": str, "result": str,
+             "code": str, "cached_value": str, "para_id": str | None}
+
+        Raises:
+            ValueError if field_id not found.
+        """
+        fields = self.list_fields()
+        for f in fields:
+            if f["field_id"] == field_id:
+                return f
+        raise ValueError(f"Field '{field_id}' not found.")
+
+    def delete_field(self, field_id: str) -> dict:
+        """Remove a complete complex field (begin through end runs).
+
+        Args:
+            field_id: Positional identifier returned by list_fields (e.g. "field_0").
+
+        Returns:
+            {"field_id": str, "deleted": True}
+
+        Raises:
+            ValueError if field_id not found.
+        """
+        doc = self._require("word/document.xml")
+
+        field_index = 0
+        for fld_char in doc.iter(f"{W}fldChar"):
+            if fld_char.get(f"{W}fldCharType") != "begin":
+                continue
+
+            current_id = f"field_{field_index}"
+            field_index += 1
+
+            if current_id != field_id:
+                continue
+
+            # Found — collect all runs from begin through end
+            begin_run = fld_char.getparent()
+            if begin_run is None:
+                raise ValueError(f"Field '{field_id}' has no parent run.")
+            para = begin_run.getparent()
+            if para is None:
+                raise ValueError(f"Field '{field_id}' run has no parent paragraph.")
+
+            children = list(para)
+            try:
+                start_idx = children.index(begin_run)
+            except ValueError:
+                raise ValueError(f"Field '{field_id}' begin run not in paragraph.")
+
+            runs_to_remove = [begin_run]
+            for sibling in children[start_idx + 1:]:
+                runs_to_remove.append(sibling)
+                fc = sibling.find(f"{W}fldChar")
+                if fc is not None and fc.get(f"{W}fldCharType") == "end":
+                    break
+
+            for run in runs_to_remove:
+                para.remove(run)
+
+            self._mark("word/document.xml")
+            return {"field_id": field_id, "deleted": True}
+
+        raise ValueError(f"Field '{field_id}' not found.")
+
+    def _build_field_runs(self, instr: str, cached_value: str = "0") -> list:
+        """Return [begin, instr, separate, cached_result, end] runs."""
+        runs = []
+        for fchar_type in ("begin", "instrText", "separate"):
+            r = etree.Element(f"{W}r")
+            if fchar_type == "instrText":
+                it = etree.SubElement(r, f"{W}instrText")
+                it.set(XML_SPACE, "preserve")
+                it.text = instr
+            else:
+                fc = etree.SubElement(r, f"{W}fldChar")
+                fc.set(f"{W}fldCharType", fchar_type)
+                if fchar_type == "begin":
+                    fc.set(f"{W}dirty", "true")
+            runs.append(r)
+        # cached result placeholder
+        r_val = etree.Element(f"{W}r")
+        t = etree.SubElement(r_val, f"{W}t")
+        t.text = cached_value
+        runs.append(r_val)
+        # end
+        r_end = etree.Element(f"{W}r")
+        fc_end = etree.SubElement(r_end, f"{W}fldChar")
+        fc_end.set(f"{W}fldCharType", "end")
+        runs.append(r_end)
+        return runs
+
+    def insert_date_field(
+        self,
+        para_id: str,
+        date_format: str = r'\@ "MMMM d, yyyy"',
+    ) -> dict:
+        """Insert a DATE complex field at the end of a paragraph.
+
+        Args:
+            para_id: w14:paraId of the target paragraph.
+            date_format: Date picture switch (default: \\@ "MMMM d, yyyy").
+
+        Returns:
+            {"para_id": str, "field_type": "DATE", "format": str}
+
+        Raises:
+            DocxMcpError(PARA_NOT_FOUND) if para_id not found.
+        """
+        doc = self._require("word/document.xml")
+        body = doc.find(f"{W}body")
+        para = self._find_para(body, para_id)
+        if para is None:
+            raise DocxMcpError(
+                ErrCode.PARA_NOT_FOUND,
+                f"Paragraph with paraId '{para_id}' not found.",
+            )
+
+        instr = f" DATE {date_format} "
+        for run in self._build_field_runs(instr):
+            para.append(run)
+
+        self._mark("word/document.xml")
+        return {"para_id": para_id, "field_type": "DATE", "format": date_format}
+
+    def insert_page_number_field(self, para_id: str) -> dict:
+        """Insert a PAGE complex field at the end of a paragraph.
+
+        Args:
+            para_id: w14:paraId of the target paragraph.
+
+        Returns:
+            {"para_id": str, "field_type": "PAGE"}
+
+        Raises:
+            DocxMcpError(PARA_NOT_FOUND) if para_id not found.
+        """
+        doc = self._require("word/document.xml")
+        body = doc.find(f"{W}body")
+        para = self._find_para(body, para_id)
+        if para is None:
+            raise DocxMcpError(
+                ErrCode.PARA_NOT_FOUND,
+                f"Paragraph with paraId '{para_id}' not found.",
+            )
+
+        instr = " PAGE "
+        for run in self._build_field_runs(instr):
+            para.append(run)
+
+        self._mark("word/document.xml")
+        return {"para_id": para_id, "field_type": "PAGE"}
+
+    def insert_if_field(
+        self,
+        para_id: str,
+        condition: str,
+        true_text: str,
+        false_text: str,
+    ) -> dict:
+        """Insert a Word IF conditional field at the end of a paragraph.
+
+        Args:
+            para_id: w14:paraId of the target paragraph.
+            condition: The condition expression (e.g. "x > 0").
+            true_text: Text to display when condition is true.
+            false_text: Text to display when condition is false.
+
+        Returns:
+            {"para_id": str, "field_type": "IF", "condition": str,
+             "true_text": str, "false_text": str}
+
+        Raises:
+            DocxMcpError(PARA_NOT_FOUND) if para_id not found.
+        """
+        doc = self._require("word/document.xml")
+        body = doc.find(f"{W}body")
+        para = self._find_para(body, para_id)
+        if para is None:
+            raise DocxMcpError(
+                ErrCode.PARA_NOT_FOUND,
+                f"Paragraph with paraId '{para_id}' not found.",
+            )
+
+        instr = f' IF {condition} "{true_text}" "{false_text}" '
+        for run in self._build_field_runs(instr, cached_value=true_text):
+            para.append(run)
+
+        self._mark("word/document.xml")
+        return {
+            "para_id": para_id,
+            "field_type": "IF",
+            "condition": condition,
+            "true_text": true_text,
+            "false_text": false_text,
+        }
+
+    def insert_sequence_field(
+        self,
+        para_id: str,
+        seq_name: str,
+        reset: bool = False,
+    ) -> dict:
+        """Insert a SEQ (sequence) field for figure/table numbering.
+
+        Args:
+            para_id: w14:paraId of the target paragraph.
+            seq_name: The sequence identifier (e.g. "Figure", "Table").
+            reset: If True, adds \\r 1 switch to restart numbering at 1.
+
+        Returns:
+            {"para_id": str, "field_type": "SEQ", "seq_name": str, "reset": bool}
+
+        Raises:
+            DocxMcpError(PARA_NOT_FOUND) if para_id not found.
+        """
+        doc = self._require("word/document.xml")
+        body = doc.find(f"{W}body")
+        para = self._find_para(body, para_id)
+        if para is None:
+            raise DocxMcpError(
+                ErrCode.PARA_NOT_FOUND,
+                f"Paragraph with paraId '{para_id}' not found.",
+            )
+
+        if reset:
+            instr = f" SEQ {seq_name} \\r 1 "
+        else:
+            instr = f" SEQ {seq_name} "
+        for run in self._build_field_runs(instr, cached_value="1"):
+            para.append(run)
+
+        self._mark("word/document.xml")
+        return {
+            "para_id": para_id,
+            "field_type": "SEQ",
+            "seq_name": seq_name,
+            "reset": reset,
+        }
+
+    def insert_merge_field(self, para_id: str, field_name: str) -> dict:
+        """Insert a MERGEFIELD (mail merge) field at the end of a paragraph.
+
+        Args:
+            para_id: w14:paraId of the target paragraph.
+            field_name: The merge field name (e.g. "FirstName").
+
+        Returns:
+            {"para_id": str, "field_type": "MERGEFIELD", "field_name": str}
+
+        Raises:
+            DocxMcpError(PARA_NOT_FOUND) if para_id not found.
+        """
+        doc = self._require("word/document.xml")
+        body = doc.find(f"{W}body")
+        para = self._find_para(body, para_id)
+        if para is None:
+            raise DocxMcpError(
+                ErrCode.PARA_NOT_FOUND,
+                f"Paragraph with paraId '{para_id}' not found.",
+            )
+
+        instr = f" MERGEFIELD {field_name} "
+        for run in self._build_field_runs(instr, cached_value=f"«{field_name}»"):
+            para.append(run)
+
+        self._mark("word/document.xml")
+        return {
+            "para_id": para_id,
+            "field_type": "MERGEFIELD",
+            "field_name": field_name,
+        }

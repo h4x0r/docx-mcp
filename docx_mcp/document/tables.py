@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import csv
 import io
 
@@ -535,3 +536,411 @@ class TablesMixin:
             writer.writerow(row)
 
         return {"csv": buf.getvalue(), "rows": len(rows_data), "cols": col_count}
+
+    def delete_table(self, table_idx: int) -> dict:
+        doc = self._require("word/document.xml")
+        tables = list(doc.iter(f"{W}tbl"))
+        if table_idx < 0 or table_idx >= len(tables):
+            raise IndexError(f"Table index {table_idx} out of range (have {len(tables)})")
+        tbl = tables[table_idx]
+        tbl.getparent().remove(tbl)
+        self._mark("word/document.xml")
+        return {"deleted": table_idx}
+
+    def add_column_to_table(self, table_idx: int, header_text: str = "") -> dict:
+        tbl = self._get_table(table_idx)
+        rows = tbl.findall(f"{W}tr")
+        for i, tr in enumerate(rows):
+            tc = etree.SubElement(tr, f"{W}tc")
+            p = etree.SubElement(tc, f"{W}p")
+            p.set(f"{W14}paraId", self._new_para_id())
+            p.set(f"{W14}textId", "77777777")
+            if i == 0 and header_text:
+                r = etree.SubElement(p, f"{W}r")
+                t = etree.SubElement(r, f"{W}t")
+                t.text = header_text
+        # Keep tblGrid in sync
+        tbl_pr = tbl.find(f"{W}tblPr")
+        tbl_grid = tbl.find(f"{W}tblGrid")
+        if tbl_grid is None:
+            tbl_grid = etree.Element(f"{W}tblGrid")
+            if tbl_pr is not None:
+                tbl_pr.addnext(tbl_grid)
+            else:
+                tbl.insert(0, tbl_grid)
+        etree.SubElement(tbl_grid, f"{W}gridCol")
+        col_count = len(tbl.findall(f"{W}tr")[0].findall(f"{W}tc")) if rows else 0
+        self._mark("word/document.xml")
+        return {"table_idx": table_idx, "columns": col_count}
+
+    def delete_column_from_table(self, table_idx: int, col_idx: int) -> dict:
+        tbl = self._get_table(table_idx)
+        rows = tbl.findall(f"{W}tr")
+        # Validate all rows first to avoid partial mutation
+        for tr in rows:
+            cells = tr.findall(f"{W}tc")
+            if col_idx < 0 or col_idx >= len(cells):
+                raise IndexError(f"Column index {col_idx} out of range (have {len(cells)})")
+        for tr in rows:
+            cells = tr.findall(f"{W}tc")
+            tr.remove(cells[col_idx])
+        # Keep tblGrid in sync
+        tbl_grid = tbl.find(f"{W}tblGrid")
+        if tbl_grid is not None:
+            grid_cols = tbl_grid.findall(f"{W}gridCol")
+            if col_idx < len(grid_cols):
+                tbl_grid.remove(grid_cols[col_idx])
+        self._mark("word/document.xml")
+        return {"table_idx": table_idx, "col_idx": col_idx}
+
+    def set_cell_width(self, table_idx: int, row_idx: int, col_idx: int, width_mm: float) -> dict:
+        tbl = self._get_table(table_idx)
+        rows = tbl.findall(f"{W}tr")
+        if row_idx < 0 or row_idx >= len(rows):
+            raise IndexError(f"Row {row_idx} out of range")
+        cells = rows[row_idx].findall(f"{W}tc")
+        if col_idx < 0 or col_idx >= len(cells):
+            raise IndexError(f"Column {col_idx} out of range")
+        tc = cells[col_idx]
+        tc_pr = tc.find(f"{W}tcPr")
+        if tc_pr is None:
+            tc_pr = etree.Element(f"{W}tcPr")
+            tc.insert(0, tc_pr)
+        tc_w = tc_pr.find(f"{W}tcW")
+        if tc_w is None:
+            tc_w = etree.SubElement(tc_pr, f"{W}tcW")
+        dxa = round(width_mm * 1440 / 25.4)
+        tc_w.set(f"{W}w", str(dxa))
+        tc_w.set(f"{W}type", "dxa")
+        self._mark("word/document.xml")
+        return {"table_idx": table_idx, "row_idx": row_idx, "col_idx": col_idx, "width_dxa": dxa}
+
+    def set_cell_vertical_alignment(
+        self, table_idx: int, row_idx: int, col_idx: int, alignment: str
+    ) -> dict:
+        tbl = self._get_table(table_idx)
+        rows = tbl.findall(f"{W}tr")
+        if row_idx < 0 or row_idx >= len(rows):
+            raise IndexError(f"Row {row_idx} out of range")
+        cells = rows[row_idx].findall(f"{W}tc")
+        if col_idx < 0 or col_idx >= len(cells):
+            raise IndexError(f"Column {col_idx} out of range")
+        tc = cells[col_idx]
+        tc_pr = tc.find(f"{W}tcPr")
+        if tc_pr is None:
+            tc_pr = etree.Element(f"{W}tcPr")
+            tc.insert(0, tc_pr)
+        v_align = tc_pr.find(f"{W}vAlign")
+        if v_align is None:
+            v_align = etree.SubElement(tc_pr, f"{W}vAlign")
+        v_align.set(f"{W}val", alignment)
+        self._mark("word/document.xml")
+        return {"table_idx": table_idx, "row_idx": row_idx, "col_idx": col_idx, "alignment": alignment}
+
+    def set_row_height(
+        self, table_idx: int, row_idx: int, height_mm: float, rule: str = "exact"
+    ) -> dict:
+        tbl = self._get_table(table_idx)
+        rows = tbl.findall(f"{W}tr")
+        if row_idx < 0 or row_idx >= len(rows):
+            raise IndexError(f"Row {row_idx} out of range")
+        tr = rows[row_idx]
+        tr_pr = tr.find(f"{W}trPr")
+        if tr_pr is None:
+            tr_pr = etree.Element(f"{W}trPr")
+            tr.insert(0, tr_pr)
+        tr_height = tr_pr.find(f"{W}trHeight")
+        if tr_height is None:
+            tr_height = etree.SubElement(tr_pr, f"{W}trHeight")
+        dxa = round(height_mm * 1440 / 25.4)
+        tr_height.set(f"{W}val", str(dxa))
+        tr_height.set(f"{W}hRule", rule)
+        self._mark("word/document.xml")
+        return {"table_idx": table_idx, "row_idx": row_idx, "height_dxa": dxa}
+
+    def set_table_alignment(self, table_idx: int, alignment: str) -> dict:
+        tbl = self._get_table(table_idx)
+        tbl_pr = tbl.find(f"{W}tblPr")
+        if tbl_pr is None:
+            tbl_pr = etree.Element(f"{W}tblPr")
+            tbl.insert(0, tbl_pr)
+        jc = tbl_pr.find(f"{W}jc")
+        if jc is None:
+            jc = etree.SubElement(tbl_pr, f"{W}jc")
+        jc.set(f"{W}val", alignment)
+        self._mark("word/document.xml")
+        return {"table_idx": table_idx, "alignment": alignment}
+
+    def set_table_borders(
+        self,
+        table_idx: int,
+        border_style: str = "single",
+        color: str = "000000",
+        size: int = 4,
+    ) -> dict:
+        tbl = self._get_table(table_idx)
+        tbl_pr = tbl.find(f"{W}tblPr")
+        if tbl_pr is None:
+            tbl_pr = etree.Element(f"{W}tblPr")
+            tbl.insert(0, tbl_pr)
+        existing = tbl_pr.find(f"{W}tblBorders")
+        if existing is not None:
+            tbl_pr.remove(existing)
+        borders = etree.SubElement(tbl_pr, f"{W}tblBorders")
+        for side in ("top", "bottom", "left", "right", "insideH", "insideV"):
+            el = etree.SubElement(borders, f"{W}{side}")
+            el.set(f"{W}val", border_style)
+            el.set(f"{W}sz", str(size))
+            el.set(f"{W}space", "0")
+            el.set(f"{W}color", color)
+        self._mark("word/document.xml")
+        return {"table_idx": table_idx, "border_style": border_style, "color": color, "size": size}
+
+    def set_cell_shading(
+        self,
+        table_idx: int,
+        row_idx: int,
+        col_idx: int,
+        fill_color: str,
+        pattern: str = "clear",
+    ) -> dict:
+        tbl = self._get_table(table_idx)
+        rows = tbl.findall(f"{W}tr")
+        if row_idx < 0 or row_idx >= len(rows):
+            raise IndexError(f"Row {row_idx} out of range (have {len(rows)})")
+        cells = rows[row_idx].findall(f"{W}tc")
+        if col_idx < 0 or col_idx >= len(cells):
+            raise IndexError(f"Column {col_idx} out of range (have {len(cells)})")
+        tc = cells[col_idx]
+        tc_pr = tc.find(f"{W}tcPr")
+        if tc_pr is None:
+            tc_pr = etree.Element(f"{W}tcPr")
+            tc.insert(0, tc_pr)
+        shd = tc_pr.find(f"{W}shd")
+        if shd is None:
+            shd = etree.SubElement(tc_pr, f"{W}shd")
+        shd.set(f"{W}val", pattern)
+        shd.set(f"{W}color", "auto")
+        shd.set(f"{W}fill", fill_color)
+        self._mark("word/document.xml")
+        return {"table_idx": table_idx, "row_idx": row_idx, "col_idx": col_idx, "fill_color": fill_color}
+
+    def set_table_style(self, table_idx: int, style_name: str) -> dict:
+        tbl = self._get_table(table_idx)
+        tbl_pr = tbl.find(f"{W}tblPr")
+        if tbl_pr is None:
+            tbl_pr = etree.Element(f"{W}tblPr")
+            tbl.insert(0, tbl_pr)
+        tbl_style = tbl_pr.find(f"{W}tblStyle")
+        if tbl_style is None:
+            tbl_style = etree.SubElement(tbl_pr, f"{W}tblStyle")
+        tbl_style.set(f"{W}val", style_name)
+        self._mark("word/document.xml")
+        return {"table_idx": table_idx, "style_name": style_name}
+
+    # ── Advanced table operations ────────────────────────────────────────────
+
+    def split_table(self, table_idx: int, at_row_index: int) -> dict:
+        """Split a table at at_row_index into two separate tables.
+
+        Rows 0..at_row_index-1 stay in table 1; rows at_row_index..end go to
+        the new table 2 inserted immediately after table 1 in the body.
+
+        Args:
+            table_idx: 0-based table index.
+            at_row_index: 0-based row index; must be > 0 and < row_count.
+
+        Returns:
+            {"table1_rows": int, "table2_rows": int}
+        """
+        tbl = self._get_table(table_idx)
+        rows = tbl.findall(f"{W}tr")
+        row_count = len(rows)
+        if at_row_index <= 0 or at_row_index >= row_count:
+            raise ValueError(
+                f"Split index out of range: at_row_index={at_row_index}, row_count={row_count}"
+            )
+
+        # Build table 2 as a deep copy of the original (preserves tblPr, tblGrid, etc.)
+        tbl2 = copy.deepcopy(tbl)
+        # Clear all w:tr children from tbl2, then repopulate with split rows
+        for tr in tbl2.findall(f"{W}tr"):
+            tbl2.remove(tr)
+        for tr in rows[at_row_index:]:
+            tbl2.append(copy.deepcopy(tr))
+
+        # Remove split rows from original table 1
+        for tr in rows[at_row_index:]:
+            tbl.remove(tr)
+
+        # Insert tbl2 immediately after tbl in its parent
+        parent = tbl.getparent()
+        tbl_pos = list(parent).index(tbl)
+        parent.insert(tbl_pos + 1, tbl2)
+
+        self._mark("word/document.xml")
+        return {"table1_rows": at_row_index, "table2_rows": row_count - at_row_index}
+
+    def duplicate_table_row(self, table_idx: int, row_index: int) -> dict:
+        """Deep-copy a table row and insert the copy immediately after it.
+
+        Clears w14:paraId / w14:textId attributes on copied paragraphs and
+        assigns fresh unique IDs to avoid duplicates.
+
+        Args:
+            table_idx: 0-based table index.
+            row_index: 0-based row to duplicate.
+
+        Returns:
+            {"row_index": row_index, "new_row_index": row_index + 1}
+        """
+        tbl = self._get_table(table_idx)
+        rows = tbl.findall(f"{W}tr")
+        if row_index < 0 or row_index >= len(rows):
+            raise ValueError(
+                f"Row index {row_index} out of range (have {len(rows)})"
+            )
+
+        original = rows[row_index]
+        new_row = copy.deepcopy(original)
+
+        # Replace row-level paraId / textId
+        if new_row.get(f"{W14}paraId") is not None:
+            new_row.set(f"{W14}paraId", self._new_para_id())
+        if new_row.get(f"{W14}textId") is not None:
+            new_row.set(f"{W14}textId", "77777777")
+
+        # Replace paraId / textId attributes on all w:p in the copy
+        for p in new_row.iter(f"{W}p"):
+            if p.get(f"{W14}paraId") is not None:
+                p.set(f"{W14}paraId", self._new_para_id())
+            if p.get(f"{W14}textId") is not None:
+                p.set(f"{W14}textId", self._new_para_id())
+
+        # Insert after the original row
+        original.addnext(new_row)
+
+        self._mark("word/document.xml")
+        return {"row_index": row_index, "new_row_index": row_index + 1}
+
+    def sort_table(self, table_idx: int, column_index: int, ascending: bool = True) -> dict:
+        """Sort the non-header rows of a table by the text content of a column.
+
+        Header rows (rows with w:tr/w:trPr/w:tblHeader) are kept at the top
+        in their original order.
+
+        Args:
+            table_idx: 0-based table index.
+            column_index: 0-based column to sort by.
+            ascending: True for A→Z, False for Z→A.
+
+        Returns:
+            {"sorted_rows": int, "column_index": int, "ascending": bool}
+        """
+        tbl = self._get_table(table_idx)
+        all_rows = tbl.findall(f"{W}tr")
+
+        header_rows = []
+        data_rows = []
+        for tr in all_rows:
+            tr_pr = tr.find(f"{W}trPr")
+            if tr_pr is not None and tr_pr.find(f"{W}tblHeader") is not None:
+                header_rows.append(tr)
+            else:
+                data_rows.append(tr)
+
+        def _row_sort_key(tr: etree._Element) -> str:
+            cells = tr.findall(f"{W}tc")
+            if column_index < len(cells):
+                return "".join(t.text for t in cells[column_index].iter(f"{W}t") if t.text)
+            return ""
+
+        data_rows.sort(key=_row_sort_key, reverse=not ascending)
+
+        # Remove all rows from table, then re-append in order
+        for tr in all_rows:
+            tbl.remove(tr)
+        for tr in header_rows + data_rows:
+            tbl.append(tr)
+
+        self._mark("word/document.xml")
+        return {"sorted_rows": len(data_rows), "column_index": column_index, "ascending": ascending}
+
+    def get_table(self, table_idx: int) -> dict:
+        """Get structured info for a single table by zero-based index.
+
+        Args:
+            table_idx: 0-based table index.
+
+        Returns:
+            {"index": int, "row_count": int, "col_count": int, "cells": list[list[str]]}
+
+        Raises:
+            IndexError: If table_idx is out of range.
+        """
+        tbl = self._get_table(table_idx)
+        rows = []
+        for tr in tbl.findall(f"{W}tr"):
+            cells = []
+            for tc in tr.findall(f"{W}tc"):
+                cells.append(self._text(tc))
+            rows.append(cells)
+        col_count = len(rows[0]) if rows else 0
+        return {
+            "index": table_idx,
+            "row_count": len(rows),
+            "col_count": col_count,
+            "cells": rows,
+        }
+
+    def get_cell_text(self, table_idx: int, row_idx: int, col_idx: int) -> dict:
+        """Return text content of a specific cell.
+
+        Args:
+            table_idx: 0-based table index.
+            row_idx: 0-based row index.
+            col_idx: 0-based column index.
+
+        Returns:
+            {"table_index": int, "row_index": int, "col_index": int, "text": str}
+
+        Raises:
+            IndexError: If any index is out of range.
+        """
+        tbl = self._get_table(table_idx)
+        rows = tbl.findall(f"{W}tr")
+        if row_idx < 0 or row_idx >= len(rows):
+            raise IndexError(f"Row index {row_idx} out of range")
+        cols = rows[row_idx].findall(f"{W}tc")
+        if col_idx < 0 or col_idx >= len(cols):
+            raise IndexError(f"Column index {col_idx} out of range")
+        return {
+            "table_index": table_idx,
+            "row_index": row_idx,
+            "col_index": col_idx,
+            "text": self._text(cols[col_idx]),
+        }
+
+    def copy_table(self, table_idx: int) -> dict:
+        """Deep-copy a table and insert it immediately after the original.
+
+        Args:
+            table_idx: 0-based table index.
+
+        Returns:
+            {"source_index": int, "new_index": int}
+
+        Raises:
+            IndexError: If table_idx is out of range.
+        """
+        tbl = self._get_table(table_idx)
+        new_tbl = copy.deepcopy(tbl)
+        # Insert first so _new_para_id() can see already-assigned IDs in the copy
+        tbl.addnext(new_tbl)
+        # Regenerate paraIds — new_tbl is now in the document tree, so each
+        # call to _new_para_id() sees the IDs set by previous iterations
+        for p in new_tbl.iter(f"{W}p"):
+            if p.get(f"{W14}paraId") is not None:
+                p.set(f"{W14}paraId", self._new_para_id())
+        self._mark("word/document.xml")
+        return {"source_index": table_idx, "new_index": table_idx + 1}

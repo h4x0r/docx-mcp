@@ -69,6 +69,7 @@ class BaseMixin:
         self.workdir: Path | None = None
         self._trees: dict[str, etree._Element] = {}
         self._modified: set[str] = set()
+        self._binaries: dict[str, bytes] = {}  # zip_path -> bytes for in-memory binary updates
 
     # ── Open / Close ────────────────────────────────────────────────────────
 
@@ -133,6 +134,7 @@ class BaseMixin:
             shutil.rmtree(self.workdir, ignore_errors=True)
         self._trees.clear()
         self._modified.clear()
+        self._binaries.clear()
         self.workdir = None
 
     # ── Save ────────────────────────────────────────────────────────────────
@@ -167,6 +169,13 @@ class BaseMixin:
                 encoding="UTF-8",
                 standalone=True,
             )
+
+        # Write in-memory binary overrides (e.g. replaced images)
+        for zip_path, data in self._binaries.items():
+            fp = self.workdir / zip_path
+            fp.parent.mkdir(parents=True, exist_ok=True)
+            fp.write_bytes(data)
+        self._binaries.clear()
 
         # Repack
         with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED) as zf:

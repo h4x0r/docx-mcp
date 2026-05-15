@@ -74,6 +74,89 @@ class EndnotesMixin:
 
         return {"endnote_id": next_id, "para_id": para_id, "text": text}
 
+    def update_endnote(self, endnote_id: int, text: str) -> dict:
+        """Update the text of an existing endnote.
+
+        Replaces the content of the first non-reference text run in the endnote.
+        Built-in endnotes (id < 1) are rejected.
+        """
+        if endnote_id < 1:
+            raise ValueError(f"Endnote id {endnote_id} not found")
+        en_tree = self._require("word/endnotes.xml")
+        target = None
+        for en in en_tree.findall(f"{W}endnote"):
+            if en.get(f"{W}id") == str(endnote_id):
+                target = en
+                break
+        if target is None:
+            raise ValueError(f"Endnote id {endnote_id} not found")
+        # Find first non-reference text run across paragraphs
+        for para in target.findall(f"{W}p"):
+            text_run = None
+            for run in para.findall(f"{W}r"):
+                rpr = run.find(f"{W}rPr")
+                is_ref = False
+                if rpr is not None:
+                    rs = rpr.find(f"{W}rStyle")
+                    if rs is not None and rs.get(f"{W}val") == "EndnoteReference":
+                        is_ref = True
+                if is_ref:
+                    continue
+                t_el = run.find(f"{W}t")
+                if t_el is not None and t_el.text and t_el.text.strip():
+                    text_run = run
+                    break
+            if text_run is not None:
+                t_el = text_run.find(f"{W}t")
+                _preserve(t_el, text)
+                self._mark("word/endnotes.xml")
+                return {"endnote_id": endnote_id, "text": text}
+            # No text run — add one
+            new_run = etree.SubElement(para, f"{W}r")
+            new_t = etree.SubElement(new_run, f"{W}t")
+            _preserve(new_t, text)
+            self._mark("word/endnotes.xml")
+            return {"endnote_id": endnote_id, "text": text}
+        # No paragraphs — create one
+        para = etree.SubElement(target, f"{W}p")
+        new_run = etree.SubElement(para, f"{W}r")
+        new_t = etree.SubElement(new_run, f"{W}t")
+        _preserve(new_t, text)
+        self._mark("word/endnotes.xml")
+        return {"endnote_id": endnote_id, "text": text}
+
+    def delete_endnote(self, endnote_id: int) -> dict:
+        """Delete an endnote definition and its in-body reference run.
+
+        Removes w:endnote from word/endnotes.xml and removes the w:r
+        containing w:endnoteReference[@w:id="{endnote_id}"] from document.xml.
+        """
+        if endnote_id < 1:
+            raise ValueError(f"Endnote id {endnote_id} not found")
+        en_tree = self._require("word/endnotes.xml")
+        target = None
+        for en in en_tree.findall(f"{W}endnote"):
+            if en.get(f"{W}id") == str(endnote_id):
+                target = en
+                break
+        if target is None:
+            raise ValueError(f"Endnote id {endnote_id} not found")
+        en_tree.remove(target)
+        self._mark("word/endnotes.xml")
+        # Remove in-body reference run
+        doc = self._tree("word/document.xml")
+        if doc is not None:
+            for ref_el in doc.iter(f"{W}endnoteReference"):
+                if ref_el.get(f"{W}id") == str(endnote_id):
+                    ref_run = ref_el.getparent()
+                    if ref_run is not None:
+                        para = ref_run.getparent()
+                        if para is not None:
+                            para.remove(ref_run)
+                    self._mark("word/document.xml")
+                    break
+        return {"deleted": endnote_id}
+
     def validate_endnotes(self) -> dict:
         """Cross-reference endnote IDs between document and endnotes.xml."""
         doc = self._require("word/document.xml")

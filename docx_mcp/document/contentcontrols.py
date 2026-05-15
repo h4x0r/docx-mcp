@@ -65,6 +65,18 @@ def _make_sdt(
     return sdt
 
 
+def _find_sdt_by_id(doc: etree._Element, control_id: str) -> etree._Element | None:
+    """Return the w:sdt whose sdtPr/w:id/@w:val equals control_id, or None."""
+    for sdt in doc.iter(f"{W}sdt"):
+        sdtPr = sdt.find(f"{W}sdtPr")
+        if sdtPr is None:
+            continue
+        id_el = sdtPr.find(f"{W}id")
+        if id_el is not None and id_el.get(f"{W}val") == control_id:
+            return sdt
+    return None
+
+
 def _find_sdt_by_tag(doc: etree._Element, tag: str) -> etree._Element | None:
     """Return the w:sdt whose sdtPr/w:tag/@w:val equals tag, or None."""
     for sdt in doc.iter(f"{W}sdt"):
@@ -254,6 +266,121 @@ class ContentControlsMixin:
 
         self._mark("word/document.xml")  # type: ignore[attr-defined]
         return {"tag": tag, "lock": lock}
+
+    def delete_content_control(self, control_id: str) -> dict:
+        """Remove the SDT wrapper but keep its content in place (unwrap).
+
+        Returns {"control_id": str, "deleted": True}.
+        Raises ValueError if control_id not found.
+        """
+        doc = self._require("word/document.xml")  # type: ignore[attr-defined]
+        sdt = _find_sdt_by_id(doc, control_id)
+        if sdt is None:
+            raise ValueError(f"Content control '{control_id}' not found.")
+
+        sdtContent = sdt.find(f"{W}sdtContent")
+        parent = sdt.getparent()
+        idx = list(parent).index(sdt)
+
+        if sdtContent is not None:
+            children = list(sdtContent)
+            for i, child in enumerate(children):
+                parent.insert(idx + i, child)
+
+        parent.remove(sdt)
+        self._mark("word/document.xml")  # type: ignore[attr-defined]
+        return {"control_id": control_id, "deleted": True}
+
+    def get_content_control(self, control_id: str) -> dict:
+        """Return details of a single content control by its w:id.
+
+        Returns {"control_id", "type", "title", "tag", "value"}.
+        Raises ValueError if control_id not found.
+        """
+        doc = self._require("word/document.xml")  # type: ignore[attr-defined]
+        sdt = _find_sdt_by_id(doc, control_id)
+        if sdt is None:
+            raise ValueError(f"Content control '{control_id}' not found.")
+
+        sdtPr = sdt.find(f"{W}sdtPr")
+        tag_el = sdtPr.find(f"{W}tag") if sdtPr is not None else None
+        tag = tag_el.get(f"{W}val", "") if tag_el is not None else ""
+        alias_el = sdtPr.find(f"{W}alias") if sdtPr is not None else None
+        title = alias_el.get(f"{W}val", "") if alias_el is not None else ""
+        ctrl_type = _sdt_type(sdtPr) if sdtPr is not None else "unknown"
+        value = _sdt_value(sdt, ctrl_type)
+
+        return {
+            "control_id": control_id,
+            "type": ctrl_type,
+            "title": title,
+            "tag": tag,
+            "value": value,
+        }
+
+    def update_content_control(
+        self,
+        control_id: str,
+        *,
+        title: str | None = None,
+        tag: str | None = None,
+        placeholder_text: str | None = None,
+    ) -> dict:
+        """Modify properties of an existing content control.
+
+        Returns {"control_id", "title", "tag", "placeholder_text"}.
+        Raises ValueError if control_id not found.
+        """
+        doc = self._require("word/document.xml")  # type: ignore[attr-defined]
+        sdt = _find_sdt_by_id(doc, control_id)
+        if sdt is None:
+            raise ValueError(f"Content control '{control_id}' not found.")
+
+        sdtPr = sdt.find(f"{W}sdtPr")
+        if sdtPr is None:
+            sdtPr = etree.Element(f"{W}sdtPr")
+            sdt.insert(0, sdtPr)
+
+        if title is not None:
+            alias_el = sdtPr.find(f"{W}alias")
+            if alias_el is None:
+                alias_el = etree.SubElement(sdtPr, f"{W}alias")
+            alias_el.set(f"{W}val", title)
+
+        if tag is not None:
+            tag_el = sdtPr.find(f"{W}tag")
+            if tag_el is None:
+                tag_el = etree.SubElement(sdtPr, f"{W}tag")
+            tag_el.set(f"{W}val", tag)
+
+        if placeholder_text is not None:
+            # Set showingPlcHdr flag
+            if sdtPr.find(f"{W}showingPlcHdr") is None:
+                etree.SubElement(sdtPr, f"{W}showingPlcHdr")
+            # Replace sdtContent with placeholder text paragraph
+            old_content = sdt.find(f"{W}sdtContent")
+            if old_content is not None:
+                sdt.remove(old_content)
+            new_content = etree.SubElement(sdt, f"{W}sdtContent")
+            p = etree.SubElement(new_content, f"{W}p")
+            r = etree.SubElement(p, f"{W}r")
+            rPr = etree.SubElement(r, f"{W}rPr")
+            rStyle = etree.SubElement(rPr, f"{W}rStyle")
+            rStyle.set(f"{W}val", "PlaceholderText")
+            t = etree.SubElement(r, f"{W}t")
+            t.text = placeholder_text
+
+        self._mark("word/document.xml")  # type: ignore[attr-defined]
+
+        # Read back actual post-mutation values
+        result_title = sdtPr.find(f"{W}alias")
+        result_tag = sdtPr.find(f"{W}tag")
+        return {
+            "control_id": control_id,
+            "title": result_title.get(f"{W}val", "") if result_title is not None else None,
+            "tag": result_tag.get(f"{W}val", "") if result_tag is not None else None,
+            "placeholder_text": placeholder_text,
+        }
 
     # ──────────────────────────────────────────────────────────────────────
     # Private helpers

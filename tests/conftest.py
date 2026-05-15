@@ -32,6 +32,32 @@ def test_docx(tmp_path: Path) -> Path:
     return path
 
 
+@pytest.fixture()
+def mike_corpus_docx(tmp_path: Path) -> Path:
+    """DOCX fixture covering mike-specific editing scenarios."""
+    path = tmp_path / "mike_corpus.docx"
+    _build_mike_corpus(path)
+    return path
+
+
+def _build_mike_corpus(path: Path) -> None:
+    files = {
+        "[Content_Types].xml": _CONTENT_TYPES,
+        "_rels/.rels": _TOP_RELS,
+        "word/document.xml": _MIKE_CORPUS_DOCUMENT_XML,
+        "word/_rels/document.xml.rels": _MIKE_CORPUS_DOC_RELS,
+        "word/footnotes.xml": _FOOTNOTES_XML,
+        "word/endnotes.xml": _ENDNOTES_XML,
+        "word/styles.xml": _STYLES_XML,
+        "word/settings.xml": _SETTINGS_XML,
+        "word/header1.xml": _HEADER_XML,
+        "docProps/core.xml": _CORE_XML,
+    }
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as zf:
+        for name, content in files.items():
+            zf.writestr(name, content.strip())
+
+
 # Smallest valid 1x1 PNG (67 bytes)
 _TINY_PNG = (
     b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01"
@@ -333,4 +359,82 @@ _HEADER_XML = """
     <w:r><w:t>Document Header Text</w:t></w:r>
   </w:p>
 </w:hdr>
+"""
+
+_MIKE_CORPUS_DOC_RELS = """
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1"
+    Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footnotes"
+    Target="footnotes.xml"/>
+  <Relationship Id="rId2"
+    Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles"
+    Target="styles.xml"/>
+  <Relationship Id="rId3"
+    Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings"
+    Target="settings.xml"/>
+  <Relationship Id="rId4"
+    Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/endnotes"
+    Target="endnotes.xml"/>
+</Relationships>
+"""
+
+# Paragraphs:
+#   00000101  body with w:hyperlink wrapping runs
+#   00000102  body with narrow no-break space U+202F
+#   00000103  body with smart quotes
+#   00000104  "twelve months" para 1 (ambiguous phrase - first)
+#   00000105  "twelve months" para 2 (ambiguous phrase - second)
+#   00000106  full-paragraph replacement candidate
+#   00000107  para with existing w:del + w:ins (pre-existing tracked changes)
+#   00000108-0A  three paragraphs for batch-edit test
+_MIKE_CORPUS_DOCUMENT_XML = """
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document
+    xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml">
+  <w:body>
+    <w:p w14:paraId="00000101" w14:textId="77777777">
+      <w:r><w:t xml:space="preserve">Payment terms require </w:t></w:r>
+      <w:hyperlink w:anchor="clause1">
+        <w:r><w:t>thirty calendar days</w:t></w:r>
+      </w:hyperlink>
+      <w:r><w:t xml:space="preserve"> for settlement.</w:t></w:r>
+    </w:p>
+    <w:p w14:paraId="00000102" w14:textId="77777777">
+      <w:r><w:t>The purchase price is $5 000 per unit.</w:t></w:r>
+    </w:p>
+    <w:p w14:paraId="00000103" w14:textId="77777777">
+      <w:r><w:t>The “Effective Date” means the date of execution.</w:t></w:r>
+    </w:p>
+    <w:p w14:paraId="00000104" w14:textId="77777777">
+      <w:r><w:t xml:space="preserve">Section 1: The term shall be twelve months from commencement.</w:t></w:r>
+    </w:p>
+    <w:p w14:paraId="00000105" w14:textId="77777777">
+      <w:r><w:t xml:space="preserve">Section 2: The renewal period is also twelve months unless terminated.</w:t></w:r>
+    </w:p>
+    <w:p w14:paraId="00000106" w14:textId="77777777">
+      <w:r><w:t>This entire clause shall be deleted upon execution.</w:t></w:r>
+    </w:p>
+    <w:p w14:paraId="00000107" w14:textId="77777777">
+      <w:r><w:t xml:space="preserve">The fee is </w:t></w:r>
+      <w:del w:id="50" w:author="Reviewer" w:date="2025-01-01T00:00:00Z">
+        <w:r><w:delText>one hundred</w:delText></w:r>
+      </w:del>
+      <w:ins w:id="51" w:author="Reviewer" w:date="2025-01-01T00:00:00Z">
+        <w:r><w:t>two hundred</w:t></w:r>
+      </w:ins>
+      <w:r><w:t xml:space="preserve"> dollars per month.</w:t></w:r>
+    </w:p>
+    <w:p w14:paraId="00000108" w14:textId="77777777">
+      <w:r><w:t>Clause A governs the initial deposit amount.</w:t></w:r>
+    </w:p>
+    <w:p w14:paraId="00000109" w14:textId="77777777">
+      <w:r><w:t>Clause B governs the ongoing maintenance fee.</w:t></w:r>
+    </w:p>
+    <w:p w14:paraId="0000010A" w14:textId="77777777">
+      <w:r><w:t>Clause C governs the termination penalty.</w:t></w:r>
+    </w:p>
+  </w:body>
+</w:document>
 """

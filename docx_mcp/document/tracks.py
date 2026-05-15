@@ -141,7 +141,7 @@ class _Slot:
 def _flatten_para(para: etree._Element) -> list[_Slot]:
     """Build the accepted-view character list for *para*.
 
-    Includes text from ``w:r`` and ``w:ins > w:r``.
+    Includes text from ``w:r``, ``w:ins > w:r``, and ``w:hyperlink > w:r``.
     Excludes text from ``w:del`` (invisible in accepted view).
     """
     slots: list[_Slot] = []
@@ -154,6 +154,11 @@ def _flatten_para(para: etree._Element) -> list[_Slot]:
         elif child.tag == f"{W}ins":
             for r in child.findall(f"{W}r"):
                 idx = _slots_from_run(r, slots, idx, in_ins=child)
+        elif child.tag == f"{W}hyperlink":
+            # TODO: w:ins > w:r nested inside w:hyperlink (tracked insertion of hyperlink
+            # text) is not yet handled — findall only reaches direct w:r children.
+            for r in child.findall(f"{W}r"):
+                idx = _slots_from_run(r, slots, idx, in_ins=None)
         # w:del, w:pPr, w:bookmarkStart, etc. → skip
     return slots
 
@@ -635,10 +640,11 @@ class TracksMixin:
         real_slot_e = real_slot_s + len(del_text)
 
         if not del_text and not ins_text:
-            return {"change_id": None, "type": "replacement", "author": author, "changed": 0}
+            return {"del_id": None, "ins_id": None, "type": "replacement", "author": author, "date": _now_iso()}
 
         cid = self._next_markup_id(doc)
         now = _now_iso()
+        ins_cid: int | None = None
 
         if del_text:
             _apply_deletion(para, real_slot_s, real_slot_e, slots, cid, author, now)
@@ -668,7 +674,13 @@ class TracksMixin:
                 para.append(ins_el)
 
         self._mark("word/document.xml")
-        return {"change_id": cid, "type": "replacement", "author": author, "date": now}
+        return {
+            "del_id": cid if del_text else None,
+            "ins_id": ins_cid if ins_text else None,
+            "type": "replacement",
+            "author": author,
+            "date": now,
+        }
 
     # ── Accept / Reject ──────────────────────────────────────────────────────
 
@@ -732,3 +744,28 @@ class TracksMixin:
         if count > 0:
             self._mark("word/document.xml")
         return {"rejected": count, "scope": "by_author" if author else "all"}
+
+    def get_body_text(self) -> dict:
+        """Return accepted-view full text as {body, footnotes}."""
+        doc = self._require("word/document.xml")
+        body_lines: list[str] = []
+        for para in doc.iter(f"{W}p"):
+            slots = _flatten_para(para)
+            body_lines.append("".join(s.char for s in slots))
+
+        footnote_lines: list[str] = []
+        try:
+            fn_doc = self._require("word/footnotes.xml")
+            for fn in fn_doc.findall(f"{W}footnote"):
+                if fn.get(f"{W}id") in ("-1", "0"):
+                    continue
+                for para in fn.iter(f"{W}p"):
+                    slots = _flatten_para(para)
+                    footnote_lines.append("".join(s.char for s in slots))
+        except RuntimeError:
+            pass
+
+        return {
+            "body": "\n".join(line for line in body_lines if line),
+            "footnotes": "\n".join(line for line in footnote_lines if line),
+        }
