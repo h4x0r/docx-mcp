@@ -12,6 +12,7 @@ transparently share a single `__default__` slot — same behavior as before.
 from __future__ import annotations
 
 import json
+import sys as _sys
 import uuid
 
 from mcp.server.fastmcp import FastMCP
@@ -52,9 +53,7 @@ def _resolve(handle: str) -> tuple[str, DocxDocument]:
     key = _key(handle)
     doc = _docs.get(key)
     if doc is None:
-        raise RuntimeError(
-            f"No document is open for handle {key!r}. Call open_document first."
-        )
+        raise RuntimeError(f"No document is open for handle {key!r}. Call open_document first.")
     return key, doc
 
 
@@ -655,9 +654,7 @@ def insert_image(
 ) -> str:
     """Insert an image into the document after a paragraph."""
     _, doc = _resolve(document_handle)
-    return _js(
-        doc.insert_image(para_id, image_path, width_emu=width_emu, height_emu=height_emu)
-    )
+    return _js(doc.insert_image(para_id, image_path, width_emu=width_emu, height_emu=height_emu))
 
 
 @mcp.tool()
@@ -2927,16 +2924,14 @@ def insert_text_box(
 # Tests and legacy callers that access `server._doc` directly continue to work:
 # reads return _docs["__default__"], writes update the same slot.
 
-import sys as _sys
-
 
 class _Module(_sys.modules[__name__].__class__):
     @property
-    def _doc(self) -> "DocxDocument | None":
+    def _doc(self) -> DocxDocument | None:
         return _docs.get(_DEFAULT_HANDLE)
 
     @_doc.setter
-    def _doc(self, val: "DocxDocument | None") -> None:
+    def _doc(self, val: DocxDocument | None) -> None:
         if val is None:
             _docs.pop(_DEFAULT_HANDLE, None)
         else:
