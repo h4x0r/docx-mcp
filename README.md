@@ -267,8 +267,8 @@ Every edit is validated against the OOXML specification before saving, catching 
 - Python 3.10+
 - Works on macOS, Linux, and Windows
 
-## License
+---
 
-MIT
+[Privacy Policy](https://securityronin.github.io/docx-mcp/privacy/) · [Terms of Service](https://securityronin.github.io/docx-mcp/terms/) · © 2026 Security Ronin Ltd
 
 <img referrerpolicy="no-referrer-when-downgrade" src="https://static.scarf.sh/a.png?x-pxid=95beebbb-0f2e-46cc-9a68-a8e66f613180" />
